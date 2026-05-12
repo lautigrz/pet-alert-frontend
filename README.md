@@ -1,59 +1,204 @@
-# PetAlertFrontend
+# 🐾 Pet Alert Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.1.
+Frontend de Pet Alert construido con **Angular 19** y **Tailwind CSS**.
 
-## Development server
+---
 
-To start a local development server, run:
+## 📁 Estructura del proyecto
 
-```bash
-ng serve
+```
+pet-alert-frontend/
+├── src/
+│   ├── app/
+│   │   ├── core/
+│   │   ├── shared/
+│   │   ├── features/
+│   │   └── layout/
+│   ├── environments/
+│   │   ├── environment.ts
+│   │   └── environment.prod.ts
+│   ├── index.html
+│   ├── main.ts
+│   └── styles.css
+├── .env.example
+├── angular.json
+├── tailwind.config.js
+├── tsconfig.json
+└── package.json
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## 🧩 Arquitectura de la app
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+La app está dividida en cuatro módulos con responsabilidades bien definidas. La regla general es: **cada cosa vive en el lugar más específico posible**.
 
-```bash
-ng generate component component-name
+---
+
+### `core/` — Servicios y lógica global
+
+Todo lo que es **singleton y se usa en toda la app** vive acá. Se importa una sola vez en el `app.config.ts` y no se repite en ningún otro módulo.
+
+```
+core/
+  guards/
+    auth.guard.ts          # Protege rutas que requieren autenticación
+    __tests__/
+  interceptors/
+    auth.interceptor.ts    # Agrega el token JWT a cada request HTTP
+    error.interceptor.ts   # Maneja errores globales de la API (401, 500, etc)
+  services/
+    auth.service.ts        # Maneja login, logout y estado de la sesión
+    __tests__/
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+**Regla:** si un servicio o guard lo usan dos o más features, va en `core/`. Si lo usa una sola feature, va dentro de esa feature.
 
-```bash
-ng generate --help
+---
+
+### `shared/` — Componentes reutilizables
+
+Todo lo que es **UI genérica y reutilizable entre features** vive acá. No tiene lógica de negocio — solo presentación.
+
+```
+shared/
+  components/
+    button/     # Botón con variantes (primary, secondary, danger)
+    input/      # Input con validación y estilos consistentes
+    modal/      # Modal genérico reutilizable
+  pipes/        # Pipes de transformación (fechas, texto, etc)
+  directives/   # Directivas personalizadas
 ```
 
-## Building
+**Regla:** si un componente aparece en más de una feature, va en `shared/`. Si solo lo usa una feature, va dentro de esa feature.
 
-To build the project run:
+---
 
-```bash
-ng build
+### `features/` — Módulos por funcionalidad
+
+Cada feature es un **módulo independiente con lazy loading**. No se conocen entre sí — solo consumen de `core/` y `shared/`. Cada feature tiene sus propios componentes, servicios y tests.
+
+```
+features/
+  auth/
+    login/
+      login.component.ts      # Formulario de login
+      login.component.html
+      __tests__/
+    register/                 # Formulario de registro
+
+  pets/
+    lost-pet/                 # Reportar mascota perdida
+    found-pet/                # Reportar mascota encontrada
+    pet-detail/               # Detalle de una mascota
+    services/
+      pet.service.ts          # Llama a la API de mascotas
+
+  matches/
+    match-list/               # Lista de posibles matches
+    match-detail/             # Detalle de un match
+    services/
+      match.service.ts        # Llama a la API de matches
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+**Regla:** todo lo que pertenece exclusivamente a una feature vive dentro de ella — componentes, servicios y tests. Esto permite que si en el futuro se elimina una feature, se borra una sola carpeta.
 
-## Running unit tests
+---
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+### `layout/` — Shell de la aplicación
 
-```bash
-ng test
+Los componentes que forman el **esqueleto visual de la app** — lo que se ve siempre independientemente de la ruta.
+
+```
+layout/
+  navbar/     # Barra de navegación superior
+  sidebar/    # Menú lateral (si aplica)
+  footer/     # Pie de página
 ```
 
-## Running end-to-end tests
+---
 
-For end-to-end (e2e) testing, run:
+## ⚙️ Variables de entorno
 
-```bash
-ng e2e
+```
+environments/
+  environment.ts       # Valores para desarrollo local
+  environment.prod.ts  # Valores para producción
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+En el código siempre importás `environment.ts`. Angular se encarga de usar el de producción cuando corresponde.
 
-## Additional Resources
+```typescript
+import { environment } from '../environments/environment';
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+const url = environment.apiUrl;
+```
+
+Copiá el `.env.example` para arrancar:
+
+```bash
+cp .env.example .env
+```
+
+---
+
+## 🧪 Testing
+
+Los tests viven en carpetas `__tests__/` dentro de la carpeta que testean:
+
+```
+guards/
+  auth.guard.ts
+  __tests__/
+    auth.guard.spec.ts
+```
+
+Hay dos niveles de tests:
+
+**Unitarios** — testean componentes, servicios y guards de forma aislada mockeando las dependencias externas (HTTP, router, etc).
+
+**Integración** — testean flujos completos dentro de una feature (formulario → servicio → respuesta).
+
+> ⚠️ Pendiente de configurar: Vitest + Angular Testing Library en reemplazo de Karma.
+
+---
+
+## 🛠️ Scripts disponibles
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm start` o `ng serve` | Levanta la app en modo desarrollo |
+| `npm run build` o `ng build` | Compila la app para producción |
+| `npm test` | Corre los tests |
+
+---
+
+## 🔑 Reglas del proyecto
+
+- **Lazy loading en todas las features** — ninguna feature se carga en el bundle inicial, solo cuando el usuario navega a esa ruta.
+- **Los servicios específicos van dentro de su feature** — solo los globales van en `core/`.
+- **Los componentes genéricos van en `shared/`** — si un componente tiene lógica de negocio de una feature específica, no es genérico.
+- **`core/` se importa una sola vez** — nunca importar módulos de `core/` dentro de una feature.
+- **Nunca importar entre features** — si dos features necesitan algo en común, ese algo va en `shared/` o `core/`.
+
+---
+
+## 🔗 Conexión con el backend
+
+La URL de la API se configura en `environments/`:
+
+```typescript
+// environment.ts
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3000/api'
+};
+
+// environment.prod.ts
+export const environment = {
+  production: true,
+  apiUrl: 'https://tu-api.railway.app/api'
+};
+```
+
+> ⚠️ Pendiente de configurar: Tailwind CSS.
