@@ -20,7 +20,6 @@ pet-alert-frontend/
 │   ├── index.html
 │   ├── main.ts
 │   └── styles.css
-├── .env.example
 ├── angular.json
 ├── tailwind.config.js
 ├── tsconfig.json
