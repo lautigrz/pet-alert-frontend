@@ -1,0 +1,124 @@
+<div class="min-h-screen bg-slate-50 flex flex-col">
+  <header class="hidden sm:block bg-white border-b border-slate-200 px-6 py-4">
+    <a routerLink="/" class="inline-flex items-center gap-2">
+      <img src="petfinder-logo.svg" alt="PetFinder" class="h-14 w-auto" />
+    </a>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center sm:justify-center px-6 py-8 sm:py-12 bg-white sm:bg-slate-50">
+    <section class="w-full max-w-md">
+      <div class="flex items-center justify-center mb-8 sm:hidden">
+        <img src="petfinder-logo.svg" alt="PetFinder" class="h-20 w-auto" />
+      </div>
+
+      <h1 class="text-2xl font-bold text-[#12355B] mb-6 sm:text-center">Registrarme</h1>
+
+      <div class="sm:bg-white sm:border sm:border-slate-200 sm:rounded-xl sm:shadow-sm sm:p-7">
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="flex flex-col gap-5">
+          <div>
+            <label for="email" class="block text-sm font-semibold text-[#12355B] mb-1.5">Correo</label>
+            <input
+              id="email"
+              type="email"
+              autocomplete="email"
+              placeholder="Correo"
+              formControlName="email"
+              class="w-full px-4 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400"
+            />
+            @if (hasError('email', 'required')) {
+              <p class="text-xs text-red-600 mt-1">El correo es obligatorio</p>
+            }
+            @if (hasError('email', 'email')) {
+              <p class="text-xs text-red-600 mt-1">El correo no tiene un formato válido</p>
+            }
+            @if (hasError('email', 'maxlength')) {
+              <p class="text-xs text-red-600 mt-1">Máximo 255 caracteres</p>
+            }
+          </div>
+
+          <div>
+            <label for="username" class="block text-sm font-semibold text-[#12355B] mb-1.5">Usuario</label>
+            <input
+              id="username"
+              type="text"
+              autocomplete="username"
+              placeholder="Usuario"
+              formControlName="username"
+              class="w-full px-4 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400"
+            />
+            @if (hasError('username', 'required')) {
+              <p class="text-xs text-red-600 mt-1">El usuario es obligatorio</p>
+            }
+            @if (hasError('username', 'minlength')) {
+              <p class="text-xs text-red-600 mt-1">Mínimo 3 caracteres</p>
+            }
+            @if (hasError('username', 'maxlength')) {
+              <p class="text-xs text-red-600 mt-1">Máximo 30 caracteres</p>
+            }
+            @if (hasError('username', 'pattern')) {
+              <p class="text-xs text-red-600 mt-1">Solo letras, números, guion bajo y espacios</p>
+            }
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-semibold text-[#12355B] mb-1.5">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              autocomplete="new-password"
+              placeholder="••••••••"
+              formControlName="password"
+              class="w-full px-4 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400"
+            />
+            @if (hasError('password', 'required')) {
+              <p class="text-xs text-red-600 mt-1">La contraseña es obligatoria</p>
+            }
+            @if (hasError('password', 'minlength')) {
+              <p class="text-xs text-red-600 mt-1">Mínimo 8 caracteres</p>
+            }
+            @if (hasError('password', 'maxlength')) {
+              <p class="text-xs text-red-600 mt-1">Máximo 100 caracteres</p>
+            }
+          </div>
+
+          <div>
+            <label for="passwordConfirm" class="block text-sm font-semibold text-[#12355B] mb-1.5">Confirmar contraseña</label>
+            <input
+              id="passwordConfirm"
+              type="password"
+              autocomplete="new-password"
+              placeholder="••••••••"
+              formControlName="passwordConfirm"
+              class="w-full px-4 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400"
+            />
+            @if (hasError('passwordConfirm', 'required')) {
+              <p class="text-xs text-red-600 mt-1">Confirmá tu contraseña</p>
+            }
+            @if (passwordsMismatch()) {
+              <p class="text-xs text-red-600 mt-1">Las contraseñas no coinciden</p>
+            }
+          </div>
+
+          @if (serverError()) {
+            <div role="alert" class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-3 py-2 rounded">
+              {{ serverError() }}
+            </div>
+          }
+
+          <button
+            type="submit"
+            [disabled]="submitting()"
+            class="w-full bg-[#E8842E] hover:bg-[#d57821] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-md transition-colors mt-2"
+          >
+            {{ submitting() ? 'Creando cuenta...' : 'Crear cuenta' }}
+          </button>
+
+          <p class="text-center text-sm text-[#1D6FA3] mt-2">
+            ¿Ya tenés una cuenta?
+            <a routerLink="/login" class="underline hover:text-[#12355B]">Iniciá sesión acá.</a>
+          </p>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
