@@ -60,7 +60,7 @@ describe('RegisterPage', () => {
         username: 'juancho',
         password: 'miPass123',
       });
-      expect(navigateSpy).toHaveBeenCalledWith('/verify-email-sent');
+      expect(navigateSpy).toHaveBeenCalledWith('/login?verification=sent');
     });
 
     it('shows the server error message when register fails', async () => {

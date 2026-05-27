@@ -3,21 +3,31 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthService } from './auth.service';
 import { AuthHttp } from '../infrastructure/auth.http';
+import { TokenStorage } from '../infrastructure/token.storage';
 import {
   EmailAlreadyRegisteredError,
+  InvalidCredentialsError,
+  InvalidLoginDataError,
   InvalidRegistrationDataError,
   NetworkError,
+  RateLimitedError,
   UnexpectedAuthError,
 } from '../domain/auth.errors';
 
 describe('AuthService.register', () => {
-  let authHttp: { registerUser: ReturnType<typeof vi.fn> };
+  let authHttp: { registerUser: ReturnType<typeof vi.fn>; loginUser: ReturnType<typeof vi.fn> };
+  let tokenStorage: { save: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; read: ReturnType<typeof vi.fn> };
   let service: AuthService;
 
   beforeEach(() => {
-    authHttp = { registerUser: vi.fn() };
+    authHttp = { registerUser: vi.fn(), loginUser: vi.fn() };
+    tokenStorage = { save: vi.fn(), clear: vi.fn(), read: vi.fn() };
     TestBed.configureTestingModule({
-      providers: [AuthService, { provide: AuthHttp, useValue: authHttp }],
+      providers: [
+        AuthService,
+        { provide: AuthHttp, useValue: authHttp },
+        { provide: TokenStorage, useValue: tokenStorage },
+      ],
     });
     service = TestBed.inject(AuthService);
   });
@@ -136,6 +146,127 @@ describe('AuthService.register', () => {
 
       // Then se mapea a UnexpectedAuthError
       await expect(accion).rejects.toThrow(UnexpectedAuthError);
+    });
+  });
+});
+
+describe('AuthService.login', () => {
+  let authHttp: { registerUser: ReturnType<typeof vi.fn>; loginUser: ReturnType<typeof vi.fn> };
+  let tokenStorage: { save: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; read: ReturnType<typeof vi.fn> };
+  let service: AuthService;
+
+  beforeEach(() => {
+    authHttp = { registerUser: vi.fn(), loginUser: vi.fn() };
+    tokenStorage = { save: vi.fn(), clear: vi.fn(), read: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: AuthHttp, useValue: authHttp },
+        { provide: TokenStorage, useValue: tokenStorage },
+      ],
+    });
+    service = TestBed.inject(AuthService);
+  });
+
+  describe('when the credentials are valid', () => {
+    it('returns the tokens and persists them in storage', async () => {
+      // Given un back que devuelve los dos tokens
+      authHttp.loginUser.mockResolvedValue({
+        accessToken: 'jwt-access',
+        refreshToken: 'refresh-string',
+      });
+
+      // When llamo a login
+      const tokens = await service.login({
+        emailOrUsername: 'juan@example.com',
+        password: 'miPass123',
+      });
+
+      // Then devuelve los tokens y los guarda en storage
+      expect(tokens).toEqual({ accessToken: 'jwt-access', refreshToken: 'refresh-string' });
+      expect(tokenStorage.save).toHaveBeenCalledWith({
+        accessToken: 'jwt-access',
+        refreshToken: 'refresh-string',
+      });
+    });
+
+    it('normalizes the email/username before sending', async () => {
+      // Given un back que acepta cualquier request
+      authHttp.loginUser.mockResolvedValue({
+        accessToken: 'jwt-access',
+        refreshToken: 'refresh-string',
+      });
+
+      // When llamo con input sucio
+      await service.login({
+        emailOrUsername: '  JUAN@Example.com  ',
+        password: 'miPass123',
+      });
+
+      // Then el back recibe el input normalizado en el campo email
+      expect(authHttp.loginUser).toHaveBeenCalledWith({
+        email: 'juan@example.com',
+        password: 'miPass123',
+      });
+    });
+  });
+
+  describe('when the back returns 401 Unauthorized', () => {
+    it('throws InvalidCredentialsError and does NOT save tokens', async () => {
+      // Given un back que rechaza por credenciales invalidas
+      authHttp.loginUser.mockRejectedValue(new HttpErrorResponse({ status: 401 }));
+
+      // When intento loguear
+      const accion = () =>
+        service.login({ emailOrUsername: 'juan@example.com', password: 'mal' });
+
+      // Then se mapea a InvalidCredentialsError y no se guardan tokens
+      await expect(accion).rejects.toThrow(InvalidCredentialsError);
+      expect(tokenStorage.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when the back returns 429 Too Many Requests', () => {
+    it('throws RateLimitedError', async () => {
+      // Given un back que rate-limita
+      authHttp.loginUser.mockRejectedValue(new HttpErrorResponse({ status: 429 }));
+
+      // When intento loguear
+      const accion = () =>
+        service.login({ emailOrUsername: 'juan@example.com', password: 'miPass123' });
+
+      // Then se mapea a RateLimitedError
+      await expect(accion).rejects.toThrow(RateLimitedError);
+    });
+  });
+
+  describe('when the back returns 400 Bad Request', () => {
+    it('throws InvalidLoginDataError with the message from the back', async () => {
+      // Given un back que rechaza por body invalido
+      authHttp.loginUser.mockRejectedValue(
+        new HttpErrorResponse({ status: 400, error: { error: 'email is required' } }),
+      );
+
+      // When intento loguear
+      const accion = () =>
+        service.login({ emailOrUsername: '', password: 'miPass123' });
+
+      // Then se mapea a InvalidLoginDataError con el mensaje
+      await expect(accion).rejects.toThrow(InvalidLoginDataError);
+    });
+  });
+
+  describe('when there is no network', () => {
+    it('throws NetworkError', async () => {
+      // Given un AuthHttp que falla con status 0
+      authHttp.loginUser.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+
+      // When intento loguear
+      const accion = () =>
+        service.login({ emailOrUsername: 'juan@example.com', password: 'miPass123' });
+
+      // Then se mapea a NetworkError
+      await expect(accion).rejects.toThrow(NetworkError);
     });
   });
 });
