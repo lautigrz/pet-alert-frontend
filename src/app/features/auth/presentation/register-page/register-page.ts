@@ -63,7 +63,7 @@ export class RegisterPage {
     try {
       const { email, username, password } = this.form.getRawValue();
       await this.authService.register({ email, username, password });
-      await this.router.navigateByUrl('/verify-email-sent');
+      await this.router.navigateByUrl('/login?verification=sent');
     } catch (error) {
       this.serverError.set(error instanceof Error ? error.message : 'Error desconocido');
     } finally {

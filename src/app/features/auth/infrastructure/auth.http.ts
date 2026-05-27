@@ -13,6 +13,16 @@ export interface RegisterUserResponse {
   id: string;
 }
 
+export interface LoginUserRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginUserResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthHttp {
   private readonly http = inject(HttpClient);
@@ -21,6 +31,12 @@ export class AuthHttp {
   registerUser(body: RegisterUserRequest): Promise<RegisterUserResponse> {
     return firstValueFrom(
       this.http.post<RegisterUserResponse>(`${this.baseUrl}/users`, body),
+    );
+  }
+
+  loginUser(body: LoginUserRequest): Promise<LoginUserResponse> {
+    return firstValueFrom(
+      this.http.post<LoginUserResponse>(`${this.baseUrl}/auth/login`, body),
     );
   }
 }

@@ -25,3 +25,24 @@ export class UnexpectedAuthError extends Error {
     this.name = 'UnexpectedAuthError';
   }
 }
+
+export class InvalidCredentialsError extends Error {
+  constructor() {
+    super('Correo o contraseña incorrectos');
+    this.name = 'InvalidCredentialsError';
+  }
+}
+
+export class RateLimitedError extends Error {
+  constructor() {
+    super('Demasiados intentos. Esperá unos minutos antes de reintentar.');
+    this.name = 'RateLimitedError';
+  }
+}
+
+export class InvalidLoginDataError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidLoginDataError';
+  }
+}
