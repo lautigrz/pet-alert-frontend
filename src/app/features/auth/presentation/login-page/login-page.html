@@ -5,16 +5,7 @@
     </a>
   </header>
 
-  @if (toastMessage()) {
-    <div
-      role="status"
-      class="fixed bottom-20 sm:bottom-4 inset-x-4 sm:left-auto sm:right-4 sm:max-w-sm z-50 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm px-4 py-3 rounded-md shadow-md text-center sm:text-left"
-    >
-      {{ toastMessage() }}
-    </div>
-  }
-
-  <main class="flex-1 flex flex-col items-center sm:justify-center px-6 py-8 sm:py-12 bg-white sm:bg-slate-50">
+<main class="flex-1 flex flex-col items-center sm:justify-center px-6 py-8 sm:py-12 bg-white sm:bg-slate-50">
     <section
       class="sm:hidden flex flex-col items-center flex-1 w-full max-w-sm"
       [class.hidden]="mobileView() === 'form'"
@@ -124,7 +115,7 @@
           </div>
 
           @if (serverError()) {
-            <div role="alert" class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-3 py-2 rounded">
+            <div role="alert" class="bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 rounded-md">
               {{ serverError() }}
             </div>
           }

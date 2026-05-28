@@ -8,8 +8,8 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../application/auth.service';
-
-const VERIFICATION_TOAST_MS = 5000;
+import { NetworkError, UnexpectedAuthError } from '../../domain/auth.errors';
+import { ToastService } from '../../../../shared/application/toast.service';
 
 function emailFormatIfHasAt(control: AbstractControl): ValidationErrors | null {
   const value = control.value as string;
@@ -29,11 +29,11 @@ export class LoginPage {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly toastService = inject(ToastService);
 
   readonly mobileView = signal<'landing' | 'form'>('landing');
   readonly submitting = signal(false);
   readonly serverError = signal<string | null>(null);
-  readonly toastMessage = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     emailOrUsername: [
@@ -53,8 +53,7 @@ export class LoginPage {
 
   constructor() {
     if (this.route.snapshot.queryParamMap.get('verification') === 'sent') {
-      this.toastMessage.set('Te enviamos un correo para verificar tu cuenta');
-      setTimeout(() => this.toastMessage.set(null), VERIFICATION_TOAST_MS);
+      this.toastService.success('Te enviamos un correo para verificar tu cuenta');
     }
   }
 
@@ -89,7 +88,11 @@ export class LoginPage {
       await this.authService.login({ emailOrUsername, password });
       await this.router.navigateByUrl('/');
     } catch (error) {
-      this.serverError.set(error instanceof Error ? error.message : 'Error desconocido');
+      if (error instanceof NetworkError || error instanceof UnexpectedAuthError) {
+        this.toastService.error(error.message);
+      } else {
+        this.serverError.set(error instanceof Error ? error.message : 'Error desconocido');
+      }
     } finally {
       this.submitting.set(false);
     }
