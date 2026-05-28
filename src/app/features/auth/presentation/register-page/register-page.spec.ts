@@ -3,20 +3,24 @@ import { provideRouter, Router } from '@angular/router';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RegisterPage } from './register-page';
 import { AuthService } from '../../application/auth.service';
-import { EmailAlreadyRegisteredError } from '../../domain/auth.errors';
+import { ToastService } from '../../../../shared/application/toast.service';
+import { EmailAlreadyRegisteredError, NetworkError } from '../../domain/auth.errors';
 
 describe('RegisterPage', () => {
   let authService: { register: ReturnType<typeof vi.fn> };
+  let toastService: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; info: ReturnType<typeof vi.fn> };
   let router: Router;
   let component: RegisterPage;
 
   beforeEach(() => {
     authService = { register: vi.fn() };
+    toastService = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
     TestBed.configureTestingModule({
       imports: [RegisterPage],
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: authService },
+        { provide: ToastService, useValue: toastService },
       ],
     });
     const fixture = TestBed.createComponent(RegisterPage);
@@ -63,16 +67,31 @@ describe('RegisterPage', () => {
       expect(navigateSpy).toHaveBeenCalledWith('/login?verification=sent');
     });
 
-    it('shows the server error message when register fails', async () => {
-      // Given: el service rechaza con EmailAlreadyRegistered
+    it('shows the server error inline when register fails with a specific error', async () => {
+      // Given: el service rechaza con EmailAlreadyRegistered (error especifico del form)
       authService.register.mockRejectedValue(new EmailAlreadyRegisteredError());
 
       // When: envio
       await component.submit();
 
-      // Then: serverError se popula con el mensaje
+      // Then: serverError se popula inline, NO se dispara toast
       expect(component.serverError()).toBe('Ya existe una cuenta con ese correo');
+      expect(toastService.error).not.toHaveBeenCalled();
       expect(component.submitting()).toBe(false);
+    });
+
+    it('dispatches a toast when register fails with a global error like NetworkError', async () => {
+      // Given: el service rechaza con NetworkError (error global, no de campo)
+      authService.register.mockRejectedValue(new NetworkError());
+
+      // When: envio
+      await component.submit();
+
+      // Then: el toast se dispara, serverError queda en null
+      expect(toastService.error).toHaveBeenCalledWith(
+        'No pudimos conectar con el servidor. Reintentá en unos segundos.',
+      );
+      expect(component.serverError()).toBeNull();
     });
   });
 
