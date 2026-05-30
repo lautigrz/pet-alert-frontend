@@ -1,9 +1,11 @@
 import { Component, AfterViewInit } from '@angular/core';
 import * as L from 'leaflet';
+import { Navbar } from '../../shared/components/navbar/navbar';
 
 @Component({
   selector: 'app-home-map',
   standalone: true,
+  imports: [Navbar],
   templateUrl: './home-map.html',
   styleUrls: ['./home-map.css'],
 })
