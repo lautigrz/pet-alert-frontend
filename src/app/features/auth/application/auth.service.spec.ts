@@ -178,7 +178,7 @@ describe('AuthService.login', () => {
 
       // When llamo a login
       const tokens = await service.login({
-        emailOrUsername: 'juan@example.com',
+        email: 'juan@example.com',
         password: 'miPass123',
       });
 
@@ -199,7 +199,7 @@ describe('AuthService.login', () => {
 
       // When llamo con input sucio
       await service.login({
-        emailOrUsername: '  JUAN@Example.com  ',
+        email: '  JUAN@Example.com  ',
         password: 'miPass123',
       });
 
@@ -218,7 +218,7 @@ describe('AuthService.login', () => {
 
       // When intento loguear
       const accion = () =>
-        service.login({ emailOrUsername: 'juan@example.com', password: 'mal' });
+        service.login({ email: 'juan@example.com', password: 'mal' });
 
       // Then se mapea a InvalidCredentialsError y no se guardan tokens
       await expect(accion).rejects.toThrow(InvalidCredentialsError);
@@ -233,7 +233,7 @@ describe('AuthService.login', () => {
 
       // When intento loguear
       const accion = () =>
-        service.login({ emailOrUsername: 'juan@example.com', password: 'miPass123' });
+        service.login({ email: 'juan@example.com', password: 'miPass123' });
 
       // Then se mapea a RateLimitedError
       await expect(accion).rejects.toThrow(RateLimitedError);
@@ -249,7 +249,7 @@ describe('AuthService.login', () => {
 
       // When intento loguear
       const accion = () =>
-        service.login({ emailOrUsername: '', password: 'miPass123' });
+        service.login({ email: '', password: 'miPass123' });
 
       // Then se mapea a InvalidLoginDataError con el mensaje
       await expect(accion).rejects.toThrow(InvalidLoginDataError);
@@ -263,7 +263,7 @@ describe('AuthService.login', () => {
 
       // When intento loguear
       const accion = () =>
-        service.login({ emailOrUsername: 'juan@example.com', password: 'miPass123' });
+        service.login({ email: 'juan@example.com', password: 'miPass123' });
 
       // Then se mapea a NetworkError
       await expect(accion).rejects.toThrow(NetworkError);

@@ -1,27 +1,41 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LoginPage } from './login-page';
 import { AuthService } from '../../application/auth.service';
-import { InvalidCredentialsError, RateLimitedError } from '../../domain/auth.errors';
+import { ToastService } from '../../../../shared/application/toast.service';
+import { InvalidCredentialsError, NetworkError, RateLimitedError } from '../../domain/auth.errors';
 
 describe('LoginPage', () => {
   let authService: { login: ReturnType<typeof vi.fn> };
+  let toastService: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; info: ReturnType<typeof vi.fn> };
   let router: Router;
   let component: LoginPage;
 
-  beforeEach(() => {
-    authService = { login: vi.fn() };
+  const buildComponent = (verification?: string): LoginPage => {
+    const queryParams = new Map<string, string>();
+    if (verification) queryParams.set('verification', verification);
+    const activatedRoute = {
+      snapshot: { queryParamMap: { get: (k: string) => queryParams.get(k) ?? null } },
+    };
     TestBed.configureTestingModule({
       imports: [LoginPage],
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: authService },
+        { provide: ToastService, useValue: toastService },
+        { provide: ActivatedRoute, useValue: activatedRoute },
       ],
     });
     const fixture = TestBed.createComponent(LoginPage);
-    component = fixture.componentInstance;
     router = TestBed.inject(Router);
+    return fixture.componentInstance;
+  };
+
+  beforeEach(() => {
+    authService = { login: vi.fn() };
+    toastService = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
+    component = buildComponent();
   });
 
   describe('when the form is invalid', () => {
@@ -39,7 +53,7 @@ describe('LoginPage', () => {
   describe('when the form is valid', () => {
     beforeEach(() => {
       component.form.setValue({
-        emailOrUsername: 'juan@example.com',
+        email: 'juan@example.com',
         password: 'miPass123',
       });
     });
@@ -57,7 +71,7 @@ describe('LoginPage', () => {
 
       // Then: el service se llamo con los valores y se redirige a la home
       expect(authService.login).toHaveBeenCalledWith({
-        emailOrUsername: 'juan@example.com',
+        email: 'juan@example.com',
         password: 'miPass123',
       });
       expect(navigateSpy).toHaveBeenCalledWith('/');
@@ -87,6 +101,20 @@ describe('LoginPage', () => {
         'Demasiados intentos. Esperá unos minutos antes de reintentar.',
       );
     });
+
+    it('dispatches a toast when login fails with a global error like NetworkError', async () => {
+      // Given: el service rechaza con NetworkError
+      authService.login.mockRejectedValue(new NetworkError());
+
+      // When: envio
+      await component.submit();
+
+      // Then: el toast se dispara, serverError queda en null
+      expect(toastService.error).toHaveBeenCalledWith(
+        'No pudimos conectar con el servidor. Reintentá en unos segundos.',
+      );
+      expect(component.serverError()).toBeNull();
+    });
   });
 
   describe('mobile flow', () => {
@@ -104,11 +132,29 @@ describe('LoginPage', () => {
     });
   });
 
+  describe('verification toast', () => {
+    it('shows a success toast when query param verification=sent is present', () => {
+      // Given un LoginPage construido con ?verification=sent
+      TestBed.resetTestingModule();
+      buildComponent('sent');
+
+      // Then el ToastService fue invocado con success
+      expect(toastService.success).toHaveBeenCalledWith(
+        'Te enviamos un correo para verificar tu cuenta',
+      );
+    });
+
+    it('does NOT show a toast when there is no verification query param', () => {
+      // Then sin query param, no se dispara ningun toast
+      expect(toastService.success).not.toHaveBeenCalled();
+    });
+  });
+
   describe('client-side validation', () => {
     it('rejects passwords shorter than 8 characters', () => {
       // Given: password de 7 chars
       component.form.setValue({
-        emailOrUsername: 'juan@example.com',
+        email: 'juan@example.com',
         password: '1234567',
       });
 
@@ -117,28 +163,28 @@ describe('LoginPage', () => {
       expect(component.form.invalid).toBe(true);
     });
 
-    it('rejects malformed input when it contains @ (treated as email)', () => {
-      // Given: input con @ pero sin dominio valido
+    it('rejects a malformed email', () => {
+      // Given: un email mal formado
       component.form.setValue({
-        emailOrUsername: 'juan@',
+        email: 'juan@',
         password: 'miPass123',
       });
 
       // Then: el control falla con error de formato email
-      expect(component.form.get('emailOrUsername')?.hasError('email')).toBe(true);
+      expect(component.form.get('email')?.hasError('email')).toBe(true);
       expect(component.form.invalid).toBe(true);
     });
 
-    it('accepts plain usernames without @ (no email format check)', () => {
-      // Given: input sin @ (username)
+    it('rejects plain text that is not an email (no username login)', () => {
+      // Given: texto sin formato de email (lo que antes pasaba como username)
       component.form.setValue({
-        emailOrUsername: 'juancho',
+        email: 'juancho',
         password: 'miPass123',
       });
 
-      // Then: el form es valido (no se chequea formato email)
-      expect(component.form.get('emailOrUsername')?.hasError('email')).toBeFalsy();
-      expect(component.form.valid).toBe(true);
+      // Then: ahora se rechaza, porque el login es solo por email
+      expect(component.form.get('email')?.hasError('email')).toBe(true);
+      expect(component.form.invalid).toBe(true);
     });
   });
 });

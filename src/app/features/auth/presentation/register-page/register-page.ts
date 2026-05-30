@@ -2,6 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../application/auth.service';
+import { NetworkError, UnexpectedAuthError } from '../../domain/auth.errors';
+import { ToastService } from '../../../../shared/application/toast.service';
 import { passwordsMatch } from './password-match.validator';
 
 @Component({
@@ -15,6 +17,7 @@ export class RegisterPage {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService);
 
   readonly submitting = signal(false);
   readonly serverError = signal<string | null>(null);
@@ -65,7 +68,11 @@ export class RegisterPage {
       await this.authService.register({ email, username, password });
       await this.router.navigateByUrl('/login?verification=sent');
     } catch (error) {
-      this.serverError.set(error instanceof Error ? error.message : 'Error desconocido');
+      if (error instanceof NetworkError || error instanceof UnexpectedAuthError) {
+        this.toastService.error(error.message);
+      } else {
+        this.serverError.set(error instanceof Error ? error.message : 'Error desconocido');
+      }
     } finally {
       this.submitting.set(false);
     }
