@@ -21,7 +21,7 @@ export interface RegisterCommand {
 }
 
 export interface LoginCommand {
-  emailOrUsername: string;
+  email: string;
   password: string;
 }
 
@@ -46,7 +46,7 @@ export class AuthService {
   async login(command: LoginCommand): Promise<AuthTokens> {
     try {
       const response = await this.authHttp.loginUser({
-        email: command.emailOrUsername.trim().toLowerCase(),
+        email: command.email.trim().toLowerCase(),
         password: command.password,
       });
       const tokens: AuthTokens = {

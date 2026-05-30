@@ -70,26 +70,23 @@
       <div class="w-full sm:bg-white sm:border sm:border-slate-200 sm:rounded-xl sm:shadow-sm sm:p-7">
         <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="flex flex-col gap-5">
           <div>
-            <label for="emailOrUsername" class="block text-sm font-semibold text-[#12355B] mb-1.5">Correo o nombre de usuario</label>
+            <label for="email" class="block text-sm font-semibold text-[#12355B] mb-1.5">Correo electrónico</label>
             <input
-              id="emailOrUsername"
-              type="text"
-              autocomplete="username"
-              placeholder="Correo o nombre de usuario"
-              formControlName="emailOrUsername"
+              id="email"
+              type="email"
+              autocomplete="email"
+              placeholder="tu@correo.com"
+              formControlName="email"
               class="w-full px-4 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400"
             />
-            @if (hasError('emailOrUsername', 'required')) {
-              <p class="text-xs text-red-600 mt-1">El correo o usuario es obligatorio</p>
+            @if (hasError('email', 'required')) {
+              <p class="text-xs text-red-600 mt-1">El correo es obligatorio</p>
             }
-            @if (hasError('emailOrUsername', 'minlength')) {
-              <p class="text-xs text-red-600 mt-1">Mínimo 3 caracteres</p>
-            }
-            @if (hasError('emailOrUsername', 'maxlength')) {
-              <p class="text-xs text-red-600 mt-1">Máximo 255 caracteres</p>
-            }
-            @if (hasError('emailOrUsername', 'email')) {
+            @if (hasError('email', 'email')) {
               <p class="text-xs text-red-600 mt-1">El correo no tiene un formato válido</p>
+            }
+            @if (hasError('email', 'maxlength')) {
+              <p class="text-xs text-red-600 mt-1">Máximo 255 caracteres</p>
             }
           </div>
 
