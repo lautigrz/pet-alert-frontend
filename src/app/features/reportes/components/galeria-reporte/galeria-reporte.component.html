@@ -1,0 +1,36 @@
+<div class="galeria-container">
+
+  <img
+    class="imagen-principal"
+    [src]="imagenPrincipalUrl"
+    (click)="abrirImagen(imagenPrincipalUrl)"
+    alt="gato"
+  />
+
+  <div class="miniaturas">
+
+    <img
+      src="https://images.unsplash.com/photo-1519052537078-e6302a4968d4?q=80&w=500&auto=format&fit=crop"
+      (click)="abrirImagen('https://images.unsplash.com/photo-1519052537078-e6302a4968d4?q=80&w=1200&auto=format&fit=crop')"
+      alt="Gato mini 1"
+    />
+
+    <img
+      src="https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=500&auto=format&fit=crop"
+      (click)="abrirImagen('https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=1200&auto=format&fit=crop')"
+      alt="Gato mini 2"
+    />
+
+    <img
+      src="https://images.unsplash.com/photo-1511044568932-338cba0ad803?q=80&w=500&auto=format&fit=crop"
+      (click)="abrirImagen('https://images.unsplash.com/photo-1511044568932-338cba0ad803?q=80&w=1200&auto=format&fit=crop')"
+      alt="Gato mini 3"
+    />
+
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="imagenSeleccionada" (click)="cerrarImagen()">
+  <span class="close-btn" (click)="cerrarImagen()">&times;</span>
+  <img [src]="imagenSeleccionada" class="imagen-completa" (click)="$event.stopPropagation()">
+</div>

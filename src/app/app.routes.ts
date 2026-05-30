@@ -16,4 +16,12 @@ export const routes: Routes = [
         (m) => m.LoginPage,
       ),
   },
+
+    {
+    path: 'detalle-reporte',
+    loadComponent: () =>
+      import(
+        './features/reportes/pages/detalle-reporte/detalle-reporte.component'
+      ).then((m) => m.DetalleReporteComponent),
+  },
 ];
