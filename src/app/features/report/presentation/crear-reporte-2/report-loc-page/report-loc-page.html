@@ -1,0 +1,89 @@
+<div class="loc-page-container">
+  <div class="breadcrumb">
+    <span>Inicio</span>
+    <span> > </span>
+    <span>Nuevo reporte</span>
+  </div>
+
+  <h1>¿Dónde encontraste a la mascota?</h1>
+  <p class="subtitle">
+    Indica la ubicación donde se encontró para que otros puedan localizarla rápidamente
+  </p>
+
+  <div class="progress-indicator">
+    <span class="step">1</span>
+    <span class="step">2</span>
+    <span class="step active">3</span>
+    <span class="step">4</span>
+    <span class="step">5</span>
+  </div>
+
+  <form class="form-container">
+
+    <!-- Búsqueda de dirección -->
+    <div class="form-group">
+      <label for="address">Buscar ubicación</label>
+      <div class="input-with-icon">
+        <input
+          id="address"
+          type="text"
+          [value]="address()"
+          (input)="address.set($any($event.target).value)"
+          placeholder="Ej: Calle Principal 123"
+        />
+        <button type="button" class="btn-search-location" title="Usar mi ubicación actual">
+          📍
+        </button>
+      </div>
+    </div>
+
+    
+
+    <!-- Fecha y Hora en la misma fila -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="date">Fecha</label>
+        <input
+          id="date"
+          type="date"
+          [value]="date()"
+          (input)="date.set($any($event.target).value)"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="time">Hora</label>
+        <input
+          id="time"
+          type="time"
+          [value]="time()"
+          (input)="time.set($any($event.target).value)"
+        />
+      </div>
+    </div>
+
+    <!-- Mapa interactivo -->
+    <div class="form-group">
+      <label>Confirmar en el mapa</label>
+      <div class="map-wrapper">
+        <div class="map-container" #mapContainer>
+          <!-- Leaflet / Google Maps se inicializa acá -->
+          <div class="map-overlay-hint">
+            <span>🗺️</span>
+            <p>Hacé clic en el mapa para marcar la ubicación</p>
+          </div>
+        </div>
+        <div class="map-coordinates" *ngIf="latitude() !== 0 || longitude() !== 0">
+          <span class="coord-label">📌 Coordenadas seleccionadas:</span>
+          <span class="coord-value">{{ latitude() | number:'1.4-4' }}, {{ longitude() | number:'1.4-4' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button type="button" class="btn secondary" (click)="previousStep()">Volver</button>
+      <button type="button" class="btn primary" (click)="nextStep()">Siguiente</button>
+    </div>
+
+  </form>
+</div>

@@ -1,0 +1,55 @@
+<div class="type-page-container">
+  <div class="breadcrumb">
+    <span>Inicio</span>
+    <span> > </span>
+    <span>Nuevo reporte</span>
+  </div>
+
+  <div class="header-section">
+    <h1>¿Qué querés reportar?</h1>
+    <p class="subtitle">Selecciona una opción</p>
+  </div>
+
+  <div class="progress-indicator">
+    <div class="step active">
+      <span class="number">1</span>
+      <span class="label">Tipo</span>
+    </div>
+    <div class="step">
+      <span class="number">2</span>
+      <span class="label">Datos</span>
+    </div>
+    <div class="step">
+      <span class="number">3</span>
+      <span class="label">Ubicado</span>
+    </div>
+    <div class="step">
+      <span class="number">4</span>
+      <span class="label">Detalles</span>
+    </div>
+    <div class="step">
+      <span class="number">5</span>
+      <span class="label">Listo</span>
+    </div>
+  </div>
+
+  <div class="options-container">
+    <button class="option-card dark">
+      <div class="icon">🐕</div>
+      <h2>Mascota perdida</h2>
+      <p>Mi mascota se perdió</p>
+    </button>
+
+    <button class="option-card orange" (click)="selectFound()">
+      <div class="icon">🐕</div>
+      <h2>Mascota encontrada</h2>
+      <p>Encontré una mascota</p>
+    </button>
+  </div>
+
+  <div class="action-buttons">
+    <button class="btn-cancel" (click)="cancel()">Cancelar</button>
+    <button class="btn-next" disabled>Siguiente</button>
+  </div>
+</div>
+

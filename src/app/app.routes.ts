@@ -16,4 +16,51 @@ export const routes: Routes = [
         (m) => m.LoginPage,
       ),
   },
+   {
+    path: 'report',
+    children: [
+      {
+        path: 'type',
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-2/report-type-page/report-type-page').then(
+            (m) => m.ReportTypePage,
+          ),
+      },
+      {
+        path: 'found-type',
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-2/report-found-type-page/report-found-type-page').then(
+            (m) => m.ReportFoundTypePage,
+          ),
+      },
+      {
+        path: 'data',
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-2/report-data-page/report-data-page').then(
+            (m) => m.ReportDataPage,
+          ),
+      },
+      {
+        path: 'location',
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-2/report-loc-page/report-loc-page').then(
+            (m) => m.ReportLocationPage,
+          ),
+      },
+      {
+        path: 'review',
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-2/report-rev-page/report-rev-page').then(
+            (m) => m.ReportRevPage,
+          ),
+      },
+      {
+        path: 'confirm',
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-2/report-confirm-page/report-confirm-page').then(
+            (m) => m.ReportConfirmPage,
+          ),
+      },
+    ],
+  },
 ];

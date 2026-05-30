@@ -1,0 +1,81 @@
+<pre style="background:#f0f0f0; padding:1rem; font-size:0.75rem">
+  {{ report() | json }}
+</pre>
+<div class="rev-page-container">
+  <div class="breadcrumb">
+    <span>Inicio</span>
+    <span> > </span>
+    <span>Nuevo reporte</span>
+  </div>
+
+  <h1>Revisá tu reporte</h1>
+  <p class="subtitle">Verificá que todos los datos sean correctos antes de enviar</p>
+
+  <div class="progress-indicator">
+    <span class="step">1</span>
+    <span class="step">2</span>
+    <span class="step">3</span>
+    <span class="step active">4</span>
+    <span class="step">5</span>
+  </div>
+
+  <div class="review-container">
+
+    <div class="review-section">
+      <h2>📋 Tipo de reporte</h2>
+      <p class="review-value">{{ reportType() }}</p>
+    </div>
+
+    <div class="review-section">
+      <h2>🐾 Mascota</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Nombre</span>
+          <span class="value">{{ report().pet?.name }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Especie</span>
+          <span class="value">{{ report().pet?.species }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Genero</span>
+          <span class="value">{{ report().pet?.gender }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Raza</span>
+          <span class="value">{{ report().pet?.breed || 'No especificada' }}</span>
+        </div>
+      </div>
+      @if (report().pet?.description && report().pet!.description!.trim() !== '') {
+  <div class="description-box">
+    <span class="label">Descripción</span>
+    <p>{{ report().pet?.description }}</p>
+  </div>
+}
+    </div>
+
+    <div class="review-section">
+      <h2>📍 Ubicación</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Dirección</span>
+          <span class="value">{{ report().location.address }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Ciudad</span>
+          <span class="value">{{ report().location.city }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Fecha y hora</span>
+          <span class="value">{{ report().location.lastSeen | date: 'short' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button class="btn secondary" (click)="previousStep()">Volver</button>
+      <button class="btn primary" (click)="nextStep()">Enviar reporte</button>
+    </div>
+
+  </div>
+</div>
