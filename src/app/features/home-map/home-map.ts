@@ -37,7 +37,6 @@ export class HomeMapComponent implements AfterViewInit {
 
     this.getUserLocation();
 
-    // Fuerza a Leaflet a recalcular el tamaño del mapa
     setTimeout(() => {
       this.map.invalidateSize();
     }, 500);
@@ -62,7 +61,6 @@ export class HomeMapComponent implements AfterViewInit {
 
         L.marker([lat, lng]).addTo(this.map);
 
-        // Recalcular tamaño nuevamente después de mover el mapa
         setTimeout(() => {
           this.map.invalidateSize();
         }, 100);
