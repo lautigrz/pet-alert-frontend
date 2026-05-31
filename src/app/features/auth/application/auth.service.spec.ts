@@ -11,6 +11,7 @@ import {
   InvalidRegistrationDataError,
   NetworkError,
   RateLimitedError,
+  SessionExpiredError,
   UnexpectedAuthError,
 } from '../domain/auth.errors';
 
@@ -267,6 +268,139 @@ describe('AuthService.login', () => {
 
       // Then se mapea a NetworkError
       await expect(accion).rejects.toThrow(NetworkError);
+    });
+  });
+});
+
+describe('AuthService.refreshSession', () => {
+  let authHttp: { refreshAccessToken: ReturnType<typeof vi.fn>; logout: ReturnType<typeof vi.fn> };
+  let tokenStorage: { save: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; read: ReturnType<typeof vi.fn> };
+  let service: AuthService;
+
+  beforeEach(() => {
+    authHttp = { refreshAccessToken: vi.fn(), logout: vi.fn() };
+    tokenStorage = { save: vi.fn(), clear: vi.fn(), read: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: AuthHttp, useValue: authHttp },
+        { provide: TokenStorage, useValue: tokenStorage },
+      ],
+    });
+    service = TestBed.inject(AuthService);
+  });
+
+  describe('when there is a stored refresh token', () => {
+    it('returns the new access token and persists it keeping the same refresh', async () => {
+      // Given tokens guardados y un back que devuelve un access nuevo
+      tokenStorage.read.mockReturnValue({ accessToken: 'old-access', refreshToken: 'refresh-1' });
+      authHttp.refreshAccessToken.mockResolvedValue({ accessToken: 'new-access' });
+
+      // When refresco la sesion
+      const accessToken = await service.refreshSession();
+
+      // Then devuelve el access nuevo, manda el refresh viejo y lo persiste sin rotar el refresh
+      expect(accessToken).toBe('new-access');
+      expect(authHttp.refreshAccessToken).toHaveBeenCalledWith({ refreshToken: 'refresh-1' });
+      expect(tokenStorage.save).toHaveBeenCalledWith({
+        accessToken: 'new-access',
+        refreshToken: 'refresh-1',
+      });
+    });
+  });
+
+  describe('when there is no stored token', () => {
+    it('throws SessionExpiredError and does NOT hit the back', async () => {
+      // Given storage vacio
+      tokenStorage.read.mockReturnValue(null);
+
+      // When intento refrescar
+      const accion = () => service.refreshSession();
+
+      // Then se corta antes de pegarle a /refresh
+      await expect(accion).rejects.toThrow(SessionExpiredError);
+      expect(authHttp.refreshAccessToken).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when called concurrently', () => {
+    it('shares a single in-flight refresh', async () => {
+      // Given tokens guardados y un back que devuelve un access nuevo
+      tokenStorage.read.mockReturnValue({ accessToken: 'old-access', refreshToken: 'refresh-1' });
+      authHttp.refreshAccessToken.mockResolvedValue({ accessToken: 'new-access' });
+
+      // When disparo dos refresh casi simultaneos
+      const [first, second] = await Promise.all([
+        service.refreshSession(),
+        service.refreshSession(),
+      ]);
+
+      // Then ambos resuelven al mismo access y solo se pego una vez al back
+      expect(first).toBe('new-access');
+      expect(second).toBe('new-access');
+      expect(authHttp.refreshAccessToken).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
+describe('AuthService.logout', () => {
+  let authHttp: { refreshAccessToken: ReturnType<typeof vi.fn>; logout: ReturnType<typeof vi.fn> };
+  let tokenStorage: { save: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; read: ReturnType<typeof vi.fn> };
+  let service: AuthService;
+
+  beforeEach(() => {
+    authHttp = { refreshAccessToken: vi.fn(), logout: vi.fn() };
+    tokenStorage = { save: vi.fn(), clear: vi.fn(), read: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: AuthHttp, useValue: authHttp },
+        { provide: TokenStorage, useValue: tokenStorage },
+      ],
+    });
+    service = TestBed.inject(AuthService);
+  });
+
+  describe('when there is a stored refresh token', () => {
+    it('revokes it on the back and then clears local storage', async () => {
+      // Given tokens guardados y un back que revoca OK
+      tokenStorage.read.mockReturnValue({ accessToken: 'access-1', refreshToken: 'refresh-1' });
+      authHttp.logout.mockResolvedValue(undefined);
+
+      // When cierro sesion
+      await service.logout();
+
+      // Then revoca el refresh en el back y limpia local
+      expect(authHttp.logout).toHaveBeenCalledWith({ refreshToken: 'refresh-1' });
+      expect(tokenStorage.clear).toHaveBeenCalled();
+    });
+  });
+
+  describe('when the back fails to revoke', () => {
+    it('still clears local storage (best-effort revoke)', async () => {
+      // Given un back que falla la revocacion
+      tokenStorage.read.mockReturnValue({ accessToken: 'access-1', refreshToken: 'refresh-1' });
+      authHttp.logout.mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+
+      // When cierro sesion
+      await service.logout();
+
+      // Then igual limpia la sesion local
+      expect(tokenStorage.clear).toHaveBeenCalled();
+    });
+  });
+
+  describe('when there is no stored token', () => {
+    it('clears storage without hitting the back', async () => {
+      // Given storage vacio
+      tokenStorage.read.mockReturnValue(null);
+
+      // When cierro sesion
+      await service.logout();
+
+      // Then no le pega al back pero igual limpia
+      expect(authHttp.logout).not.toHaveBeenCalled();
+      expect(tokenStorage.clear).toHaveBeenCalled();
     });
   });
 });
