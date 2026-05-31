@@ -23,6 +23,18 @@ export interface LoginUserResponse {
   refreshToken: string;
 }
 
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+}
+
+export interface LogoutRequest {
+  refreshToken: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthHttp {
   private readonly http = inject(HttpClient);
@@ -37,6 +49,18 @@ export class AuthHttp {
   loginUser(body: LoginUserRequest): Promise<LoginUserResponse> {
     return firstValueFrom(
       this.http.post<LoginUserResponse>(`${this.baseUrl}/auth/login`, body),
+    );
+  }
+  
+  refreshAccessToken(body: RefreshTokenRequest): Promise<RefreshTokenResponse> {
+    return firstValueFrom(
+      this.http.post<RefreshTokenResponse>(`${this.baseUrl}/auth/refresh`, body),
+    );
+  }
+
+  logout(body: LogoutRequest): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.baseUrl}/auth/logout`, body),
     );
   }
 }
