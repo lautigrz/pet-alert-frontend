@@ -18,18 +18,19 @@ export const routes: Routes = [
         (m) => m.LoginPage,
       ),
   },
-
+  
   {
     path: 'profile/edit',
-    canActivate:[authGuard],
+    canActivate: [authGuard],
     loadComponent: () =>
-      import(
-        './features/profile/presentation/edit-profile-page/edit-profile-page'
-      ).then((m) => m.EditProfilePage),
+      import('./features/profile/presentation/edit-profile-page/edit-profile-page').then(
+        (m) => m.EditProfilePage,
+      ),
   },
-   {
+  {
     path: 'report',
     children: [
+
       {
         path: 'type',
         loadComponent: () =>
@@ -37,6 +38,7 @@ export const routes: Routes = [
             (m) => m.ReportTypePage,
           ),
       },
+
       {
         path: 'found-type',
         loadComponent: () =>
@@ -44,6 +46,7 @@ export const routes: Routes = [
             (m) => m.ReportFoundTypePage,
           ),
       },
+
       {
         path: 'data',
         loadComponent: () =>
@@ -72,6 +75,40 @@ export const routes: Routes = [
             (m) => m.ReportConfirmPage,
           ),
       },
+
+      {
+        path: 'lost-data',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-1/lost-data-page/lost-data-page').then(
+            (m) => m.LostDataPage,
+          ),
+      },
+      {
+        path: 'lost-location',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-1/lost-loc-page/lost-loc-page').then(
+            (m) => m.LostLocationPage,
+          ),
+      },
+      {
+        path: 'lost-review',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-1/lost-rev-page/lost-rev-page').then(
+            (m) => m.LostRevPage,
+          ),
+      },
+      {
+        path: 'lost-confirm',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-1/lost-confirm-page/lost-confirm-page').then(
+            (m) => m.LostConfirmPage,
+          ),
+      },
+
     ],
   },
 ];

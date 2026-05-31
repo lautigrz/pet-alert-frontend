@@ -1,0 +1,157 @@
+.confirm-page-container {
+  min-height: 100vh;
+  background: #f8f8f8;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.success-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.success-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  position: relative;
+  animation: fadeUp 0.3s ease-out;
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.close-btn:hover {
+  color: #374151;
+}
+
+.success-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.25rem;
+}
+
+.success-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.success-card h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f97316;
+  margin: 0 0 0.75rem;
+}
+
+.success-card p {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0 0 1.75rem;
+}
+
+.btn-ver-reporte {
+  width: 100%;
+  padding: 0.85rem;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-ver-reporte:hover {
+  background: #1e40af;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 6rem 1rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #f97316;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 2rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.loading-state p {
+  color: #6b7280;
+}
+
+.error-state {
+  max-width: 500px;
+  margin: 4rem auto;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #ef4444;
+  color: #991b1b;
+}
+
+.error-state h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.error-state p {
+  margin-bottom: 1.5rem;
+  color: #6b7280;
+}
+
+.btn {
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+}
+
+.btn.primary {
+  background: #1e3a8a;
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: #1e40af;
+}

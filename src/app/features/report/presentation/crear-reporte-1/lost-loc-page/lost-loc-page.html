@@ -1,0 +1,78 @@
+<div class="loc-page-container">
+  <div class="breadcrumb">
+    <span>Inicio</span>
+    <span> > </span>
+    <span>Nuevo reporte</span>
+  </div>
+
+  <div class="progress-indicator">
+    <div class="step">1</div>
+    <div class="step">2</div>
+    <div class="step active">3</div>
+    <div class="step">4</div>
+    <div class="step">5</div>
+  </div>
+
+  <h1>¿Dónde la viste por última vez?</h1>
+  <p class="subtitle">Indicá la ubicación aproximada y cuándo fue</p>
+
+  <div class="form-container">
+
+    <div class="form-group">
+      <label>Buscar ubicación</label>
+      <div class="input-with-icon">
+        <input
+          type="text"
+          [value]="address()"
+          (input)="address.set($any($event.target).value)"
+          placeholder="Buscar ubicación"
+        />
+        <button type="button" class="btn-search-location" (click)="useCurrentLocation()" title="Usar mi ubicación actual">
+          📍
+        </button>
+      </div>
+    </div>
+
+    <div class="map-wrapper">
+      <div class="map-container">
+        <div class="map-overlay-hint">
+          <span>🗺️</span>
+          <p>Mapa interactivo</p>
+          <p style="font-size:0.8rem">Integrar Leaflet / Google Maps</p>
+        </div>
+      </div>
+      @if (latitude() !== 0 || longitude() !== 0) {
+        <div class="map-coordinates">
+          <span class="coord-label">📍</span>
+          <span>Lat: {{ latitude() | number:'1.4-4' }} — Lng: {{ longitude() | number:'1.4-4' }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input
+          type="date"
+          [value]="date()"
+          (input)="date.set($any($event.target).value)"
+          [max]="today"
+        />
+      </div>
+      <div class="form-group">
+        <label>Hora</label>
+        <input
+          type="time"
+          [value]="time()"
+          (input)="time.set($any($event.target).value)"
+        />
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button type="button" class="btn secondary" (click)="previousStep()">Volver</button>
+      <button type="button" class="btn primary" (click)="nextStep()">Siguiente</button>
+    </div>
+
+  </div>
+</div>
