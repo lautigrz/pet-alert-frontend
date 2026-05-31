@@ -1,0 +1,8 @@
+{
+  "buildCommand": "ng build --configuration production",
+  "outputDirectory": "dist/pet-alert-frontend/browser",
+  "framework": "angular",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
