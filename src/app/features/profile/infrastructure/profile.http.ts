@@ -48,5 +48,11 @@ export class ProfileHttp {
   );
 }
 
+  uploadProfilePhoto(file: File): Promise<UpdateProfileResponse>{
+    const formData = new FormData();
+    formData.append('photo',file);
+    return firstValueFrom(this.http.post<UpdateProfileResponse>(`${this.baseUrl}/users/me/photo`, formData));
+  }
+
 }
 

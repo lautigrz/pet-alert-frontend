@@ -19,13 +19,13 @@ export class EditProfilePage {
   readonly serverError = signal<string | null>(null);
   readonly currentPhotoUrl = signal<string | null>(null);
   readonly defaultPhotoUrl ='https://ui-avatars.com/api/?name=Perfil&background=e2e8f0&color=12355B&size=128';
+  readonly uploadingPhoto = signal(false);
 
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.maxLength(50)]],
     lastname: ['', [Validators.maxLength(50)]],
     username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
-    photoUrl: ['', [Validators.maxLength(500)]],
   });
 
   async ngOnInit(): Promise<void> {
@@ -41,9 +41,9 @@ export class EditProfilePage {
           name: profile.name ?? '',
         lastname: profile.lastname ?? '',
         username: profile.username ?? '',
-        photoUrl: profile.photoUrl ?? '',
         }
       );
+
       this.currentPhotoUrl.set(profile.photoUrl ?? null);
     } catch(error){
        this.serverError.set(
@@ -60,12 +60,51 @@ export class EditProfilePage {
   }
 
   profilePhotoUrl(): string {
-  return (
-    this.form.controls.photoUrl.value ||
-    this.currentPhotoUrl() ||
-    this.defaultPhotoUrl
-  );
-}
+  return this.currentPhotoUrl() || this.defaultPhotoUrl;
+  }
+
+  async onPhotoSelected(event:Event): Promise<void>{
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if(!file)return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    const maxSizeInBytes = 5 * 1024 * 1024;
+
+    if(!allowedTypes.includes(file.type)){
+      this.serverError.set('Solo se permiten imágenes JPG, PNG o WEBP');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > maxSizeInBytes) {
+      this.serverError.set('La imagen no puede superar los 5MB');
+      input.value = '';
+      return;
+    }
+
+    this.uploadingPhoto.set(true);
+    this.successMessage.set(null);
+    this.serverError.set(null);
+
+    try{
+      const updated = await this.profileService.uploadProfilePhoto(file);
+
+      this.currentPhotoUrl.set(updated.photoUrl ?? null);
+      this.successMessage.set('Foto de perfil actualizada correctamente');
+    } catch(error){
+      this.serverError.set(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo subir la foto de perfil',
+      );
+    } finally {
+      this.uploadingPhoto.set(false);
+      input.value = '';
+    }
+
+  }
 
   async submit(): Promise<void> {
     if (this.form.invalid) {
@@ -78,18 +117,16 @@ export class EditProfilePage {
     this.serverError.set(null);
 
     try {
-      const { name, lastname, username, photoUrl } =
+      const { name, lastname, username, } =
         this.form.getRawValue();
 
       const updated = await this.profileService.updateProfile({
         name,
         lastname,
         username,
-        photoUrl,
       });
 
       this.currentPhotoUrl.set(updated.photoUrl ?? null);
-
       this.successMessage.set('Perfil actualizado correctamente');
     } catch (error) {
       this.serverError.set(
