@@ -1,0 +1,39 @@
+<div class="confirm-page-container">
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <h2>Publicando tu reporte...</h2>
+      <p>Estamos notificando a la comunidad</p>
+    </div>
+  }
+
+  @if (!isLoading() && success()) {
+    <div class="success-overlay">
+      <div class="success-card">
+        <button class="close-btn" (click)="goHome()">✕</button>
+
+        <div class="success-icon">
+          <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="36" cy="36" r="36" fill="#1e3a8a"/>
+            <path d="M20 36l12 12 20-20" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <h2>¡Reporte creado con éxito!</h2>
+        <p>La alerta ya está activa<br/>y la comunidad fue notificada.</p>
+
+        <button class="btn-ver-reporte" (click)="goHome()">Ver reporte</button>
+      </div>
+    </div>
+  }
+
+  @if (!isLoading() && error()) {
+    <div class="error-state">
+      <h2>⚠️ No pudimos publicar el reporte</h2>
+      <p>{{ error() }}</p>
+      <button class="btn primary" (click)="retry()">Volver e intentar de nuevo</button>
+    </div>
+  }
+
+</div>

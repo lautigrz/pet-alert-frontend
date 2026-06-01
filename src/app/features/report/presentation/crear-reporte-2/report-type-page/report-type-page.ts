@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReportWizardService } from '../../../application/report-wizard.service';
-import { ReportType } from '../../../domain/report.model';
+import { TokenStorage } from '../../../../auth/infrastructure/token.storage';
 
 @Component({
   selector: 'app-report-type-page',
@@ -14,10 +14,17 @@ import { ReportType } from '../../../domain/report.model';
 export class ReportTypePage {
   private router = inject(Router);
   private wizardService = inject(ReportWizardService);
+  private tokenStorage = inject(TokenStorage);
 
-  selectType(type: ReportType) {
-    this.wizardService.setType(type);
-    this.router.navigate(['/report/data']);
+  selectLost() {
+    this.wizardService.setType('lost');
+    const tokens = this.tokenStorage.read();
+    if (!tokens?.accessToken) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.router.navigate(['/report/lost-data']);
   }
 
   selectFound() {

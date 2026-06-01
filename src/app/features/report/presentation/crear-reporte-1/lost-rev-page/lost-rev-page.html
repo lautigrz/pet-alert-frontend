@@ -1,0 +1,88 @@
+<div class="rev-page-container">
+  <div class="breadcrumb">
+    <span>Inicio</span>
+    <span> > </span>
+    <span>Nuevo reporte</span>
+  </div>
+
+  <div class="progress-indicator">
+    <div class="step">1</div>
+    <div class="step">2</div>
+    <div class="step">3</div>
+    <div class="step active">4</div>
+    <div class="step">5</div>
+  </div>
+
+  <h1>Revisá tu reporte antes de publicarlo</h1>
+  <p class="subtitle">Verificá que la información esté correcta. Después de publicar podés editarla.</p>
+
+  <div class="review-container">
+
+    <div class="review-section">
+      <h2>🐾 Mascota</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Nombre</span>
+          <span class="value">{{ report().pet?.name || '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Especie</span>
+          <span class="value">{{ report().pet?.species || '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Raza</span>
+          <span class="value">{{ report().pet?.breed || 'No especificada' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Género</span>
+          <span class="value">{{ report().pet?.gender || '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Tamaño</span>
+          <span class="value">{{ report().pet?.size || '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Collar ID</span>
+          <span class="value">{{ report().pet?.hasIdentification === 'si' ? 'Sí' : 'No' }}</span>
+        </div>
+      </div>
+      @if (report().pet?.description) {
+        <div class="description-box">
+          <span class="label">Descripción</span>
+          <p>{{ report().pet?.description }}</p>
+        </div>
+      }
+    </div>
+
+    <div class="review-section">
+      <h2>📍 Última ubicación vista</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Dirección</span>
+          <span class="value">{{ report().location?.address || '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Fecha y hora</span>
+          <span class="value">
+            {{ report().location?.lastSeen ? (report().location!.lastSeen | date:'dd/MM/yyyy HH:mm') : '—' }}
+          </span>
+        </div>
+        @if (report().location?.latitude) {
+          <div class="info-item">
+            <span class="label">Coordenadas</span>
+            <span class="value coordinates">
+              {{ report().location?.latitude | number:'1.4-4' }},
+              {{ report().location?.longitude | number:'1.4-4' }}
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button type="button" class="btn secondary" (click)="previousStep()">Volver</button>
+      <button type="button" class="btn primary" (click)="nextStep()">Finalizar</button>
+    </div>
+
+  </div>
+</div>

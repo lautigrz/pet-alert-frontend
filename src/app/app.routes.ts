@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 
-
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   {
@@ -69,6 +68,40 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/report/presentation/crear-reporte-2/report-confirm-page/report-confirm-page').then(
             (m) => m.ReportConfirmPage,
+          ),
+      },
+
+      
+      {
+        path: 'lost-data',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-1/lost-data-page/lost-data-page').then(
+            (m) => m.LostDataPage,
+          ),
+      },
+      {
+        path: 'lost-location',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-1/lost-loc-page/lost-loc-page').then(
+            (m) => m.LostLocationPage,
+          ),
+      },
+      {
+        path: 'lost-review',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-1/lost-rev-page/lost-rev-page').then(
+            (m) => m.LostRevPage,
+          ),
+      },
+      {
+        path: 'lost-confirm',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-1/lost-confirm-page/lost-confirm-page').then(
+            (m) => m.LostConfirmPage,
           ),
       },
     ],

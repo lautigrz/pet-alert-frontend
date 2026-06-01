@@ -1,0 +1,193 @@
+<div class="data-page-container">
+  <div class="breadcrumb">
+    <span>Inicio</span>
+    <span> > </span>
+    <span>Nuevo reporte</span>
+  </div>
+
+  <div class="header-section">
+    <h1>Información de la mascota</h1>
+    <p class="subtitle">Cuanta más información cargues, más rápido la van a reconocer</p>
+  </div>
+
+  <div class="progress-indicator">
+    <div class="step">
+      <span class="number">1</span>
+      <span class="label">Tipo</span>
+    </div>
+    <div class="step active">
+      <span class="number">2</span>
+      <span class="label">Datos</span>
+    </div>
+    <div class="step">
+      <span class="number">3</span>
+      <span class="label">Ubicación</span>
+    </div>
+    <div class="step">
+      <span class="number">4</span>
+      <span class="label">Revisión</span>
+    </div>
+    <div class="step">
+      <span class="number">5</span>
+      <span class="label">Listo</span>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <form class="form-section">
+      <div class="form-group photo-group">
+        <label>Foto de la mascota</label>
+        <p class="field-hint">Proporcioná una foto clara de la mascota</p>
+        <div class="photo-upload" [class.has-image]="petImage()">
+          @if (petImage()) {
+            <img [src]="petImage()" alt="Foto mascota" />
+          } @else {
+            <div class="upload-placeholder" (click)="fileInput.click()">
+              <input
+                type="file"
+                accept="image/*"
+                (change)="onFileSelected($event)"
+                #fileInput
+              />
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <p>Elegir archivo</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Especie</label>
+        <div class="tabs-group">
+          <button type="button" class="tab" [class.active]="petSpecies() === 'gato'" (click)="petSpecies.set('gato')">Gato</button>
+          <button type="button" class="tab" [class.active]="petSpecies() === 'perro'" (click)="petSpecies.set('perro')">Perro</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Género</label>
+        <div class="tabs-group">
+          <button type="button" class="tab" [class.active]="petGender() === 'macho'" (click)="petGender.set('macho')">Macho</button>
+          <button type="button" class="tab" [class.active]="petGender() === 'hembra'" (click)="petGender.set('hembra')">Hembra</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tamaño</label>
+        <div class="tabs-group">
+          <button type="button" class="tab" [class.active]="petSize() === 'pequeño'" (click)="petSize.set('pequeño')">Pequeño</button>
+          <button type="button" class="tab" [class.active]="petSize() === 'mediano'" (click)="petSize.set('mediano')">Mediano</button>
+          <button type="button" class="tab" [class.active]="petSize() === 'grande'" (click)="petSize.set('grande')">Grande</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name">Nombre</label>
+          <input
+            id="name"
+            type="text"
+            [value]="petName()"
+            (input)="petName.set($any($event.target).value)"
+            placeholder="Nombre"
+          />
+        </div>
+        <div class="form-group">
+          <label for="breed">Raza <span class="optional">(opcional)</span></label>
+          <input
+            id="breed"
+            type="text"
+            [value]="petBreed()"
+            (input)="petBreed.set($any($event.target).value)"
+            placeholder="Raza"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>¿Posee collar con identificación?</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="identification" value="si"
+              (change)="hasIdentification.set('si')"
+              [checked]="hasIdentification() === 'si'" />
+            <span>Sí</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="identification" value="no"
+              (change)="hasIdentification.set('no')"
+              [checked]="hasIdentification() === 'no'" />
+            <span>No</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>¿Posee las vacunaciones necesarias?</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="vaccination" value="si"
+              (change)="hasVaccination.set('si')"
+              [checked]="hasVaccination() === 'si'" />
+            <span>Sí</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="vaccination" value="no"
+              (change)="hasVaccination.set('no')"
+              [checked]="hasVaccination() === 'no'" />
+            <span>No</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Descripción adicional <span class="optional">(opcional)</span></label>
+        <textarea
+          id="description"
+          #descRef
+          (input)="petDescription.set(descRef.value)"
+          placeholder="Ingresá información que creas relevante para el caso"
+          rows="4"
+        ></textarea>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="btn-volver" (click)="previousStep()">Volver</button>
+        <button type="button" class="btn-siguiente" (click)="nextStep()">Siguiente</button>
+      </div>
+    </form>
+
+    <div class="preview-section">
+      <h3>Vista previa</h3>
+      <div class="preview-card">
+        @if (petImage()) {
+          <img [src]="petImage()" alt="Preview" class="preview-image" />
+        } @else {
+          <div class="preview-placeholder">🐾</div>
+        }
+      </div>
+
+      @if (petName()) {
+        <div class="preview-info">
+          <span class="preview-badge">🔴 Mascota perdida</span>
+          <h2>{{ petName() }}</h2>
+          <div class="preview-details">
+            <p><strong>Especie:</strong> {{ petSpecies() }}</p>
+            <p><strong>Raza:</strong> {{ petBreed() || 'No especificada' }}</p>
+            <p><strong>Género:</strong> {{ petGender() }}</p>
+            <p><strong>Tamaño:</strong> {{ petSize() }}</p>
+          </div>
+          @if (petDescription()) {
+            <p class="preview-description">{{ petDescription() }}</p>
+          }
+        </div>
+      } @else {
+        <div class="preview-empty">Completá los datos para ver la vista previa</div>
+      }
+    </div>
+  </div>
+</div>
