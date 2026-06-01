@@ -27,7 +27,9 @@ export const routes: Routes = [
         './features/reportes/pages/detalle-reporte/detalle-reporte.component'
       ).then((m) => m.DetalleReporteComponent),
 
+
   },
+
   {
     path: 'profile/edit',
     canActivate:[authGuard],
