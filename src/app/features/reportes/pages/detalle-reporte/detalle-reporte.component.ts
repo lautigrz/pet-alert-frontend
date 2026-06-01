@@ -6,7 +6,6 @@ import { InfoReporteComponent } from '../../components/info-reporte/info-reporte
 import { UbicacionReporteComponent } from '../../components/ubicacion-reporte/ubicacion-reporte.component';
 import { ContactoReporteComponent } from '../../components/contacto-reporte/contacto-reporte.component';
 import { NavbarComponent } from '../../../../shared/component/navbar/navbar.component';
-import { Reporte } from '../../../../core/interfaces/reporte.interface';
 
 @Component({
   selector: 'app-detalle-reporte',

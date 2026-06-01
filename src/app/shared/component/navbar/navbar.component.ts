@@ -11,5 +11,5 @@ import { RouterModule } from '@angular/router'; // Importamos el módulo de ruta
 })
 export class NavbarComponent {
   // Ruta hacia el perfil del usuario logueado
-  rutaMiPerfil: string = '/perfil';
+  rutaMiPerfil = '/perfil';
 }
