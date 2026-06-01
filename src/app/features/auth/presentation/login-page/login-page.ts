@@ -1,21 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../application/auth.service';
 import { NetworkError, UnexpectedAuthError } from '../../domain/auth.errors';
 import { ToastService } from '../../../../shared/application/toast.service';
-
-function emailFormatIfHasAt(control: AbstractControl): ValidationErrors | null {
-  const value = control.value as string;
-  if (!value || !value.includes('@')) return null;
-  return Validators.email(control);
-}
 
 @Component({
   selector: 'app-login-page',
@@ -36,14 +24,9 @@ export class LoginPage {
   readonly serverError = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
-    emailOrUsername: [
+    email: [
       '',
-      [
-        Validators.required,
-        Validators.minLength(3),
-        Validators.maxLength(255),
-        emailFormatIfHasAt,
-      ],
+      [Validators.required, Validators.email, Validators.maxLength(255)],
     ],
     password: [
       '',
@@ -84,8 +67,8 @@ export class LoginPage {
     this.submitting.set(true);
     this.serverError.set(null);
     try {
-      const { emailOrUsername, password } = this.form.getRawValue();
-      await this.authService.login({ emailOrUsername, password });
+      const { email, password } = this.form.getRawValue();
+      await this.authService.login({ email, password });
       await this.router.navigateByUrl('/');
     } catch (error) {
       if (error instanceof NetworkError || error instanceof UnexpectedAuthError) {
