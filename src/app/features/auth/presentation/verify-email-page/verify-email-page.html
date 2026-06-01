@@ -1,0 +1,39 @@
+<div class="min-h-screen bg-slate-50 flex flex-col">
+  <header class="hidden sm:block bg-white border-b border-slate-200 px-6 py-4">
+    <a routerLink="/" class="inline-flex items-center gap-2">
+      <img src="petfinder-logo.svg" alt="PetFinder" class="h-14 w-auto" />
+    </a>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center sm:justify-center px-6 py-8 sm:py-12 bg-white sm:bg-slate-50">
+    <section class="w-full max-w-md text-center">
+      <div class="flex items-center justify-center mb-8 sm:hidden">
+        <img src="petfinder-logo.svg" alt="PetFinder" class="h-20 w-auto" />
+      </div>
+
+      <div class="sm:bg-white sm:border sm:border-slate-200 sm:rounded-xl sm:shadow-sm sm:p-8">
+        @if (status() === 'verifying') {
+          <h1 class="text-2xl font-bold text-[#12355B] mb-3">Verificando tu cuenta…</h1>
+          <p class="text-sm text-slate-500">Esperá un momento.</p>
+        }
+
+        @if (status() === 'retry') {
+          <h1 class="text-2xl font-bold text-[#12355B] mb-3">No pudimos verificar tu cuenta</h1>
+          <p class="text-sm text-slate-600 mb-6">
+            Hubo un problema de conexión. Tu enlace sigue siendo válido, reintentá en unos segundos.
+          </p>
+          <button
+            type="button"
+            (click)="retry()"
+            class="w-full bg-[#E8842E] hover:bg-[#d57821] text-white font-semibold py-3 rounded-md transition-colors"
+          >
+            Reintentar
+          </button>
+          <a routerLink="/login" class="block text-sm text-[#1D6FA3] underline hover:text-[#12355B] mt-4">
+            Volver a iniciar sesión
+          </a>
+        }
+      </div>
+    </section>
+  </main>
+</div>

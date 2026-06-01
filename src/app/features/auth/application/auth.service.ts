@@ -13,6 +13,7 @@ import {
   RateLimitedError,
   UnexpectedAuthError,
   SessionExpiredError,
+  InvalidVerificationTokenError,
 } from '../domain/auth.errors';
 
 export interface RegisterCommand {
@@ -95,6 +96,21 @@ export class AuthService {
     } catch {
       return;
     }
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    try {
+      await this.authHttp.verifyEmail({ token });
+    } catch (error) {
+      throw this.mapVerifyError(error);
+    }
+  }
+
+  private mapVerifyError(error: unknown): Error {
+    if (!(error instanceof HttpErrorResponse)) return new UnexpectedAuthError();
+    if (error.status === 0) return new NetworkError();
+    if (error.status === 400) return new InvalidVerificationTokenError();
+    return new UnexpectedAuthError();
   }
 
   private mapRegisterError(error: unknown): Error {

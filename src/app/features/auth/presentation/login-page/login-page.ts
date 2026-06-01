@@ -38,6 +38,12 @@ export class LoginPage {
     if (this.route.snapshot.queryParamMap.get('verification') === 'sent') {
       this.toastService.success('Te enviamos un correo para verificar tu cuenta');
     }
+    const verified = this.route.snapshot.queryParamMap.get('verified');
+    if (verified === 'ok') {
+      this.toastService.success('¡Tu cuenta fue verificada! Ya podés ingresar.');
+    } else if (verified === 'error') {
+      this.toastService.error('El enlace de verificación es inválido o expiró.');
+    }
   }
 
   goToForm(): void {
