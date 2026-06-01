@@ -1,9 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { ReportWizardService } from '../../../application/report-wizard.service';
-import { TokenStorage } from '../../../../auth/infrastructure/token.storage';
+import { ReportService } from '../../../application/report.service';
 import { environment } from '../../../../../../environments/environment';
 
 @Component({
@@ -13,11 +13,11 @@ import { environment } from '../../../../../../environments/environment';
   templateUrl: './lost-confirm-page.html',
   styleUrl: './lost-confirm-page.css',
 })
-export class LostConfirmPage {
+export class LostConfirmPage implements OnInit {
   private router = inject(Router);
   private wizardService = inject(ReportWizardService);
   private http = inject(HttpClient);
-  private tokenStorage = inject(TokenStorage);  
+  private reportService = inject(ReportService);
 
   isLoading = signal(true);
   error = signal<string | null>(null);
@@ -35,47 +35,57 @@ export class LostConfirmPage {
     const pet = report.pet!;
     const location = report.location;
 
-    const tokens = this.tokenStorage.read();
-    const payload = tokens ? JSON.parse(atob(tokens.accessToken.split('.')[1])) : {};
-    const userId: number | undefined = payload.userId;
-   // const userId: number = payload.userId ?? 6;
-
     try {
-      const petPayload = {
-        name: pet.name,
-        userId,                                          
-        animalType: this.mapSpecies(pet.species),        
-        genderType: pet.gender === 'macho' ? 'male' : 'female',  
-        sizeType: this.mapSize(pet.size),               
-        color: '',
+      const petFormData = new FormData();
+
+      // Construir JSON de datos del pet
+      const petData = {
+        name: pet.name.trim(),
+        animalType: this.mapSpecies(pet.species).toUpperCase(), // 'DOG' o 'CAT'
+        genderType: pet.gender === 'macho' ? 'MALE' : 'FEMALE', // Enum: MALE/FEMALE
+        sizeType: this.mapSize(pet.size).toUpperCase(), // 'SMALL', 'MEDIUM', 'LARGE'
+        color: 'No especificado',
         hasIdCollar: pet.hasIdentification === 'si',
-        breed: pet.breed || '',
+        breed: pet.breed?.trim() || '',
       };
 
-      const petRes: any = await this.http
-        .post(`${environment.apiUrl}/pets`, petPayload)
+      // Agregar datos como JSON stringificado en campo 'data'
+      petFormData.append('data', JSON.stringify(petData));
+
+      // Agregar foto del pet si existe
+      if (pet.imageUrl) {
+        const blob = await fetch(pet.imageUrl).then(r => r.blob());
+        petFormData.append('photos', blob, 'pet-photo.jpg');
+      } else {
+        // El backend requiere obligatoriamente al menos una foto
+        throw new Error('Se requiere una foto de la mascota');
+      }
+
+      const petRes = await this.http
+        .post<{ message: string; publicId: string }>(`${environment.apiUrl}/pets`, petFormData)
         .toPromise();
 
-      const reportPayload = {
-        type: 'lost',                                  
+      if (!petRes?.publicId) throw new Error('No pet ID returned');
+
+      await this.reportService.submitLostReport({
         petId: petRes.publicId,
-        occurredAt: location?.lastSeen ?? new Date(),
+        occurredAt: (location?.lastSeen && location.lastSeen.toString() !== 'Invalid Date') ? location.lastSeen : new Date(),
         location: {
           address: location?.address ?? '',
           latitude: location?.latitude ?? 0,
           longitude: location?.longitude ?? 0,
+          city: location?.city ?? '',
         },
-        description: pet.description ?? '',
-      };
-
-      await this.http
-        .post(`${environment.apiUrl}/reports`, reportPayload)
-        .toPromise();
+        description: pet.description?.trim() ?? '',
+      });
 
       this.success.set(true);
       this.wizardService.resetReport();
     } catch (err: any) {
-      const msg = err?.error?.error ?? 'Ocurrió un error al crear el reporte.';
+      
+      console.error('🔴 ERROR DETECTADO EN EL FLUJO DE PERDIDO:', err);
+
+      const msg = err?.error?.error ?? err?.message ?? 'Ocurrió un error al crear el reporte.';
       this.error.set(msg);
     } finally {
       this.isLoading.set(false);
@@ -91,18 +101,17 @@ export class LostConfirmPage {
   }
 
   private mapSpecies(species: string): string {
-    return species === 'perro' ? 'dog' : 'cat';  
+    const clean = species?.toLowerCase()?.trim();
+    return clean === 'perro' || clean === 'dog' ? 'dog' : 'cat';
   }
 
   private mapSize(size: string): string {
+    const clean = size?.toLowerCase()?.trim() ?? '';
     const map: Record<string, string> = {
-      'pequeño': 'small',   
+      'pequeño': 'small',
       'mediano': 'medium',
-      'grande':  'large',
+      'grande': 'large',
     };
-    return map[size] ?? 'medium';
+    return map[clean] ?? 'medium';
   }
 }
-
-
-

@@ -43,12 +43,13 @@
           <span class="value">{{ report().pet?.breed || 'No especificada' }}</span>
         </div>
       </div>
+      
       @if (report().pet?.description && report().pet!.description!.trim() !== '') {
-  <div class="description-box">
-    <span class="label">Descripción</span>
-    <p>{{ report().pet?.description }}</p>
-  </div>
-}
+        <div class="description-box">
+          <span class="label">Descripción</span>
+          <p>{{ report().pet?.description }}</p>
+        </div>
+      }
     </div>
 
     <div class="review-section">
@@ -64,7 +65,13 @@
         </div>
         <div class="info-item">
           <span class="label">Fecha y hora</span>
-          <span class="value">{{ report().location.lastSeen | date: 'short' }}</span>
+          <span class="value">
+          @if (report().location.lastSeen && report().location.lastSeen?.toString() !== 'Invalid Date') {
+            {{ report().location.lastSeen | date: 'short' }}
+          } @else {
+            No disponible
+          }
+        </span>
         </div>
       </div>
     </div>

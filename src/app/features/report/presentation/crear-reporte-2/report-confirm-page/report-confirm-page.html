@@ -1,13 +1,13 @@
 <div class="confirm-page-container">
 
-  @if (isLoading) {
+  @if (isLoading()) {
     <div class="loading-state">
       <div class="spinner"></div>
       <h2>Enviando tu reporte...</h2>
       <p>Por favor esperá mientras guardamos tu información</p>
     </div>
 
- } @else if (reportId) {
+ } @else if (reportId()) {
   <div class="success-overlay">
     <div class="success-card">
       <button class="close-btn" (click)="goHome()">✕</button>
@@ -27,10 +27,10 @@
     </div>
   </div>
 
-  } @else if (error) {
+  } @else if (error()) {
     <div class="error-state">
       <h2>⚠️ Error al enviar</h2>
-      <p>{{ error }}</p>
+      <p>{{ error() }}</p>
       <button class="btn primary" (click)="submitReport()">Reintentar</button>
     </div>
   }
