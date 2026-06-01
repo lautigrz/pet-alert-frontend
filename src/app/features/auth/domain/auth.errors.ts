@@ -46,3 +46,10 @@ export class InvalidLoginDataError extends Error {
     this.name = 'InvalidLoginDataError';
   }
 }
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Tu sesión expiró. Ingresá de nuevo.');
+    this.name = 'SessionExpiredError';
+  }
+}

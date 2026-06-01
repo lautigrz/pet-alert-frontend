@@ -53,7 +53,7 @@ describe('LoginPage', () => {
   describe('when the form is valid', () => {
     beforeEach(() => {
       component.form.setValue({
-        emailOrUsername: 'juan@example.com',
+        email: 'juan@example.com',
         password: 'miPass123',
       });
     });
@@ -71,7 +71,7 @@ describe('LoginPage', () => {
 
       // Then: el service se llamo con los valores y se redirige a la home
       expect(authService.login).toHaveBeenCalledWith({
-        emailOrUsername: 'juan@example.com',
+        email: 'juan@example.com',
         password: 'miPass123',
       });
       expect(navigateSpy).toHaveBeenCalledWith('/');
@@ -154,7 +154,7 @@ describe('LoginPage', () => {
     it('rejects passwords shorter than 8 characters', () => {
       // Given: password de 7 chars
       component.form.setValue({
-        emailOrUsername: 'juan@example.com',
+        email: 'juan@example.com',
         password: '1234567',
       });
 
@@ -163,28 +163,28 @@ describe('LoginPage', () => {
       expect(component.form.invalid).toBe(true);
     });
 
-    it('rejects malformed input when it contains @ (treated as email)', () => {
-      // Given: input con @ pero sin dominio valido
+    it('rejects a malformed email', () => {
+      // Given: un email mal formado
       component.form.setValue({
-        emailOrUsername: 'juan@',
+        email: 'juan@',
         password: 'miPass123',
       });
 
       // Then: el control falla con error de formato email
-      expect(component.form.get('emailOrUsername')?.hasError('email')).toBe(true);
+      expect(component.form.get('email')?.hasError('email')).toBe(true);
       expect(component.form.invalid).toBe(true);
     });
 
-    it('accepts plain usernames without @ (no email format check)', () => {
-      // Given: input sin @ (username)
+    it('rejects plain text that is not an email (no username login)', () => {
+      // Given: texto sin formato de email (lo que antes pasaba como username)
       component.form.setValue({
-        emailOrUsername: 'juancho',
+        email: 'juancho',
         password: 'miPass123',
       });
 
-      // Then: el form es valido (no se chequea formato email)
-      expect(component.form.get('emailOrUsername')?.hasError('email')).toBeFalsy();
-      expect(component.form.valid).toBe(true);
+      // Then: ahora se rechaza, porque el login es solo por email
+      expect(component.form.get('email')?.hasError('email')).toBe(true);
+      expect(component.form.invalid).toBe(true);
     });
   });
 });

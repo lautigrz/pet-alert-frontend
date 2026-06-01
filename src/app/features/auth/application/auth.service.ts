@@ -12,6 +12,7 @@ import {
   NetworkError,
   RateLimitedError,
   UnexpectedAuthError,
+  SessionExpiredError,
 } from '../domain/auth.errors';
 
 export interface RegisterCommand {
@@ -21,7 +22,7 @@ export interface RegisterCommand {
 }
 
 export interface LoginCommand {
-  emailOrUsername: string;
+  email: string;
   password: string;
 }
 
@@ -46,7 +47,7 @@ export class AuthService {
   async login(command: LoginCommand): Promise<AuthTokens> {
     try {
       const response = await this.authHttp.loginUser({
-        email: command.emailOrUsername.trim().toLowerCase(),
+        email: command.email.trim().toLowerCase(),
         password: command.password,
       });
       const tokens: AuthTokens = {
@@ -57,6 +58,42 @@ export class AuthService {
       return tokens;
     } catch (error) {
       throw this.mapLoginError(error);
+    }
+  }
+
+  private refreshInFlight: Promise<string> | null = null;
+
+  refreshSession(): Promise<string> {
+    this.refreshInFlight ??= this.runRefresh().finally(() => {
+      this.refreshInFlight = null;
+    });
+    return this.refreshInFlight;
+  }
+
+  private async runRefresh(): Promise<string> {
+    const stored = this.tokenStorage.read();
+    if (!stored) throw new SessionExpiredError();
+    const response = await this.authHttp.refreshAccessToken({
+      refreshToken: stored.refreshToken,
+    });
+    this.tokenStorage.save({
+      accessToken: response.accessToken,
+      refreshToken: stored.refreshToken,
+    });
+    return response.accessToken;
+  }
+
+  async logout(): Promise<void> {
+    const stored = this.tokenStorage.read();
+    if (stored) await this.tryRevokeRefreshToken(stored.refreshToken);
+    this.tokenStorage.clear();
+  }
+
+  private async tryRevokeRefreshToken(refreshToken: string): Promise<void> {
+    try {
+      await this.authHttp.logout({ refreshToken });
+    } catch {
+      return;
     }
   }
 
