@@ -35,6 +35,14 @@ export interface LogoutRequest {
   refreshToken: string;
 }
 
+export interface VerifyEmailRequest {
+  token: string;
+}
+
+export interface VerifyEmailResponse {
+  verified: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthHttp {
   private readonly http = inject(HttpClient);
@@ -61,6 +69,12 @@ export class AuthHttp {
   logout(body: LogoutRequest): Promise<void> {
     return firstValueFrom(
       this.http.post<void>(`${this.baseUrl}/auth/logout`, body),
+    );
+  }
+
+  verifyEmail(body: VerifyEmailRequest): Promise<VerifyEmailResponse> {
+    return firstValueFrom(
+      this.http.post<VerifyEmailResponse>(`${this.baseUrl}/users/verify-email`, body),
     );
   }
 }

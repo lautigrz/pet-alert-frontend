@@ -53,3 +53,10 @@ export class SessionExpiredError extends Error {
     this.name = 'SessionExpiredError';
   }
 }
+
+export class InvalidVerificationTokenError extends Error {
+  constructor() {
+    super('El enlace de verificación es inválido o expiró.');
+    this.name = 'InvalidVerificationTokenError';
+  }
+}

@@ -18,6 +18,13 @@ export const routes: Routes = [
         (m) => m.LoginPage,
       ),
   },
+  {
+    path: 'verify-email',
+    loadComponent: () =>
+      import(
+        './features/auth/presentation/verify-email-page/verify-email-page'
+      ).then((m) => m.VerifyEmailPage),
+  },
 
 
     {

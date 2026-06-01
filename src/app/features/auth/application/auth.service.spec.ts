@@ -13,6 +13,7 @@ import {
   RateLimitedError,
   SessionExpiredError,
   UnexpectedAuthError,
+  InvalidVerificationTokenError,
 } from '../domain/auth.errors';
 
 describe('AuthService.register', () => {
@@ -401,6 +402,64 @@ describe('AuthService.logout', () => {
       // Then no le pega al back pero igual limpia
       expect(authHttp.logout).not.toHaveBeenCalled();
       expect(tokenStorage.clear).toHaveBeenCalled();
+    });
+  });
+});
+
+describe('AuthService.verifyEmail', () => {
+  let authHttp: { verifyEmail: ReturnType<typeof vi.fn> };
+  let tokenStorage: { save: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; read: ReturnType<typeof vi.fn> };
+  let service: AuthService;
+
+  beforeEach(() => {
+    authHttp = { verifyEmail: vi.fn() };
+    tokenStorage = { save: vi.fn(), clear: vi.fn(), read: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: AuthHttp, useValue: authHttp },
+        { provide: TokenStorage, useValue: tokenStorage },
+      ],
+    });
+    service = TestBed.inject(AuthService);
+  });
+
+  describe('when the back confirms the verification', () => {
+    it('resolves and sends the token to the back', async () => {
+      // Given un back que confirma la verificación
+      authHttp.verifyEmail.mockResolvedValue({ verified: true });
+
+      // When verifico el email
+      await expect(service.verifyEmail('tok-1')).resolves.toBeUndefined();
+
+      // Then se envió el token al back
+      expect(authHttp.verifyEmail).toHaveBeenCalledWith({ token: 'tok-1' });
+    });
+  });
+
+  describe('when the back returns 400', () => {
+    it('throws InvalidVerificationTokenError', async () => {
+      // Given un back que rechaza el token
+      authHttp.verifyEmail.mockRejectedValue(new HttpErrorResponse({ status: 400 }));
+
+      // When intento verificar
+      const accion = () => service.verifyEmail('mal');
+
+      // Then se mapea al error de dominio
+      await expect(accion).rejects.toThrow(InvalidVerificationTokenError);
+    });
+  });
+
+  describe('when there is no network', () => {
+    it('throws NetworkError', async () => {
+      // Given un AuthHttp que falla con status 0
+      authHttp.verifyEmail.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+
+      // When intento verificar
+      const accion = () => service.verifyEmail('tok');
+
+      // Then se mapea a NetworkError
+      await expect(accion).rejects.toThrow(NetworkError);
     });
   });
 });

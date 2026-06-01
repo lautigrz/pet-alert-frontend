@@ -12,9 +12,10 @@ describe('LoginPage', () => {
   let router: Router;
   let component: LoginPage;
 
-  const buildComponent = (verification?: string): LoginPage => {
+  const buildComponent = (verification?: string, verified?: string): LoginPage => {
     const queryParams = new Map<string, string>();
     if (verification) queryParams.set('verification', verification);
+    if (verified) queryParams.set('verified', verified);
     const activatedRoute = {
       snapshot: { queryParamMap: { get: (k: string) => queryParams.get(k) ?? null } },
     };
@@ -147,6 +148,30 @@ describe('LoginPage', () => {
     it('does NOT show a toast when there is no verification query param', () => {
       // Then sin query param, no se dispara ningun toast
       expect(toastService.success).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verification result toast', () => {
+    it('shows a success toast when query param verified=ok', () => {
+      // Given un LoginPage construido con ?verified=ok
+      TestBed.resetTestingModule();
+      buildComponent(undefined, 'ok');
+
+      // Then se dispara el toast de cuenta verificada
+      expect(toastService.success).toHaveBeenCalledWith(
+        '¡Tu cuenta fue verificada! Ya podés ingresar.',
+      );
+    });
+
+    it('shows an error toast when query param verified=error', () => {
+      // Given un LoginPage construido con ?verified=error
+      TestBed.resetTestingModule();
+      buildComponent(undefined, 'error');
+
+      // Then se dispara el toast de enlace inválido
+      expect(toastService.error).toHaveBeenCalledWith(
+        'El enlace de verificación es inválido o expiró.',
+      );
     });
   });
 
