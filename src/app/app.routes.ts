@@ -17,13 +17,27 @@ export const routes: Routes = [
         (m) => m.LoginPage,
       ),
   },
+
+
+    {
+    path: 'detalle-reporte',
+    loadComponent: () =>
+      import(
+        './features/reportes/pages/detalle-reporte/detalle-reporte.component'
+      ).then((m) => m.DetalleReporteComponent),
+
+
+  },
+
   {
     path: 'profile/edit',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/profile/presentation/edit-profile-page/edit-profile-page').then(
-        (m) => m.EditProfilePage,
-      ),
+      import(
+        './features/profile/presentation/edit-profile-page/edit-profile-page'
+      ).then((m) => m.EditProfilePage),
+
+
   },
   {
     path: 'report',
