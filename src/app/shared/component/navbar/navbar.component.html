@@ -1,0 +1,29 @@
+<header class="navbar">
+
+  <div class="logo">
+    <img src="nuevologo.png" alt="PetFinder" />
+  </div>
+
+  <nav>
+    <a routerLink="/inicio">Inicio</a>
+    <a routerLink="/reportes">Reportes</a>
+    <a routerLink="/chats">Chats</a>
+    <a [routerLink]="[rutaMiPerfil]">Perfil</a>
+  </nav>
+
+  <div class="right-section">
+
+    <button>
+      + Nuevo reporte
+    </button>
+
+    <a [routerLink]="[rutaMiPerfil]" class="usuario-info">
+      <div class="avatar"></div>
+      <span class="usuario">
+        Ana
+      </span>
+    </a>
+
+  </div>
+
+</header>

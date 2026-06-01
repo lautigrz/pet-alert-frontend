@@ -19,6 +19,17 @@ export const routes: Routes = [
       ),
   },
 
+
+    {
+    path: 'detalle-reporte',
+    loadComponent: () =>
+      import(
+        './features/reportes/pages/detalle-reporte/detalle-reporte.component'
+      ).then((m) => m.DetalleReporteComponent),
+
+
+  },
+
   {
     path: 'profile/edit',
     canActivate:[authGuard],
@@ -26,5 +37,7 @@ export const routes: Routes = [
       import(
         './features/profile/presentation/edit-profile-page/edit-profile-page'
       ).then((m) => m.EditProfilePage),
+
+
   },
 ];
