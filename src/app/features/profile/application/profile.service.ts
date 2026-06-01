@@ -59,6 +59,25 @@ export class ProfileService {
   }
 }
 
+  async uploadProfilePhoto(file:File): Promise<UpdatedProfile> {
+    try{
+      const response = await this.profileHttp.uploadProfilePhoto(file);
+
+      return{
+        id: response.id,
+        email: response.email,
+        username: response.username,
+        name: response.name ?? null,
+        lastname: response.lastname ?? null,
+        photoUrl: response.photoUrl ?? null
+      };
+    }catch(error){
+      throw this.mapUpdateProfileError(error);
+    }
+
+  }
+
+
   private mapUpdateProfileError(error:unknown) : Error{
     if(!(error instanceof HttpErrorResponse)){
       return new UnexpectedProfileError();
