@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
+import { guestGuard } from './core/guards/guest.guard';
 import { verifiedGuard } from './core/guards/verified.guard';
 import { wizardStepGuard } from './features/report/guards/wizard-step.guard';
 import { AppShellComponent } from './shared/component/app-shell/app-shell.component';
@@ -9,6 +10,7 @@ export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   {
     path: 'register',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/presentation/register-page/register-page').then(
         (m) => m.RegisterPage,
@@ -16,6 +18,7 @@ export const routes: Routes = [
   },
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/presentation/login-page/login-page').then(
         (m) => m.LoginPage,
@@ -30,6 +33,7 @@ export const routes: Routes = [
   },
   {
     path: 'forgot-password',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import(
         './features/auth/presentation/forgot-password-page/forgot-password-page'
@@ -37,6 +41,7 @@ export const routes: Routes = [
   },
   {
     path: 'reset-password',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import(
         './features/auth/presentation/reset-password-page/reset-password-page'
