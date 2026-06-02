@@ -1,0 +1,91 @@
+  <main class="flex-1 flex flex-col w-full max-w-6xl mx-auto px-10 py-6">
+    <nav class="text-sm mb-3">
+      <a routerLink="/home" class="text-[#1D6FA3] hover:underline">Inicio</a>
+      <span class="text-slate-400"> &gt; </span>
+      <span class="font-bold text-[#12355B]">Nuevo reporte</span>
+    </nav>
+
+    <div class="flex items-start justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-[#12355B]">¿Dónde encontraste a la mascota?</h1>
+        <p class="text-sm text-slate-500 mt-0.5">Indicá el punto donde la encontraste. Quien la busca podrá ubicarte rápido.</p>
+      </div>
+      <span class="shrink-0 bg-[#E8842E] text-white text-sm font-semibold px-4 py-2 rounded-md">
+        Paso 3 de 5
+      </span>
+    </div>
+
+    <app-wizard-stepper [current]="3" />
+
+    <div class="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <h3 class="text-base font-bold text-[#12355B] mb-4">Ubicación</h3>
+
+        <label for="search" class="block text-sm font-semibold text-[#12355B] mb-1.5">Buscar ubicación</label>
+        <div class="relative mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input id="search" type="text" [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)"
+            (keyup.enter)="search()" placeholder="Buscar"
+            class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="date" class="block text-sm font-semibold text-[#12355B] mb-1.5">Fecha</label>
+            <input id="date" type="date" [value]="date()" [max]="maxDate" (input)="onDateInput($any($event.target).value)"
+              class="w-full px-3 py-2.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]" />
+          </div>
+          <div>
+            <span class="block text-sm font-semibold text-[#12355B] mb-1.5">Hora</span>
+            <div class="flex gap-2">
+              <select (change)="setHour($any($event.target).value)"
+                class="w-full px-2 py-2.5 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]">
+                @for (h of hours; track h) {
+                  <option [value]="h" [selected]="h === selectedHour()" [disabled]="isHourDisabled(h)">{{ h }}</option>
+                }
+              </select>
+              <select (change)="setMinute($any($event.target).value)"
+                class="w-full px-2 py-2.5 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]">
+                @for (m of minutes; track m) {
+                  <option [value]="m" [selected]="m === selectedMinute()" [disabled]="isMinuteDisabled(m)">{{ m }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative rounded-xl overflow-hidden border border-slate-200 h-[420px]">
+        <div id="report-location-map" class="w-full h-full"></div>
+
+        <div class="absolute top-4 left-4 z-[1000] bg-[#12355B] text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-md pointer-events-none">
+          Arrastrá el pin para ajustar
+        </div>
+
+        <button type="button" (click)="locateMe()" aria-label="Usar mi ubicación actual"
+          class="absolute bottom-4 right-4 z-[1000] w-11 h-11 rounded-full bg-[#E8842E] hover:bg-[#d57821] text-white shadow-lg flex items-center justify-center transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" x2="12" y1="2" y2="5" />
+            <line x1="12" x2="12" y1="19" y2="22" />
+            <line x1="2" x2="5" y1="12" y2="12" />
+            <line x1="19" x2="22" y1="12" y2="12" />
+            <circle cx="12" cy="12" r="6" />
+            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between mt-auto pt-8">
+      <button type="button" (click)="previousStep()" class="text-slate-500 hover:text-[#12355B] font-medium">
+        Volver
+      </button>
+      <button type="button" (click)="nextStep()"
+        class="bg-[#12355B] hover:bg-[#0e2a4a] text-white font-semibold px-8 py-2.5 rounded-md transition">
+        Siguiente
+      </button>
+    </div>
+  </main>

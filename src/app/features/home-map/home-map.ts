@@ -1,4 +1,5 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component, AfterViewInit, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as L from 'leaflet';
 import { NavbarComponent } from '../../shared/component/navbar/navbar.component';
 
@@ -9,16 +10,35 @@ import { NavbarComponent } from '../../shared/component/navbar/navbar.component'
   templateUrl: './home-map.html',
   styleUrls: ['./home-map.css'],
 })
-export class HomeMapComponent implements AfterViewInit {
+export class HomeMapComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  readonly successReportId = signal<string | null>(null);
 
   private readonly DEFAULT_LOCATION = {
     lat: -34.603734,
     lng: -58.38157,
   };
 
+  ngOnInit(): void {
+    const reportId = this.route.snapshot.queryParamMap.get('reporte');
+    if (reportId) this.successReportId.set(reportId);
+  }
+
   ngAfterViewInit(): void {
     this.initializeMap();
+  }
+
+  verReporte(): void {
+    const reportId = this.successReportId();
+    this.successReportId.set(null);
+    this.router.navigate(['/detalle-reporte'], { queryParams: reportId ? { reporte: reportId } : {} });
+  }
+
+  closeSuccess(): void {
+    this.successReportId.set(null);
+    this.router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
   private initializeMap(): void {

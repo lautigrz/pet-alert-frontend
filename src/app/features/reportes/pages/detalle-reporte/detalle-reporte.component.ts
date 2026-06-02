@@ -5,7 +5,6 @@ import { GaleriaReporteComponent } from '../../components/galeria-reporte/galeri
 import { InfoReporteComponent } from '../../components/info-reporte/info-reporte.component';
 import { UbicacionReporteComponent } from '../../components/ubicacion-reporte/ubicacion-reporte.component';
 import { ContactoReporteComponent } from '../../components/contacto-reporte/contacto-reporte.component';
-import { NavbarComponent } from '../../../../shared/component/navbar/navbar.component';
 
 @Component({
   selector: 'app-detalle-reporte',
@@ -15,8 +14,9 @@ import { NavbarComponent } from '../../../../shared/component/navbar/navbar.comp
     GaleriaReporteComponent,
     InfoReporteComponent,
     UbicacionReporteComponent,
-    ContactoReporteComponent, NavbarComponent,
+    ContactoReporteComponent,
   ],
+  host: { class: 'flex flex-1 flex-col' },
   templateUrl: './detalle-reporte.component.html',
   styleUrls: ['./detalle-reporte.component.css']
 })

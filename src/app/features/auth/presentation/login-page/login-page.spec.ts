@@ -75,7 +75,7 @@ describe('LoginPage', () => {
         email: 'juan@example.com',
         password: 'miPass123',
       });
-      expect(navigateSpy).toHaveBeenCalledWith('/');
+      expect(navigateSpy).toHaveBeenCalledWith('/home');
     });
 
     it('shows InvalidCredentialsError message when login fails with 401', async () => {
