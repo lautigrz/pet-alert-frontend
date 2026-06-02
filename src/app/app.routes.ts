@@ -38,6 +38,15 @@ export const routes: Routes = [
   },
 
   {
+    path: 'reportes',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import(
+        './features/reportes/pages/lista-reportes/lista-reportes.component'
+      ).then((m) => m.ListaReportesComponent),
+  },
+
+  {
     path: 'profile/edit',
     canActivate:[authGuard],
     loadComponent: () =>
