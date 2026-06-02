@@ -1,16 +1,16 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileService } from '../../application/profile.service';
-import { RouterLink } from '@angular/router';
+import { NavbarComponent } from '../../../../shared/component/navbar/navbar.component';
 
 @Component({
   selector: 'app-edit-profile-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, NavbarComponent],
   templateUrl: './edit-profile-page.html',
   styleUrl: './edit-profile-page.css',
 })
-export class EditProfilePage {
+export class EditProfilePage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly profileService = inject(ProfileService);
 
