@@ -8,11 +8,6 @@ import { AppShellComponent } from './shared/component/app-shell/app-shell.compon
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   {
-    path: 'home',
-    loadComponent: () =>
-      import('./features/home-map/home-map').then((m) => m.HomeMapComponent),
-  },
-  {
     path: 'register',
     loadComponent: () =>
       import('./features/auth/presentation/register-page/register-page').then(
@@ -113,6 +108,11 @@ export const routes: Routes = [
     path: '',
     component: AppShellComponent,
     children: [
+      {
+        path: 'home',
+        loadComponent: () =>
+          import('./features/home-map/home-map').then((m) => m.HomeMapComponent),
+      },
       {
         path: 'detalle-reporte',
         loadComponent: () =>

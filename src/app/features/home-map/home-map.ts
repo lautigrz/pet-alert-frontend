@@ -1,20 +1,34 @@
 import { Component, AfterViewInit, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as L from 'leaflet';
-import { NavbarComponent } from '../../shared/component/navbar/navbar.component';
 
 @Component({
   selector: 'app-home-map',
   standalone: true,
-  imports: [NavbarComponent],
+  imports: [],
+  host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
-  styleUrls: ['./home-map.css'],
 })
 export class HomeMapComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly successReportId = signal<string | null>(null);
+
+  readonly tipoFiltro = signal('todos');
+  readonly cercaniaFiltro = signal('todos');
+  readonly mascotaFiltro = signal('todos');
+  readonly centrosFiltro = signal('todos');
+
+  readonly misReportes = [
+    { nombre: 'Cari', hace: 'Hace 2hs', tipo: 'Mascota perdida', direccion: 'Bartolomé Mitre 2000', fecha: '01 Ene 2026', hora: '13hs' },
+  ];
+
+  readonly reportesCercanos = [
+    { nombre: 'Cari', hace: 'Hace 2hs', tipo: 'Mascota perdida', direccion: 'Bartolomé Mitre 2000', fecha: '01 Ene 2026', hora: '13hs' },
+    { nombre: 'Charles', hace: 'Hace 2hs', tipo: 'Mascota avistada', direccion: 'Bartolomé Mitre 2000', fecha: '01 Ene 2026', hora: '13hs' },
+    { nombre: 'Mandarina', hace: 'Hace 2hs', tipo: 'Mascota perdida', direccion: 'Bartolomé Mitre 2000', fecha: '01 Ene 2026', hora: '13hs' },
+  ];
 
   private readonly DEFAULT_LOCATION = {
     lat: -34.603734,
@@ -43,19 +57,13 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   private initializeMap(): void {
     this.map = L.map('map').setView(
-      [
-        this.DEFAULT_LOCATION.lat,
-        this.DEFAULT_LOCATION.lng,
-      ],
-      13
+      [this.DEFAULT_LOCATION.lat, this.DEFAULT_LOCATION.lng],
+      13,
     );
 
-    L.tileLayer(
-      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      {
-        attribution: '&copy; OpenStreetMap contributors',
-      }
-    ).addTo(this.map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(this.map);
 
     this.getUserLocation();
 
@@ -65,43 +73,20 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   private getUserLocation(): void {
-    console.log('Intentando obtener ubicación');
-
-    if (!navigator.geolocation) {
-      console.log('Geolocation no soportada');
-      return;
-    }
+    if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        console.log('Ubicación obtenida');
-
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-
         this.map.setView([lat, lng], 15);
-
         L.marker([lat, lng]).addTo(this.map);
-
-        setTimeout(() => {
-          this.map.invalidateSize();
-        }, 100);
+        setTimeout(() => this.map.invalidateSize(), 100);
       },
-      (error) => {
-        console.error('Error obteniendo ubicación:', error);
-
-        this.map.setView(
-          [
-            this.DEFAULT_LOCATION.lat,
-            this.DEFAULT_LOCATION.lng,
-          ],
-          13
-        );
-
-        setTimeout(() => {
-          this.map.invalidateSize();
-        }, 100);
-      }
+      () => {
+        this.map.setView([this.DEFAULT_LOCATION.lat, this.DEFAULT_LOCATION.lng], 13);
+        setTimeout(() => this.map.invalidateSize(), 100);
+      },
     );
   }
 }
