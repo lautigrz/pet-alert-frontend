@@ -70,8 +70,11 @@
             <span class="font-bold text-[#12355B] text-sm">{{ r.nombre }}</span>
             <span class="text-[11px] text-slate-400">{{ r.hace }}</span>
           </div>
-          <span class="inline-block mt-1 text-[10px] font-semibold text-white px-2 py-0.5 rounded"
-            [class]="r.tipo === 'Mascota perdida' ? 'bg-[#E8842E]' : 'bg-[#12355B]'">{{ r.tipo }}</span>
+          <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-white px-2 py-0.5 rounded"
+            [class]="r.tipo === 'Mascota perdida' ? 'bg-[#E8842E]' : 'bg-[#12355B]'">
+            <img [src]="r.tipo === 'Mascota perdida' ? 'Icono-mascota-perdida.png' : 'Icono-mascota-encontrada.png'" alt="" class="w-3 h-3" />
+            {{ r.tipo }}
+          </span>
           <p class="mt-1.5 text-[11px] text-slate-500 truncate">{{ r.direccion }}</p>
           <p class="text-[11px] text-slate-400 mt-0.5">{{ r.fecha }} · {{ r.hora }}</p>
         </div>
@@ -97,8 +100,11 @@
             <span class="font-bold text-[#12355B] text-sm">{{ r.nombre }}</span>
             <span class="text-[11px] text-slate-400">{{ r.hace }}</span>
           </div>
-          <span class="inline-block mt-1 text-[10px] font-semibold text-white px-2 py-0.5 rounded"
-            [class]="r.tipo === 'Mascota perdida' ? 'bg-[#E8842E]' : 'bg-[#12355B]'">{{ r.tipo }}</span>
+          <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-white px-2 py-0.5 rounded"
+            [class]="r.tipo === 'Mascota perdida' ? 'bg-[#E8842E]' : 'bg-[#12355B]'">
+            <img [src]="r.tipo === 'Mascota perdida' ? 'Icono-mascota-perdida.png' : 'Icono-mascota-encontrada.png'" alt="" class="w-3 h-3" />
+            {{ r.tipo }}
+          </span>
           <p class="mt-1.5 text-[11px] text-slate-500 truncate">{{ r.direccion }}</p>
           <p class="text-[11px] text-slate-400 mt-0.5">{{ r.fecha }} · {{ r.hora }}</p>
         </div>
