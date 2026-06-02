@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReportesService } from '../../application/reportes.service';
 import {
@@ -7,7 +7,6 @@ import {
   ReporteFiltros,
   ReportType,
 } from '../../domain/reporte.model';
-import { NavbarComponent } from '../../../../shared/component/navbar/navbar.component';
 import { CardReporteComponent } from '../../components/card-reporte/card-reporte.component';
 
 type Tab = 'recientes' | 'cercanos' | 'mis-reportes';
@@ -18,11 +17,12 @@ type FiltroFecha = 'TODOS' | 'HOY' | 'SEMANA';
 @Component({
   selector: 'app-lista-reportes',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, CardReporteComponent],
+  imports: [CommonModule, CardReporteComponent],
+  host: { class: 'flex flex-1 flex-col' },
   templateUrl: './lista-reportes.component.html',
   styleUrls: ['./lista-reportes.component.css'],
 })
-export class ListaReportesComponent {
+export class ListaReportesComponent implements OnInit {
   private readonly reportesService = inject(ReportesService);
 
   readonly tab = signal<Tab>('recientes');

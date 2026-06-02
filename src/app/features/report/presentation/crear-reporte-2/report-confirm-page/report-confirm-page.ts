@@ -8,6 +8,7 @@ import { ToastService } from '../../../../../shared/application/toast.service';
   selector: 'app-report-confirm-page',
   standalone: true,
   imports: [],
+  host: { class: 'flex flex-1' },
   templateUrl: './report-confirm-page.html',
 })
 export class ReportConfirmPage implements OnInit {

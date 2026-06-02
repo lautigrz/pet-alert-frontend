@@ -1,12 +1,12 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileService } from '../../application/profile.service';
-import { NavbarComponent } from '../../../../shared/component/navbar/navbar.component';
 
 @Component({
   selector: 'app-edit-profile-page',
   standalone: true,
-  imports: [ReactiveFormsModule, NavbarComponent],
+  imports: [ReactiveFormsModule],
+  host: { class: 'flex flex-1 flex-col' },
   templateUrl: './edit-profile-page.html',
   styleUrl: './edit-profile-page.css',
 })
