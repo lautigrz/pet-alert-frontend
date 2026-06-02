@@ -58,7 +58,8 @@ export class LostConfirmPage implements OnInit {
         size: pet.size,
         color: pet.color?.trim() ?? '',
         hasIdCollar: pet.hasIdentification === 'si',
-        breed: pet.breed?.trim() ?? '',
+        isVaccinated: pet.vaccinated === 'si',
+        breed: pet.breed,
         photos: photoFiles,
       });
 

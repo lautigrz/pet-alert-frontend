@@ -16,10 +16,13 @@ export interface CreateLostReportRequest {
   description: string;
 }
 
-
 export interface CreateSightingReportRequest {
   type: 'sighting';
+  petName?: string;
+  genderType: ('MALE' | 'FEMALE') | null;
+  sizeType: ('SMALL' | 'MEDIUM' | 'LARGE') | null;
   animalType: 'DOG' | 'CAT';
+  breed?: string;
   hasIdCollar: boolean;
   color: string;
   isInTransit: boolean;
@@ -75,7 +78,11 @@ export class ReportHttp {
 
     const reportData = {
       type: body.type.toUpperCase(),
+      petName: body.petName,
+      genderType: body.genderType,
+      sizeType: body.sizeType,
       animalType: body.animalType,
+      breed: body.breed,
       hasIdCollar: body.hasIdCollar,
       color: body.color,
       isInTransit: body.isInTransit ?? false,
@@ -88,6 +95,9 @@ export class ReportHttp {
       description: body.description,
     };
 
+
+    console.log('Report data to be sent:', reportData);
+    
     formData.append('data', JSON.stringify(reportData));
 
     if (body.photos && body.photos.length > 0) {

@@ -50,9 +50,13 @@ export class ReportConfirmPage implements OnInit {
       );
 
       const result = await this.reportService.submitSightingReport({
+        petName: report.pet?.name ?? null,
+        genderType: report.pet?.gender === 'hembra' ? 'FEMALE' : report.pet?.gender === 'macho' ? 'MALE' : null,
+        sizeType: report.pet?.size === 'pequeño' ? 'SMALL' : report.pet?.size === 'mediano' ? 'MEDIUM' : report.pet?.size === 'grande' ? 'LARGE' : null,
         animalType: this.mapAnimalType(sightingDetails.animalType),
         hasIdCollar: sightingDetails.hasIdCollar,
         color: report.pet?.color?.trim() ?? '',
+        breed: report.pet?.breed?.trim() ?? '',
         isInTransit: sightingDetails.isInTransit,
         occurredAt: (location?.lastSeen && location.lastSeen.toString() !== 'Invalid Date') ? location.lastSeen : new Date(),
         location: {

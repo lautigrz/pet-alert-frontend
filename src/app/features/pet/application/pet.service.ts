@@ -9,6 +9,7 @@ export interface CreatePetCommand {
   size: 'pequeño' | 'mediano' | 'grande';
   color: string;
   hasIdCollar: boolean;
+  isVaccinated: boolean;
   breed: string;
   photos: File[];
 }
@@ -26,6 +27,7 @@ export class PetService {
         sizeType: this.mapSize(command.size),
         color: command.color.trim(),
         hasIdCollar: command.hasIdCollar,
+        isVaccinated: command.isVaccinated,
         breed: command.breed.trim(),
         photos: command.photos,
       });

@@ -8,7 +8,11 @@ export interface CreateLostReportCommand {
 }
 
 export interface CreateSightingReportCommand {
+  petName: string | null;
+  genderType: ('MALE' | 'FEMALE') | null;
+  sizeType: ('SMALL' | 'MEDIUM' | 'LARGE') | null;
   animalType: 'DOG' | 'CAT';
+  breed?: string;
   hasIdCollar: boolean;
   color: string;
   isInTransit: boolean;

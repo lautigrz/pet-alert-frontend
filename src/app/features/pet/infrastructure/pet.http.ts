@@ -9,6 +9,7 @@ export interface CreatePetRequest {
   genderType: 'MALE' | 'FEMALE';
   sizeType: 'SMALL' | 'MEDIUM' | 'LARGE';
   color: string;
+  isVaccinated: boolean;
   hasIdCollar: boolean;
   breed: string;
   photos: File[];
@@ -32,6 +33,7 @@ export class PetHttp {
       genderType: body.genderType,
       sizeType: body.sizeType,
       color: body.color,
+      isVaccinated: body.isVaccinated,
       hasIdCollar: body.hasIdCollar,
       breed: body.breed,
     };

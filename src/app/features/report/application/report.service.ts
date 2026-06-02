@@ -35,7 +35,11 @@ export class ReportService {
     try {
       const response = await this.reportHttp.createSightingReport({
         type: 'sighting',
+        petName: command.petName?.trim() ,
         animalType: command.animalType,
+        genderType: command.genderType,
+        sizeType: command.sizeType,
+        breed: command.breed?.trim(),
         hasIdCollar: command.hasIdCollar,
         color: command.color.trim(),
         isInTransit: command.isInTransit,
