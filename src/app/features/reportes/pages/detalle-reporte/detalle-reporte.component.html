@@ -1,19 +1,21 @@
 <div class="detalle-container">
 
-  <div class="left-section">
+  @if (loading()) {
+    <p>Cargando...</p>
+  } @else if (error()) {
+    <p>{{ error() }}</p>
+  } @else if (report(); as r) {
 
-    <app-galeria-reporte></app-galeria-reporte>
+    <div class="left-section">
+      <app-galeria-reporte [report]="r" />
+      <app-info-reporte [report]="r" />
+    </div>
 
-    <app-info-reporte></app-info-reporte>
+    <div class="right-section">
+      <app-ubicacion-reporte [report]="r" />
+      <app-contacto-reporte [report]="r" />
+    </div>
 
-  </div>
-
-  <div class="right-section">
-
-    <app-ubicacion-reporte></app-ubicacion-reporte>
-
-    <app-contacto-reporte></app-contacto-reporte>
-
-  </div>
+  }
 
 </div>

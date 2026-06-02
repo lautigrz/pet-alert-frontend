@@ -1,69 +1,50 @@
 <div class="galeria-container">
 
-  <img
-    class="imagen-principal"
-    [src]="imagenPrincipalUrl"
-    role="button"
-    tabindex="0"
-    (click)="abrirImagen(imagenPrincipalUrl)"
-    (keyup.enter)="abrirImagen(imagenPrincipalUrl)"
-    (keyup.space)="abrirImagen(imagenPrincipalUrl)"
-    alt="Imagen principal"
-  />
+  @if (imagenPrincipal()) {
+    <img
+      class="imagen-principal"
+      [src]="imagenPrincipal()"
+      role="button"
+      tabindex="0"
+      (click)="abrirImagen(imagenPrincipal()!)"
+      (keyup.enter)="abrirImagen(imagenPrincipal()!)"
+      alt="Imagen principal"
+    />
+  }
 
   <div class="miniaturas">
-
-    <img
-      src="https://images.unsplash.com/photo-1519052537078-e6302a4968d4?q=80&w=500&auto=format&fit=crop"
-      role="button"
-      tabindex="0"
-      (click)="abrirImagen('https://images.unsplash.com/photo-1519052537078-e6302a4968d4?q=80&w=1200&auto=format&fit=crop')"
-      (keyup.enter)="abrirImagen('https://images.unsplash.com/photo-1519052537078-e6302a4968d4?q=80&w=1200&auto=format&fit=crop')"
-      (keyup.space)="abrirImagen('https://images.unsplash.com/photo-1519052537078-e6302a4968d4?q=80&w=1200&auto=format&fit=crop')"
-      alt="Gato mini 1"
-    />
-
-    <img
-      src="https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=500&auto=format&fit=crop"
-      role="button"
-      tabindex="0"
-      (click)="abrirImagen('https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=1200&auto=format&fit=crop')"
-      (keyup.enter)="abrirImagen('https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=1200&auto=format&fit=crop')"
-      (keyup.space)="abrirImagen('https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=1200&auto=format&fit=crop')"
-      alt="Gato mini 2"
-    />
-
-    <img
-      src="https://images.unsplash.com/photo-1511044568932-338cba0ad803?q=80&w=500&auto=format&fit=crop"
-      role="button"
-      tabindex="0"
-      (click)="abrirImagen('https://images.unsplash.com/photo-1511044568932-338cba0ad803?q=80&w=1200&auto=format&fit=crop')"
-      (keyup.enter)="abrirImagen('https://images.unsplash.com/photo-1511044568932-338cba0ad803?q=80&w=1200&auto=format&fit=crop')"
-      (keyup.space)="abrirImagen('https://images.unsplash.com/photo-1511044568932-338cba0ad803?q=80&w=1200&auto=format&fit=crop')"
-      alt="Gato mini 3"
-    />
-
+    @for (url of imagenes(); track url) {
+      <img
+        [src]="url"
+        role="button"
+        tabindex="0"
+        (click)="abrirImagen(url)"
+        (keyup.enter)="abrirImagen(url)"
+        alt="Miniatura"
+      />
+    }
   </div>
+
 </div>
 
-<div
-  class="modal-overlay"
-  *if="imagenSeleccionada"
-  role="button"
-  tabindex="0"
-  (click)="cerrarImagen()"
-  (keyup.enter)="cerrarImagen()"
-  (keyup.space)="cerrarImagen()"
->
-  <button type="button" class="close-btn" (click)="cerrarImagen()" aria-label="Cerrar modal">&times;</button>
+@if (imagenSeleccionada()) {
+  <div
+    class="modal-overlay"
+    role="button"
+    tabindex="0"
+    (click)="cerrarImagen()"
+    (keyup.enter)="cerrarImagen()"
+  >
+    <button type="button" class="close-btn" (click)="cerrarImagen()">&times;</button>
   <img
-    [src]="imagenSeleccionada"
+    [src]="imagenSeleccionada()"
     class="imagen-completa"
     alt="Imagen completa"
     role="button"
     tabindex="0"
     (click)="$event.stopPropagation()"
     (keyup.enter)="$event.stopPropagation()"
-    (keyup.space)="$event.stopPropagation()"
-  >
-</div>
+    (keydown)="$event.stopPropagation()"
+  />
+  </div>
+}

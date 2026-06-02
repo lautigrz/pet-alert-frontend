@@ -74,7 +74,7 @@ export const routes: Routes = [
           ).then((m) => m.EditProfilePage),
       },
       {
-        path: 'detalle-reporte',
+        path: 'detalle-reporte/:publicId',
         loadComponent: () =>
           import(
             './features/reportes/pages/detalle-reporte/detalle-reporte.component'

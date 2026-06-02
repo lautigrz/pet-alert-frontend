@@ -1,5 +1,5 @@
 @if (data(); as r) {
-  <a class="card" [routerLink]="['/detalle-reporte']">
+  <a class="card" [routerLink]="['/detalle-reporte', r.publicId]">
     <div class="card__foto">
       @if (imagen()) {
         <img [src]="imagen()" [alt]="titulo()" />

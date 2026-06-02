@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { ReportHttp, CreateReportResponse } from '../infrastructure/report.http';
+import { ReportHttp, CreateReportResponse, ReportDetail } from '../infrastructure/report.http';
 import {
   InvalidPetDataError,
   NetworkError,
@@ -74,5 +74,13 @@ export class ReportService {
     return new ReportSubmissionError(
       error.error?.error ?? 'Error al enviar reporte'
     );
+  }
+
+   async getReportByPublicId(publicId: string): Promise<ReportDetail> {
+    try {
+      return await this.reportHttp.getReportByPublicId(publicId);
+    } catch (error) {
+      throw this.mapReportError(error);
+    }
   }
 }
