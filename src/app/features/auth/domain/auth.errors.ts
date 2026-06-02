@@ -60,3 +60,10 @@ export class InvalidVerificationTokenError extends Error {
     this.name = 'InvalidVerificationTokenError';
   }
 }
+
+export class InvalidResetTokenError extends Error {
+  constructor() {
+    super('El enlace para restablecer la contraseña es inválido o expiró.');
+    this.name = 'InvalidResetTokenError';
+  }
+}

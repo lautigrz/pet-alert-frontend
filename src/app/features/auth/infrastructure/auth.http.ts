@@ -43,6 +43,15 @@ export interface VerifyEmailResponse {
   verified: boolean;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthHttp {
   private readonly http = inject(HttpClient);
@@ -75,6 +84,18 @@ export class AuthHttp {
   verifyEmail(body: VerifyEmailRequest): Promise<VerifyEmailResponse> {
     return firstValueFrom(
       this.http.post<VerifyEmailResponse>(`${this.baseUrl}/users/verify-email`, body),
+    );
+  }
+
+  forgotPassword(body: ForgotPasswordRequest): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.baseUrl}/auth/forgot-password`, body),
+    );
+  }
+
+  resetPassword(body: ResetPasswordRequest): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.baseUrl}/auth/reset-password`, body),
     );
   }
 }

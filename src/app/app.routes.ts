@@ -29,6 +29,20 @@ export const routes: Routes = [
       ).then((m) => m.VerifyEmailPage),
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import(
+        './features/auth/presentation/forgot-password-page/forgot-password-page'
+      ).then((m) => m.ForgotPasswordPage),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import(
+        './features/auth/presentation/reset-password-page/reset-password-page'
+      ).then((m) => m.ResetPasswordPage),
+  },
+  {
     path: '',
     component: AppShellComponent,
     canActivate: [authGuard],
