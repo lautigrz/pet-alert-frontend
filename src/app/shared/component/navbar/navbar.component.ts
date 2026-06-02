@@ -16,7 +16,7 @@ export class NavbarComponent implements OnInit {
   private readonly router = inject(Router);
 
   rutaHome = '/home';
-  rutaMiPerfil = '/profile/edit';
+  rutaMiPerfil = '/profile';
   defaultAvatar = 'https://ui-avatars.com/api/?name=PetFinder&background=e2e8f0&color=12355B&size=128';
 
   readonly nombreUsuario = signal('');
