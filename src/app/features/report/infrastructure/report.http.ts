@@ -78,7 +78,7 @@ export class ReportHttp {
 
     const reportData = {
       type: body.type.toUpperCase(),
-      petName: body.petName?.trim() ?? null,
+      petName: body.petName,
       genderType: body.genderType,
       sizeType: body.sizeType,
       animalType: body.animalType,
@@ -113,7 +113,7 @@ export class ReportHttp {
 
   listUserReports(): Promise<ReportResponse[]> {
     return firstValueFrom(
-      this.http.get<ReportResponse[]>(`${this.baseUrl}/reportds`),
+      this.http.get<ReportResponse[]>(`${this.baseUrl}/reports`),
     );
   }
 
