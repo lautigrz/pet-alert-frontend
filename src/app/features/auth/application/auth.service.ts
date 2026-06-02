@@ -14,6 +14,7 @@ import {
   UnexpectedAuthError,
   SessionExpiredError,
   InvalidVerificationTokenError,
+  InvalidResetTokenError,
 } from '../domain/auth.errors';
 
 export interface RegisterCommand {
@@ -104,6 +105,37 @@ export class AuthService {
     } catch (error) {
       throw this.mapVerifyError(error);
     }
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    try {
+      await this.authHttp.forgotPassword({ email: email.trim().toLowerCase() });
+    } catch (error) {
+      throw this.mapRequestResetError(error);
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    try {
+      await this.authHttp.resetPassword({ token, newPassword });
+    } catch (error) {
+      throw this.mapResetError(error);
+    }
+  }
+
+  private mapRequestResetError(error: unknown): Error {
+    if (!(error instanceof HttpErrorResponse)) return new UnexpectedAuthError();
+    if (error.status === 0) return new NetworkError();
+    if (error.status === 429) return new RateLimitedError();
+    return new UnexpectedAuthError();
+  }
+
+  private mapResetError(error: unknown): Error {
+    if (!(error instanceof HttpErrorResponse)) return new UnexpectedAuthError();
+    if (error.status === 0) return new NetworkError();
+    if (error.status === 400) return new InvalidResetTokenError();
+    if (error.status === 429) return new RateLimitedError();
+    return new UnexpectedAuthError();
   }
 
   private mapVerifyError(error: unknown): Error {
