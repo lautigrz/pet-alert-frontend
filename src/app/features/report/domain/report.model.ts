@@ -9,6 +9,7 @@ export interface Pet {
   color?: string;
   description?: string;
   hasIdentification?: 'si' | 'no';
+  vaccinated?: 'si' | 'no';
   imageUrl?: string;
   imageUrls?: string[];
 }

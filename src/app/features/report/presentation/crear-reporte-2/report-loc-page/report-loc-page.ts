@@ -124,7 +124,8 @@ export class ReportLocationPage implements AfterViewInit, OnDestroy {
   }
 
   previousStep(): void {
-    this.router.navigate(['/report/data']);
+    const lost = this.wizard.getCurrentReport().type === 'lost';
+    this.router.navigate([lost ? '/report/lost-data' : '/report/data']);
   }
 
   onDateInput(value: string): void {

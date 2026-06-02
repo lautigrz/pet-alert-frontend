@@ -60,6 +60,17 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'lost-confirm',
+        canActivate: [
+          wizardStepGuard((r) => r.type === 'lost' && !!r.pet?.name && !!r.location?.address),
+          verifiedGuard,
+        ],
+        loadComponent: () =>
+          import('./features/report/presentation/crear-reporte-1/lost-confirm-page/lost-confirm-page').then(
+            (m) => m.LostConfirmPage,
+          ),
+      },
+      {
         path: '',
         component: AppShellComponent,
         children: [
@@ -85,8 +96,15 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'lost-data',
+            loadComponent: () =>
+              import('./features/report/presentation/crear-reporte-1/lost-data-page/lost-data-page').then(
+                (m) => m.LostDataPage,
+              ),
+          },
+          {
             path: 'location',
-            canActivate: [wizardStepGuard((r) => !!r.sightingDetails)],
+            canActivate: [wizardStepGuard((r) => !!r.sightingDetails || !!r.pet?.name)],
             loadComponent: () =>
               import('./features/report/presentation/crear-reporte-2/report-loc-page/report-loc-page').then(
                 (m) => m.ReportLocationPage,
@@ -94,7 +112,7 @@ export const routes: Routes = [
           },
           {
             path: 'review',
-            canActivate: [wizardStepGuard((r) => !!r.sightingDetails && !!r.location?.address)],
+            canActivate: [wizardStepGuard((r) => (!!r.sightingDetails || !!r.pet?.name) && !!r.location?.address)],
             loadComponent: () =>
               import('./features/report/presentation/crear-reporte-2/report-rev-page/report-rev-page').then(
                 (m) => m.ReportRevPage,
