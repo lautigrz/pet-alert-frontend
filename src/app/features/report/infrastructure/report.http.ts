@@ -18,7 +18,7 @@ export interface CreateLostReportRequest {
 
 export interface CreateSightingReportRequest {
   type: 'sighting';
-  petName: string | null;
+  petName?: string;
   genderType: ('MALE' | 'FEMALE') | null;
   sizeType: ('SMALL' | 'MEDIUM' | 'LARGE') | null;
   animalType: 'DOG' | 'CAT';
