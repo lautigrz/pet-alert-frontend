@@ -75,7 +75,7 @@ export class LoginPage {
     try {
       const { email, password } = this.form.getRawValue();
       await this.authService.login({ email, password });
-      await this.router.navigateByUrl('/');
+      await this.router.navigateByUrl('/home');
     } catch (error) {
       if (error instanceof NetworkError || error instanceof UnexpectedAuthError) {
         this.toastService.error(error.message);
