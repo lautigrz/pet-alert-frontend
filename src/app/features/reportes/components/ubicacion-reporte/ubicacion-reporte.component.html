@@ -1,29 +1,17 @@
 <div class="ubicacion-card">
-
-  <h3>Última ubicación</h3>
+  <h3>Ultima ubicacion</h3>
 
   <p>
-    Av. Rivadavia 5400
+    {{ direccion() }}
   </p>
 
   <div class="mapa-container">
+    <img class="mapa-img" src="mapa.avif" alt="Mapa" />
 
-    <img
-      class="mapa-img"
-      src="mapa.avif"
-      alt="Mapa"
-    />
-
-    <div class="pin-mascota">
-
-      <img
-        src="https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=800"
-        alt="Mascota"
-      />
-
-    </div>
-
+    @if (imagenMascota()) {
+      <div class="pin-mascota">
+        <img [src]="imagenMascota()!" alt="Mascota" />
+      </div>
+    }
   </div>
-
-
 </div>

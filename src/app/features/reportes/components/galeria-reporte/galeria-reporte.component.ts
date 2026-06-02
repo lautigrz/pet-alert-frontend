@@ -1,28 +1,27 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common'; // Importamos para poder usar *ngIf en el HTML
+import { Component, input, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReportDetail } from '../../../report/infrastructure/report.http';
 
 @Component({
   selector: 'app-galeria-reporte',
   standalone: true,
-  imports: [CommonModule], // Agregamos CommonModule acá
+  imports: [CommonModule],
   templateUrl: './galeria-reporte.component.html',
   styleUrls: ['./galeria-reporte.component.css']
 })
 export class GaleriaReporteComponent {
-  // URL de la imagen principal para renderizarla de forma dinámica
-  imagenPrincipalUrl = 'https://images.unsplash.com/photo-1519052537078-e6302a4968d4?q=80&w=1200&auto=format&fit=crop';
+  report = input.required<ReportDetail>();
 
-  // Esta variable guarda la URL de la imagen que se va a mostrar en pantalla completa. 
-  // Si es null, el modal se oculta automáticamente.
-  imagenSeleccionada: string | null = null;
+  imagenSeleccionada = signal<string | null>(null);
 
-  // Función que se ejecuta al hacer clic en cualquier imagen
+  imagenes = computed(() => this.report().details.images.map(i => i.url));
+  imagenPrincipal = computed(() => this.imagenes()[0] ?? null);
+
   abrirImagen(url: string): void {
-    this.imagenSeleccionada = url;
+    this.imagenSeleccionada.set(url);
   }
 
-  // Función para cerrar el modal al hacer clic afuera o en la 'X'
   cerrarImagen(): void {
-    this.imagenSeleccionada = null;
+    this.imagenSeleccionada.set(null);
   }
 }

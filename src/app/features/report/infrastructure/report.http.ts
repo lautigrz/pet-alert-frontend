@@ -46,6 +46,36 @@ export interface ReportResponse {
   createdAt: string;
 }
 
+export interface ReportDetail {
+  publicId: string;
+  type: 'LOST' | 'SIGHTING';
+  status: 'ACTIVE' | 'RESOLVED' | 'CLOSED';
+  description: string;
+  createdAt: string;
+  occurredAt: string;
+  location: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+  details: {
+    publicId?: string;
+    name?: string;
+    petName?: string;
+    animalType: 'DOG' | 'CAT';
+    genderType?: 'MALE' | 'FEMALE' | '';
+    sizeType?: 'SMALL' | 'MEDIUM' | 'LARGE' | '';
+    breed?: string;
+    color: string;
+    hasIdCollar: boolean;
+    isInTransit?: boolean;
+    images: { url: string }[];
+  };
+  user: {
+    publicId: string;
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReportHttp {
   private readonly http = inject(HttpClient);
@@ -117,9 +147,9 @@ export class ReportHttp {
     );
   }
 
-  getReportByPublicId(publicId: string): Promise<ReportResponse> {
+  getReportByPublicId(publicId: string): Promise<ReportDetail> {
     return firstValueFrom(
-      this.http.get<ReportResponse>(`${this.baseUrl}/reports/${publicId}`),
+      this.http.get<ReportDetail>(`${this.baseUrl}/reports/${publicId}`),
     );
   }
 }

@@ -1,30 +1,30 @@
 <div class="info-card">
-
   <span class="estado">
-    Mascota perdida
+    {{ estado() }}
   </span>
 
-  <h1>Cari</h1>
+  <h1>{{ titulo() }}</h1>
 
   <p class="datos">
-    Gato · Hembra · Pequeño
+    {{ datos() }}
   </p>
 
   <div class="tags">
-    <span>Sin vacunas</span>
-    <span>Con collar</span>
+    <span>{{ collar() }}</span>
+    @if (transito()) {
+      <span>{{ transito() }}</span>
+    }
   </div>
 
-  <h3>Descripción</h3>
+  <h3>Descripcion</h3>
 
   <p class="descripcion">
-    No posee vacunas, tiene una pequeña cicatriz.
+    {{ descripcion() }}
   </p>
 
   <div class="extra-info">
-    <span>📍 Bartolomé Mitre 2000</span>
-    <span>📅 01 Ene 2025</span>
-    <span>⏰ 13hs</span>
+    <span>{{ ubicacion() }}</span>
+    <span>{{ report().occurredAt | date: 'dd MMM yyyy' }}</span>
+    <span>{{ report().occurredAt | date: 'HH:mm' }}</span>
   </div>
-
 </div>
