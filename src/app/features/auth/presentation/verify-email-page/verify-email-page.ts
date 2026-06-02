@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../application/auth.service';
 import { InvalidVerificationTokenError } from '../../domain/auth.errors';
+import { ToastService } from '../../../../shared/application/toast.service';
+import { TokenStorage } from '../../infrastructure/token.storage';
 
 type VerifyStatus = 'verifying' | 'retry';
 
@@ -16,6 +18,8 @@ export class VerifyEmailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
+  private readonly tokenStorage = inject(TokenStorage);
 
   readonly status = signal<VerifyStatus>('verifying');
 
@@ -31,22 +35,31 @@ export class VerifyEmailPage implements OnInit {
   private async verify(): Promise<void> {
     const token = this.route.snapshot.queryParamMap.get('token');
     if (!token) {
-      await this.redirectToLogin('error');
+      await this.finish('error');
       return;
     }
     try {
       await this.authService.verifyEmail(token);
-      await this.redirectToLogin('ok');
+      await this.finish('ok');
     } catch (error) {
       if (error instanceof InvalidVerificationTokenError) {
-        await this.redirectToLogin('error');
+        await this.finish('error');
         return;
       }
       this.status.set('retry');
     }
   }
 
-  private redirectToLogin(verified: 'ok' | 'error'): Promise<boolean> {
-    return this.router.navigate(['/login'], { queryParams: { verified } });
+  private async finish(verified: 'ok' | 'error'): Promise<void> {
+    if (this.tokenStorage.read()?.accessToken) {
+      if (verified === 'ok') {
+        this.toastService.success('¡Tu cuenta fue verificada!');
+      } else {
+        this.toastService.error('El enlace de verificación es inválido o expiró.');
+      }
+      await this.router.navigateByUrl('/home');
+      return;
+    }
+    await this.router.navigate(['/login'], { queryParams: { verified } });
   }
 }
