@@ -128,11 +128,13 @@ export const routes: Routes = [
     children: [
       {
         path: 'home',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/home-map/home-map').then((m) => m.HomeMapComponent),
       },
       {
         path: 'detalle-reporte',
+        canActivate: [authGuard],
         loadComponent: () =>
           import(
             './features/reportes/pages/detalle-reporte/detalle-reporte.component'
