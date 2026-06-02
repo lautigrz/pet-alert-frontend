@@ -7,9 +7,12 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
    {
-    path: 'home',
-    component: HomeMapComponent,
-  },
+  path: 'home',
+  loadComponent: () =>
+    import('./features/home-map/home-map').then(
+      (m) => m.HomeMapComponent
+    ),
+},
   {
     path: 'register',
     loadComponent: () =>
