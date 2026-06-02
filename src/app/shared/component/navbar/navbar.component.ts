@@ -9,7 +9,6 @@ import { AuthService } from '../../../features/auth/application/auth.service';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.css'],
 })
 export class NavbarComponent implements OnInit {
   private readonly profileService = inject(ProfileService);
@@ -18,6 +17,7 @@ export class NavbarComponent implements OnInit {
 
   rutaHome = '/home';
   rutaMiPerfil = '/profile/edit';
+  defaultAvatar = 'https://ui-avatars.com/api/?name=PetFinder&background=e2e8f0&color=12355B&size=128';
 
   readonly nombreUsuario = signal('');
   readonly fotoUsuario = signal<string | null>(null);

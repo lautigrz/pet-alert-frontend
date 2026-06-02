@@ -1,43 +1,42 @@
-<header class="navbar">
+<header class="sticky top-0 z-[1000] h-[75px] bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-8">
 
-  <a class="logo" [routerLink]="[rutaHome]">
-    <img src="nuevologo.png" alt="PetFinder" />
+  <a [routerLink]="[rutaHome]" class="flex items-center shrink-0">
+    <img src="nuevologo.png" alt="PetFinder" class="h-12 w-auto" />
   </a>
 
-  <nav>
-    <a [routerLink]="[rutaHome]" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
-    <a routerLink="/reportes" routerLinkActive="active">Reportes</a>
-    <a routerLink="/chats" routerLinkActive="active">Chats</a>
-    <a [routerLink]="[rutaMiPerfil]" routerLinkActive="active">Perfil</a>
+  <nav class="hidden md:flex gap-7 text-slate-700">
+    <a [routerLink]="[rutaHome]" routerLinkActive="text-[#E8842E]" [routerLinkActiveOptions]="{ exact: true }" class="hover:text-[#E8842E] transition-colors">Inicio</a>
+    <a routerLink="/reportes" routerLinkActive="text-[#E8842E]" class="hover:text-[#E8842E] transition-colors">Reportes</a>
+    <a routerLink="/chats" routerLinkActive="text-[#E8842E]" class="hover:text-[#E8842E] transition-colors">Chats</a>
+    <a [routerLink]="[rutaMiPerfil]" routerLinkActive="text-[#E8842E]" class="hover:text-[#E8842E] transition-colors">Perfil</a>
   </nav>
 
-  <div class="right-section">
-
-    <button class="btn-nuevo" (click)="nuevoReporte()">
+  <div class="flex items-center gap-4 shrink-0">
+    <button type="button" (click)="nuevoReporte()"
+      class="inline-flex items-center gap-1.5 bg-[#E8842E] hover:bg-[#d2741f] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
       + Nuevo reporte
     </button>
 
-    <div class="usuario-menu">
-      <button type="button" class="usuario-info" (click)="toggleMenu()">
-        <div
-          class="avatar"
-          [style.background-image]="fotoUsuario() ? 'url(' + fotoUsuario() + ')' : null"
-        ></div>
-        <span class="usuario">{{ nombreUsuario() }}</span>
-        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <div class="relative">
+      <button type="button" (click)="toggleMenu()" class="flex items-center gap-2.5 select-none">
+        <span class="w-9 h-9 rounded-full bg-slate-200 bg-cover bg-center shrink-0"
+          [style.background-image]="'url(' + (fotoUsuario() || defaultAvatar) + ')'"></span>
+        <span class="font-semibold text-slate-700 hidden sm:inline">{{ nombreUsuario() }}</span>
+        <svg class="w-4 h-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
 
       @if (menuAbierto()) {
-        <button type="button" class="menu-backdrop" (click)="cerrarMenu()" aria-label="Cerrar menú"></button>
-        <div class="dropdown">
-          <a [routerLink]="[rutaMiPerfil]" class="dropdown-item" (click)="cerrarMenu()">Mi perfil</a>
-          <button type="button" class="dropdown-item logout" (click)="cerrarSesion()">Cerrar sesión</button>
+        <button type="button" (click)="cerrarMenu()" aria-label="Cerrar menú" class="fixed inset-0 z-[1050] cursor-default"></button>
+        <div class="absolute right-0 top-[calc(100%+10px)] z-[1100] min-w-[190px] bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 flex flex-col">
+          <a [routerLink]="[rutaMiPerfil]" (click)="cerrarMenu()"
+            class="px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 transition-colors">Mi perfil</a>
+          <button type="button" (click)="cerrarSesion()"
+            class="text-left px-3 py-2.5 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">Cerrar sesión</button>
         </div>
       }
     </div>
-
   </div>
 
 </header>
