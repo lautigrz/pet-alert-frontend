@@ -1,0 +1,66 @@
+<app-navbar />
+
+<div class="layout">
+  <!-- Sidebar de filtros -->
+  <aside class="filtros">
+    <h2 class="filtros__titulo">Filtros</h2>
+
+    <div class="filtros__grupo">
+      <span class="filtros__label">Tipo de reporte</span>
+      <div class="pills">
+        <button class="pill" [class.pill--activo]="filtroTipo() === 'TODOS'" (click)="setFiltroTipo('TODOS')">Todos</button>
+        <button class="pill" [class.pill--activo]="filtroTipo() === 'LOST'" (click)="setFiltroTipo('LOST')">Perdidos</button>
+        <button class="pill" [class.pill--activo]="filtroTipo() === 'SIGHTING'" (click)="setFiltroTipo('SIGHTING')">Avistados</button>
+      </div>
+    </div>
+
+    <div class="filtros__grupo">
+      <span class="filtros__label">Mascota</span>
+      <div class="pills">
+        <button class="pill" [class.pill--activo]="filtroMascota() === 'TODOS'" (click)="setFiltroMascota('TODOS')">Todos</button>
+        <button class="pill" [class.pill--activo]="filtroMascota() === 'DOG'" (click)="setFiltroMascota('DOG')">Perro</button>
+        <button class="pill" [class.pill--activo]="filtroMascota() === 'CAT'" (click)="setFiltroMascota('CAT')">Gato</button>
+      </div>
+    </div>
+
+    <div class="filtros__grupo">
+      <span class="filtros__label">Fecha</span>
+      <div class="pills">
+        <button class="pill" [class.pill--activo]="filtroFecha() === 'TODOS'" (click)="setFiltroFecha('TODOS')">Todos</button>
+        <button class="pill" [class.pill--activo]="filtroFecha() === 'HOY'" (click)="setFiltroFecha('HOY')">Hoy</button>
+        <button class="pill" [class.pill--activo]="filtroFecha() === 'SEMANA'" (click)="setFiltroFecha('SEMANA')">Esta semana</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Contenido principal -->
+  <main class="contenido">
+    <h1 class="contenido__titulo">Reportes</h1>
+
+    <div class="tabs">
+      <button class="tab" [class.tab--activo]="tab() === 'recientes'" (click)="seleccionarTab('recientes')">Recientes</button>
+      <button class="tab" [class.tab--activo]="tab() === 'cercanos'" (click)="seleccionarTab('cercanos')">Cercanos</button>
+      <button class="tab" [class.tab--activo]="tab() === 'mis-reportes'" (click)="seleccionarTab('mis-reportes')">Mis Reportes</button>
+    </div>
+
+    @if (cargando()) {
+      <div class="estado">Cargando reportes…</div>
+    } @else if (error()) {
+      <div class="estado estado--error">{{ error() }}</div>
+    } @else if (sinResultados()) {
+      <div class="estado">
+        @if (tab() === 'mis-reportes') {
+          Todavía no creaste ningún reporte.
+        } @else {
+          No hay reportes para mostrar.
+        }
+      </div>
+    } @else {
+      <div class="grid">
+        @for (reporte of reportes(); track reporte.publicId) {
+          <app-card-reporte [reporte]="reporte" />
+        }
+      </div>
+    }
+  </main>
+</div>

@@ -1,0 +1,36 @@
+@if (data(); as r) {
+  <a class="card" [routerLink]="['/detalle-reporte']">
+    <div class="card__foto">
+      @if (imagen()) {
+        <img [src]="imagen()" [alt]="titulo()" />
+      } @else {
+        <div class="card__foto--placeholder">🐾</div>
+      }
+    </div>
+
+    <div class="card__body">
+      <div class="card__header">
+        <h3 class="card__nombre">{{ titulo() }}</h3>
+        <span class="card__tiempo">{{ tiempoRelativo() }}</span>
+      </div>
+
+      <span class="badge" [class.badge--perdida]="esPerdida()" [class.badge--avistado]="!esPerdida()">
+        @if (esPerdida()) { Mascota perdida } @else { Mascota avistada }
+      </span>
+
+      <p class="card__atributos">{{ atributos() }}</p>
+
+      <div class="card__meta">
+        <span class="card__meta-item">
+          <span class="ico">📍</span>{{ r.location.address || 'Sin ubicación' }}
+        </span>
+        <span class="card__meta-item">
+          <span class="ico">📅</span>{{ r.occurredAt | date: 'dd MMM yyyy' }}
+        </span>
+        <span class="card__meta-item">
+          <span class="ico">🕐</span>{{ r.occurredAt | date: 'HH:mm' }}
+        </span>
+      </div>
+    </div>
+  </a>
+}

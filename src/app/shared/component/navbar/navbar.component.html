@@ -1,8 +1,8 @@
 <header class="navbar">
 
-  <div class="logo">
+  <a class="logo" [routerLink]="[rutaHome]">
     <img src="nuevologo.png" alt="PetFinder" />
-  </div>
+  </a>
 
   <nav>
     <a routerLink="/inicio">Inicio</a>
@@ -18,9 +18,12 @@
     </button>
 
     <a [routerLink]="[rutaMiPerfil]" class="usuario-info">
-      <div class="avatar"></div>
+      <div
+        class="avatar"
+        [style.background-image]="fotoUsuario() ? 'url(' + fotoUsuario() + ')' : null"
+      ></div>
       <span class="usuario">
-        Ana
+        {{ nombreUsuario() }}
       </span>
     </a>
 

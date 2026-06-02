@@ -1,0 +1,141 @@
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 28px 60px;
+  background: #ffffff;
+  min-height: calc(100vh - 75px);
+}
+
+/* ---------- Sidebar de filtros ---------- */
+.filtros {
+  align-self: stretch;
+}
+
+.filtros__titulo {
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #12355b;
+}
+
+.filtros__grupo {
+  margin-bottom: 20px;
+}
+
+.filtros__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7680;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  padding: 6px 14px;
+  border: 1px solid #e0e3e8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #12355b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.pill:hover {
+  border-color: #e8842e;
+}
+
+.pill--activo {
+  background: #e8842e;
+  border-color: #e8842e;
+  color: #ffffff;
+}
+
+/* ---------- Contenido ---------- */
+.contenido {
+  background: #f7f8fa;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.contenido__titulo {
+  margin: 0 0 18px;
+  font-size: 26px;
+  font-weight: 800;
+  color: #12355b;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.tab {
+  padding: 9px 18px;
+  border: 1px solid #e0e3e8;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #12355b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab:hover {
+  border-color: #e8842e;
+}
+
+.tab--activo {
+  background: #e8842e;
+  border-color: #e8842e;
+  color: #ffffff;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.estado {
+  padding: 48px 24px;
+  text-align: center;
+  color: #6b7680;
+  font-size: 15px;
+  background: #ffffff;
+  border: 1px dashed #e0e3e8;
+  border-radius: 14px;
+}
+
+.estado--error {
+  color: #b04632;
+  border-color: #f3c4ba;
+  background: #fbeae6;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros {
+    position: static;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
