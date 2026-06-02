@@ -21,8 +21,8 @@
       <p class="card__atributos">{{ atributos() }}</p>
 
       <div class="card__meta">
-        <span class="card__meta-item">
-          <span class="ico">📍</span>{{ r.location.address || 'Sin ubicación' }}
+        <span class="card__meta-item card__meta-item--ubicacion">
+          <span class="ico">📍</span><span class="texto">{{ r.location.address || 'Sin ubicación' }}</span>
         </span>
         <span class="card__meta-item">
           <span class="ico">📅</span>{{ r.occurredAt | date: 'dd MMM yyyy' }}
