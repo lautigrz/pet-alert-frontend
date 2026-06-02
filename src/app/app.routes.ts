@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { HomeMapComponent } from './features/home-map/home-map';
 
 import { authGuard } from './core/guards/auth.guard';
 
