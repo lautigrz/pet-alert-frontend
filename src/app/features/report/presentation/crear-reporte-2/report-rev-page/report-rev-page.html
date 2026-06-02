@@ -36,8 +36,9 @@
           </div>
 
           <div class="flex items-center justify-between mb-3">
-            <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-[#12355B] px-2.5 py-1 rounded-full">
-              <img src="Icono-mascota-encontrada.png" alt="" class="w-3.5 h-3.5" />
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white px-2.5 py-1 rounded-full"
+              [class]="report().type === 'lost' ? 'bg-[#E8842E]' : 'bg-[#12355B]'">
+              <img [src]="badgeIcon()" alt="" class="w-3.5 h-3.5" />
               {{ badgeLabel() }}
             </span>
             <button type="button" (click)="editPet()" class="inline-flex items-center gap-1 text-[#E8842E] text-sm font-medium hover:underline">

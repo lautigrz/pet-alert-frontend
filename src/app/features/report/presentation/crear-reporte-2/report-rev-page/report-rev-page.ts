@@ -17,7 +17,15 @@ export class ReportRevPage implements AfterViewInit, OnDestroy {
 
   readonly report = this.wizard.report;
   readonly badgeLabel = computed(() =>
-    this.report().sightingDetails?.isInTransit ? 'Mascota en tránsito' : 'Mascota avistada',
+    this.report().type === 'lost'
+      ? 'Mascota perdida'
+      : this.report().sightingDetails?.isInTransit
+        ? 'Mascota en tránsito'
+        : 'Mascota avistada',
+  );
+
+  readonly badgeIcon = computed(() =>
+    this.report().type === 'lost' ? 'Icono-mascota-perdida.png' : 'Icono-mascota-encontrada.png',
   );
 
   readonly slots = [0, 1, 2, 3];
@@ -71,7 +79,8 @@ export class ReportRevPage implements AfterViewInit, OnDestroy {
   }
 
   editPet(): void {
-    this.router.navigate(['/report/data']);
+    const lost = this.report().type === 'lost';
+    this.router.navigate([lost ? '/report/lost-data' : '/report/data']);
   }
 
   editLocation(): void {
@@ -83,7 +92,8 @@ export class ReportRevPage implements AfterViewInit, OnDestroy {
   }
 
   finish(): void {
-    this.router.navigate(['/report/confirm']);
+    const lost = this.report().type === 'lost';
+    this.router.navigate([lost ? '/report/lost-confirm' : '/report/confirm']);
   }
 
   private pad(n: number): string {
