@@ -19,6 +19,9 @@ export interface UpdateProfileCommand{
 export class ProfileService {
   private readonly profileHttp = inject(ProfileHttp);
 
+  private cachedProfile: UpdatedProfile | null = null;
+  private inFlight: Promise<UpdatedProfile> | null = null;
+
   async updateProfile(
     command: UpdateProfileCommand,
   ): Promise<UpdatedProfile>{
@@ -29,7 +32,7 @@ export class ProfileService {
         username: command.username?.trim() || undefined,
         photoUrl: command.photoUrl?.trim() || undefined,
       });
-      return {
+      this.cachedProfile = {
         id: response.id,
         email: response.email,
         username: response.username,
@@ -37,44 +40,60 @@ export class ProfileService {
         lastname: response.lastname,
         photoUrl: response.photoUrl,
       };
+      return this.cachedProfile;
     } catch (error) {
       throw this.mapUpdateProfileError(error);
     }
   }
 
   async getProfile(): Promise<UpdatedProfile> {
-  try {
-    const response = await this.profileHttp.getProfile();
-
-    return {
-      id: response.id,
-      email: response.email,
-      username: response.username,
-      name: response.name ?? null,
-      lastname: response.lastname ?? null,
-      photoUrl: response.photoUrl ?? null,
-    };
-  } catch (error) {
-    throw this.mapUpdateProfileError(error);
+    if (this.cachedProfile) return this.cachedProfile;
+    if (this.inFlight) return this.inFlight;
+    this.inFlight = this.fetchProfile().finally(() => {
+      this.inFlight = null;
+    });
+    return this.inFlight;
   }
-}
 
-  async uploadProfilePhoto(file:File): Promise<UpdatedProfile> {
-    try{
-      const response = await this.profileHttp.uploadProfilePhoto(file);
-
-      return{
+  private async fetchProfile(): Promise<UpdatedProfile> {
+    try {
+      const response = await this.profileHttp.getProfile();
+      this.cachedProfile = {
         id: response.id,
         email: response.email,
         username: response.username,
         name: response.name ?? null,
         lastname: response.lastname ?? null,
-        photoUrl: response.photoUrl ?? null
+        photoUrl: response.photoUrl ?? null,
       };
+      return this.cachedProfile;
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async uploadProfilePhoto(file:File): Promise<UpdatedProfile> {
+    try{
+      const response = await this.profileHttp.uploadProfilePhoto(file);
+
+      this.cachedProfile = {
+        id: response.id,
+        email: response.email,
+        username: response.username,
+        name: response.name ?? null,
+        lastname: response.lastname ?? null,
+        photoUrl: response.photoUrl ?? null,
+      };
+      return this.cachedProfile;
     }catch(error){
       throw this.mapUpdateProfileError(error);
     }
 
+  }
+
+  clearCache(): void {
+    this.cachedProfile = null;
+    this.inFlight = null;
   }
 
 

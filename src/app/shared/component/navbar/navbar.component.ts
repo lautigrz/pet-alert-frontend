@@ -48,6 +48,7 @@ export class NavbarComponent implements OnInit {
   async cerrarSesion(): Promise<void> {
     this.menuAbierto.set(false);
     await this.authService.logout();
+    this.profileService.clearCache();
     this.router.navigate(['/login']);
   }
 }
