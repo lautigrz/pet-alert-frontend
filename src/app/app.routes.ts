@@ -46,6 +46,13 @@ export const routes: Routes = [
           ).then((m) => m.ListaReportesComponent),
       },
       {
+        path: 'profile',
+        loadComponent: () =>
+          import(
+            './features/profile/presentation/profile-page/profile-page'
+          ).then((m) => m.ProfilePage),
+      },
+      {
         path: 'profile/edit',
         loadComponent: () =>
           import(
