@@ -9,6 +9,7 @@ import { ToastService } from '../../../../../shared/application/toast.service';
   selector: 'app-lost-confirm-page',
   standalone: true,
   imports: [],
+  host: { class: 'flex flex-1' },
   templateUrl: './lost-confirm-page.html',
 })
 export class LostConfirmPage implements OnInit {

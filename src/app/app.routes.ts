@@ -29,50 +29,38 @@ export const routes: Routes = [
       ).then((m) => m.VerifyEmailPage),
   },
   {
-    path: 'reportes',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import(
-        './features/reportes/pages/lista-reportes/lista-reportes.component'
-      ).then((m) => m.ListaReportesComponent),
-  },
-  {
-    path: 'profile/edit',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import(
-        './features/profile/presentation/edit-profile-page/edit-profile-page'
-      ).then((m) => m.EditProfilePage),
-  },
-  {
-    path: 'report',
+    path: '',
+    component: AppShellComponent,
     canActivate: [authGuard],
     children: [
       {
-        path: 'confirm',
-        canActivate: [
-          wizardStepGuard((r) => !!r.sightingDetails && !!r.location?.address),
-          verifiedGuard,
-        ],
+        path: 'home',
         loadComponent: () =>
-          import('./features/report/presentation/crear-reporte-2/report-confirm-page/report-confirm-page').then(
-            (m) => m.ReportConfirmPage,
-          ),
+          import('./features/home-map/home-map').then((m) => m.HomeMapComponent),
       },
       {
-        path: 'lost-confirm',
-        canActivate: [
-          wizardStepGuard((r) => r.type === 'lost' && !!r.pet?.name && !!r.location?.address),
-          verifiedGuard,
-        ],
+        path: 'reportes',
         loadComponent: () =>
-          import('./features/report/presentation/crear-reporte-1/lost-confirm-page/lost-confirm-page').then(
-            (m) => m.LostConfirmPage,
-          ),
+          import(
+            './features/reportes/pages/lista-reportes/lista-reportes.component'
+          ).then((m) => m.ListaReportesComponent),
       },
       {
-        path: '',
-        component: AppShellComponent,
+        path: 'profile/edit',
+        loadComponent: () =>
+          import(
+            './features/profile/presentation/edit-profile-page/edit-profile-page'
+          ).then((m) => m.EditProfilePage),
+      },
+      {
+        path: 'detalle-reporte',
+        loadComponent: () =>
+          import(
+            './features/reportes/pages/detalle-reporte/detalle-reporte.component'
+          ).then((m) => m.DetalleReporteComponent),
+      },
+      {
+        path: 'report',
         children: [
           {
             path: 'type',
@@ -118,27 +106,29 @@ export const routes: Routes = [
                 (m) => m.ReportRevPage,
               ),
           },
+          {
+            path: 'confirm',
+            canActivate: [
+              wizardStepGuard((r) => !!r.sightingDetails && !!r.location?.address),
+              verifiedGuard,
+            ],
+            loadComponent: () =>
+              import('./features/report/presentation/crear-reporte-2/report-confirm-page/report-confirm-page').then(
+                (m) => m.ReportConfirmPage,
+              ),
+          },
+          {
+            path: 'lost-confirm',
+            canActivate: [
+              wizardStepGuard((r) => r.type === 'lost' && !!r.pet?.name && !!r.location?.address),
+              verifiedGuard,
+            ],
+            loadComponent: () =>
+              import('./features/report/presentation/crear-reporte-1/lost-confirm-page/lost-confirm-page').then(
+                (m) => m.LostConfirmPage,
+              ),
+          },
         ],
-      },
-    ],
-  },
-  {
-    path: '',
-    component: AppShellComponent,
-    children: [
-      {
-        path: 'home',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import('./features/home-map/home-map').then((m) => m.HomeMapComponent),
-      },
-      {
-        path: 'detalle-reporte',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import(
-            './features/reportes/pages/detalle-reporte/detalle-reporte.component'
-          ).then((m) => m.DetalleReporteComponent),
       },
     ],
   },
