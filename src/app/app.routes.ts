@@ -1,9 +1,15 @@
 import { Routes } from '@angular/router';
+import { HomeMapComponent } from './features/home-map/home-map';
+
 import { authGuard } from './core/guards/auth.guard';
 
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
+   {
+    path: 'home',
+    component: HomeMapComponent,
+  },
   {
     path: 'register',
     loadComponent: () =>
@@ -48,3 +54,8 @@ export const routes: Routes = [
 
   },
 ];
+
+
+
+
+
