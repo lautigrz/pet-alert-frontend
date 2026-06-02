@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../application/auth.service';
 import { NetworkError, UnexpectedAuthError } from '../../domain/auth.errors';
 import { ToastService } from '../../../../shared/application/toast.service';
+import { ProfileService } from '../../../profile/application/profile.service';
 
 @Component({
   selector: 'app-login-page',
@@ -18,6 +19,7 @@ export class LoginPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toastService = inject(ToastService);
+  private readonly profileService = inject(ProfileService);
 
   readonly mobileView = signal<'landing' | 'form'>('landing');
   readonly submitting = signal(false);
@@ -75,6 +77,7 @@ export class LoginPage {
     try {
       const { email, password } = this.form.getRawValue();
       await this.authService.login({ email, password });
+      this.profileService.clearCache();
       await this.router.navigateByUrl('/home');
     } catch (error) {
       if (error instanceof NetworkError || error instanceof UnexpectedAuthError) {
