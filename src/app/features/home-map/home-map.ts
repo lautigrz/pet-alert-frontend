@@ -6,7 +6,7 @@ import * as L from 'leaflet';
   selector: 'app-home-map',
   standalone: true,
   imports: [],
-  host: { class: 'flex flex-1 min-h-0' },
+  host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
 })
 export class HomeMapComponent implements OnInit, AfterViewInit {
