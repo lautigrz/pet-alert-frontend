@@ -11,7 +11,7 @@
 
 /* ---------- Sidebar de filtros ---------- */
 .filtros {
-  align-self: start;
+  align-self: stretch;
 }
 
 .filtros__titulo {
