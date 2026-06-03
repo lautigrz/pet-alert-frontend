@@ -1,17 +1,15 @@
 <div class="ubicacion-card">
-  <h3>Ultima ubicacion</h3>
+  <h3>Última ubicación</h3>
 
   <p>
     {{ direccion() }}
   </p>
 
   <div class="mapa-container">
-    <img class="mapa-img" src="mapa.avif" alt="Mapa" />
 
-    @if (imagenMascota()) {
-      <div class="pin-mascota">
-        <img [src]="imagenMascota()!" alt="Mascota" />
-      </div>
-    }
+    <div class="relative rounded-lg overflow-hidden border border-slate-200 mt-3 h-[220px]">
+      <div id="report-review-map" class="w-full h-full"></div>
+    </div>
+
   </div>
 </div>

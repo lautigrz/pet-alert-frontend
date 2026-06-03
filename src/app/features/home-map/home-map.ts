@@ -159,9 +159,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   verReporte(): void {
     const reportId = this.successReportId();
     this.successReportId.set(null);
-    this.router.navigate(['/detalle-reporte'], {
-      queryParams: reportId ? { reporte: reportId } : {},
-    });
+    this.router.navigate(['/detalle-reporte', reportId]);
   }
 
   closeSuccess(): void {

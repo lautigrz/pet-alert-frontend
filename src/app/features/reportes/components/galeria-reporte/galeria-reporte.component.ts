@@ -15,7 +15,13 @@ export class GaleriaReporteComponent {
   imagenSeleccionada = signal<string | null>(null);
 
   imagenes = computed(() => this.report().details.images.map(i => i.url));
-  imagenPrincipal = computed(() => this.imagenes()[0] ?? null);
+  imagenSeleccionadaIndex = signal(0);
+  imagenPrincipal = computed(() => this.imagenes()[this.imagenSeleccionadaIndex()] ?? null);
+
+  seleccionarImagen(url: string): void {
+    const index = this.imagenes().indexOf(url);
+    if (index !== -1) this.imagenSeleccionadaIndex.set(index);
+  }
 
   abrirImagen(url: string): void {
     this.imagenSeleccionada.set(url);

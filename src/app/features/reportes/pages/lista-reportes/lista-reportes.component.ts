@@ -64,9 +64,11 @@ export class ListaReportesComponent implements OnInit {
     });
 
     if (this.tab() === 'recientes') {
-      const limite = Date.now() - DIAS_RECIENTES * 24 * 60 * 60 * 1000;
-      return filtrados.filter((r) => new Date(r.createdAt).getTime() >= limite);
-    }
+  const limite = Date.now() - DIAS_RECIENTES * 24 * 60 * 60 * 1000;
+  return filtrados
+    .filter((r) => new Date(r.createdAt).getTime() >= limite)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
 
     if (this.tab() !== 'cercanos') return filtrados;
 

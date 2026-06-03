@@ -2,9 +2,9 @@
   <h3>Contacto</h3>
 
   <div class="usuario">
-    <img src="https://i.pravatar.cc/150" alt="" />
+   <img [src]="imagenUsuario()" alt="Avatar" />
 
-    <span>Usuario {{ userPublicId() }}</span>
+    <span> <strong>{{ username() }}</strong></span>
   </div>
 
   <button>

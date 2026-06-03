@@ -73,6 +73,8 @@ export interface ReportDetail {
   };
   user: {
     publicId: string;
+    username:string;
+    photoUrl: string | null;
   };
 }
 
@@ -127,7 +129,7 @@ export class ReportHttp {
 
 
     console.log('Report data to be sent:', reportData);
-    
+
     formData.append('data', JSON.stringify(reportData));
 
     if (body.photos && body.photos.length > 0) {
