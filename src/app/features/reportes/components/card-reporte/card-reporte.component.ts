@@ -21,6 +21,12 @@ export class CardReporteComponent {
 
   readonly esPerdida = computed(() => this.data()?.type === 'LOST');
 
+  readonly enTransito = computed(() => {
+    const r = this.data();
+    if (!r || r.type === 'LOST') return false;
+    return (r.details as SightingDetails).isInTransit === true;
+  });
+
   readonly imagen = computed(() => {
     const r = this.data();
     if (!r) return null;
@@ -30,8 +36,12 @@ export class CardReporteComponent {
   readonly titulo = computed(() => {
     const r = this.data();
     if (!r) return '';
-    if (r.type === 'LOST') return (r.details as LostDetails).name || 'Sin nombre';
-    return 'Avistamiento';
+
+    const especie = this.especie((r.details as LostDetails | SightingDetails).animalType);
+
+    if (r.type === 'LOST') return `${especie} perdido`;
+    if (this.enTransito()) return `${especie} en tránsito`;
+    return `${especie} avistado`;
   });
 
   

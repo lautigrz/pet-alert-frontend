@@ -9,6 +9,7 @@
         <button class="pill" [class.pill--activo]="filtroTipo() === 'TODOS'" (click)="setFiltroTipo('TODOS')">Todos</button>
         <button class="pill" [class.pill--activo]="filtroTipo() === 'LOST'" (click)="setFiltroTipo('LOST')">Perdidos</button>
         <button class="pill" [class.pill--activo]="filtroTipo() === 'SIGHTING'" (click)="setFiltroTipo('SIGHTING')">Avistados</button>
+        <button class="pill" [class.pill--activo]="filtroTipo() === 'TRANSITO'" (click)="setFiltroTipo('TRANSITO')">Tránsito</button>
       </div>
     </div>
 
@@ -36,26 +37,51 @@
     <h1 class="contenido__titulo">Reportes</h1>
 
     <div class="tabs">
+      <button class="tab" [class.tab--activo]="tab() === 'todos'" (click)="seleccionarTab('todos')">Todos</button>
       <button class="tab" [class.tab--activo]="tab() === 'recientes'" (click)="seleccionarTab('recientes')">Recientes</button>
       <button class="tab" [class.tab--activo]="tab() === 'cercanos'" (click)="seleccionarTab('cercanos')">Cercanos</button>
       <button class="tab" [class.tab--activo]="tab() === 'mis-reportes'" (click)="seleccionarTab('mis-reportes')">Mis Reportes</button>
+    </div>
+
+    <div class="buscador">
+      <svg xmlns="http://www.w3.org/2000/svg" class="buscador__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+      <input
+        type="text"
+        class="buscador__input"
+        placeholder="Buscar por zona (ej. Ramos Mejía, Pilar...)"
+        [value]="busqueda()"
+        (input)="busqueda.set($any($event.target).value)"
+      />
     </div>
 
     @if (cargando()) {
       <div class="estado">Cargando reportes…</div>
     } @else if (error()) {
       <div class="estado estado--error">{{ error() }}</div>
+    } @else if (tab() === 'cercanos' && ubicacionDenegada()) {
+      <div class="estado">
+        Necesitamos tu ubicación para mostrar reportes cercanos. Activá el permiso de ubicación en tu navegador y volvé a intentar.
+      </div>
+    } @else if (tab() === 'cercanos' && !ubicacion()) {
+      <div class="estado">Obteniendo tu ubicación…</div>
     } @else if (sinResultados()) {
       <div class="estado">
         @if (tab() === 'mis-reportes') {
           Todavía no creaste ningún reporte.
+        } @else if (tab() === 'cercanos') {
+          No hay reportes cerca de tu ubicación.
+        } @else if (tab() === 'recientes') {
+          No hay reportes de los últimos 3 días.
         } @else {
           No hay reportes para mostrar.
         }
       </div>
     } @else {
       <div class="grid">
-        @for (reporte of reportes(); track reporte.publicId) {
+        @for (reporte of reportesVisibles(); track reporte.publicId) {
           <app-card-reporte [reporte]="reporte" />
         }
       </div>
