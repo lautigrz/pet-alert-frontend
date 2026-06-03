@@ -61,9 +61,7 @@
     @for (r of misReportes; track $index) {
       <div class="flex gap-3 items-stretch bg-[#f4f5f7] rounded-2xl p-3 mt-3">
         <div class="w-24 self-stretch rounded-2xl bg-slate-200 shrink-0 flex items-center justify-center text-slate-400">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" />
-          </svg>
+          <img [src]="r.img" alt="Foto de {{ r.nombre }}" class="w-full h-full object-cover rounded-2xl" />
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
@@ -109,9 +107,7 @@
     @for (r of reportesCercanos; track $index) {
       <div class="flex gap-3 items-stretch bg-[#f4f5f7] rounded-2xl p-3 mt-3">
         <div class="w-24 self-stretch rounded-2xl bg-slate-200 shrink-0 flex items-center justify-center text-slate-400">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" />
-          </svg>
+          <img [src]="r.img" alt="Foto de {{ r.nombre }}" class="w-full h-full object-cover rounded-2xl" />
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
