@@ -144,7 +144,7 @@
   color: #6b7680;
 }
 
-/* La direccion ocupa toda la fila y se recorta con "..." si es larga */
+
 .card__meta-item--ubicacion {
   flex: 0 0 100%;
   max-width: 100%;

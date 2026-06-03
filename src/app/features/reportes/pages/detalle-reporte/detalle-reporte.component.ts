@@ -63,7 +63,7 @@ export class DetalleReporteComponent implements OnInit{
     this.actualizando.set(true);
     try {
       await this.reportesService.updateToResolved(r.publicId);
-      // Actualizar el report localmente
+      
       this.report.update((current) =>
         current ? { ...current, status: 'RESOLVED' } : null,
       );

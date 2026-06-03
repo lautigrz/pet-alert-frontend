@@ -24,7 +24,7 @@ export class ReportesHttp {
     );
   }
 
-  /** Reportes del usuario autenticado, paginados (GET /api/reports). */
+
   getMisReportesPaginado(page = 1, limit = 50): Promise<ReportesPaginados> {
     const params = new HttpParams()
       .set('page', String(page))
@@ -35,7 +35,7 @@ export class ReportesHttp {
     );
   }
 
-  /** Actualizar estado del reporte a RESOLVED (PATCH /api/reports/status/:publicId). */
+
   updateStatus(publicId: string, status: 'RESOLVED'): Promise<void> {
     return firstValueFrom(
       this.http.patch<void>(

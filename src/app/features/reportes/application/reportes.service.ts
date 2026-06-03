@@ -7,7 +7,7 @@ import { Reporte, ReporteFiltros } from '../domain/reporte.model';
 export class ReportesService {
   private readonly reportesHttp = inject(ReportesHttp);
 
-  /** Reportes de todos los usuarios (incluye los propios). */
+
   async getGenerales(filtros: ReporteFiltros = {}): Promise<Reporte[]> {
     try {
       return await this.reportesHttp.getFiltered(filtros);
@@ -16,7 +16,7 @@ export class ReportesService {
     }
   }
 
-  /** Solo los reportes del usuario autenticado (GET /api/reports, paginado). */
+  
   async getMisReportes(filtros: ReporteFiltros = {}): Promise<Reporte[]> {
     try {
       const { data } = await this.reportesHttp.getMisReportesPaginado();
@@ -26,7 +26,7 @@ export class ReportesService {
     }
   }
 
-  /** Actualizar estado del reporte a RESOLVED. */
+  
   async updateToResolved(publicId: string): Promise<void> {
     try {
       await this.reportesHttp.updateStatus(publicId, 'RESOLVED');
@@ -35,7 +35,7 @@ export class ReportesService {
     }
   }
 
-  /** Filtra en memoria (el endpoint paginado no recibe filtros). */
+  
   private aplicarFiltros(reportes: Reporte[], filtros: ReporteFiltros): Reporte[] {
     return reportes.filter((r) => {
       if (filtros.reportType && r.type !== filtros.reportType) return false;

@@ -9,7 +9,7 @@
     <div class="left-section">
       <app-galeria-reporte [report]="r" />
       <app-info-reporte [report]="r">
-        <!-- Botón y confirmación para marcar como Resuelto -->
+        
         @if (r.status === 'ACTIVE') {
           <div slot="resolve-button" class="action-wrapper">
             @if (!confirmandoResolucion()) {
