@@ -134,15 +134,6 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         const color = reporte.type === 'LOST' ? '#E8842E' : '#1D6FA3';
         const imageUrl = reporte.details?.images?.[0]?.url;
 
-        const marker = L.marker([lat, lng], {
-          icon: this.buildPin(color, imageUrl),
-        })
-          .addTo(this.map)
-          .bindPopup(this.buildPopup(reporte), {
-            maxWidth: 270,
-            minWidth: 240,
-          });
-
         L.marker([lat, lng], {
           icon: this.buildPin(color, imageUrl),
         })
@@ -336,39 +327,5 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 </a>
     </div>
   `;
-  }
-
-  private formatAnimalType(value?: string): string {
-    if (!value) return 'No informado';
-
-    const normalized = value.toLowerCase();
-
-    if (normalized === 'dog') return 'Perro';
-    if (normalized === 'cat') return 'Gato';
-
-    return value;
-  }
-
-  private formatGenderType(value?: string): string {
-    if (!value) return 'No informado';
-
-    const normalized = value.toLowerCase();
-
-    if (normalized === 'male') return 'Macho';
-    if (normalized === 'female') return 'Hembra';
-
-    return value;
-  }
-
-  private formatSizeType(value?: string): string {
-    if (!value) return 'No informado';
-
-    const normalized = value.toLowerCase();
-
-    if (normalized === 'small') return 'Pequeño';
-    if (normalized === 'medium') return 'Mediano';
-    if (normalized === 'large') return 'Grande';
-
-    return value;
   }
 }
