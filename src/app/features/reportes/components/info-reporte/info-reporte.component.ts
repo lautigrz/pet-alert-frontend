@@ -52,7 +52,13 @@ export class InfoReporteComponent {
   collar = computed(() => (this.report().details.hasIdCollar ? 'Con collar' : 'Sin collar'));
   transito = computed(() => (this.report().details.isInTransit ? 'En transito' : null));
   descripcion = computed(() => this.report().description || 'Sin descripcion');
-  ubicacion = computed(() => this.report().location.address || 'Sin ubicacion');
+  ubicacion = computed(() => {
+    const address = this.report().location.address;
+    if (!address) return 'Sin ubicación';
+
+    const partes = address.split(',').map(p => p.trim());
+    return partes.slice(0, 3).join(', ');
+  });
 
   private especie(value?: string): string {
     const map: Record<string, string> = { DOG: 'Perro', CAT: 'Gato' };

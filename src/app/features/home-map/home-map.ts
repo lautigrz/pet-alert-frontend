@@ -135,9 +135,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   verReporte(): void {
     const reportId = this.successReportId();
     this.successReportId.set(null);
-    this.router.navigate(['/detalle-reporte'], {
-      queryParams: reportId ? { reporte: reportId } : {},
-    });
+    this.router.navigate(['/detalle-reporte', reportId]);
   }
 
   closeSuccess(): void {
@@ -167,12 +165,12 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         this.map.setView([lat, lng], 15);
-       L.marker(
-  [lat, lng],
-  {
-    icon: this.buildPin('#000000'),
-  }
-).addTo(this.map);
+        L.marker(
+          [lat, lng],
+          {
+            icon: this.buildPin('#000000'),
+          }
+        ).addTo(this.map);
         setTimeout(() => this.map.invalidateSize(), 100);
       },
       () => {

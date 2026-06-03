@@ -1,50 +1,31 @@
 <div class="galeria-container">
 
   @if (imagenPrincipal()) {
-    <img
-      class="imagen-principal"
-      [src]="imagenPrincipal()"
-      role="button"
-      tabindex="0"
-      (click)="abrirImagen(imagenPrincipal()!)"
-      (keyup.enter)="abrirImagen(imagenPrincipal()!)"
-      alt="Imagen principal"
-    />
+  <div class="imagen-principal-wrap" role="button" tabindex="0" (click)="abrirImagen(imagenPrincipal()!)"
+    (keyup.enter)="abrirImagen(imagenPrincipal()!)">
+    <img [src]="imagenPrincipal()" alt="Foto principal de la mascota" />
+  </div>
   }
 
   <div class="miniaturas">
-    @for (url of imagenes(); track url) {
-      <img
-        [src]="url"
-        role="button"
-        tabindex="0"
-        (click)="abrirImagen(url)"
-        (keyup.enter)="abrirImagen(url)"
-        alt="Miniatura"
-      />
+    @for (url of imagenes(); track url; let i = $index) {
+    <div class="miniatura-wrap" [class.activa]="url === imagenPrincipal()" role="button" tabindex="0"
+      (click)="seleccionarImagen(url)" (keyup.enter)="seleccionarImagen(url)">
+      <img [src]="url" [alt]="'Foto ' + (i + 1)" />
+    </div>
     }
   </div>
 
 </div>
 
 @if (imagenSeleccionada()) {
-  <div
-    class="modal-overlay"
-    role="button"
-    tabindex="0"
-    (click)="cerrarImagen()"
-    (keyup.enter)="cerrarImagen()"
-  >
-    <button type="button" class="close-btn" (click)="cerrarImagen()">&times;</button>
-  <img
-    [src]="imagenSeleccionada()"
-    class="imagen-completa"
-    alt="Imagen completa"
-    role="button"
-    tabindex="0"
-    (click)="$event.stopPropagation()"
-    (keyup.enter)="$event.stopPropagation()"
-    (keydown)="$event.stopPropagation()"
-  />
+<div class="modal-overlay" role="dialog" aria-modal="true" (click)="cerrarImagen()" (keyup.escape)="cerrarImagen()">
+  <div class="modal-inner">
+    <button type="button" class="modal-close" aria-label="Cerrar imagen" (click)="cerrarImagen()">
+      &times;
+    </button>
+    <img [src]="imagenSeleccionada()" alt="Imagen ampliada" tabindex="0" (click)="$event.stopPropagation()"
+      (keyup.enter)="$event.stopPropagation()" />
   </div>
+</div>
 }

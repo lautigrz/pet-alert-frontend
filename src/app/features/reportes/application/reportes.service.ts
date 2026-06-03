@@ -10,6 +10,7 @@ export class ReportesService {
 
   async getGenerales(filtros: ReporteFiltros = {}): Promise<Reporte[]> {
     try {
+      console.log('Obteniendo reportes con filtros:', filtros);
       return await this.reportesHttp.getFiltered(filtros);
     } catch (error) {
       throw this.mapError(error);
