@@ -87,12 +87,18 @@
   color: #ffffff;
 }
 
+.badge__ico {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
 .badge--perdida {
   background: #e8842e;
 }
 
 .badge--avistado {
-  background: #1d6fa3;
+  background: #12355b;
 }
 
 /* Badges de estado */
@@ -158,5 +164,7 @@
 
 .card__meta-item .ico {
   flex-shrink: 0;
-  font-size: 13px;
+  width: 13px;
+  height: 13px;
+  color: #e8842e;
 }
