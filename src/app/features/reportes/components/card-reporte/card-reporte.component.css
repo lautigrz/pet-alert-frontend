@@ -95,6 +95,33 @@
   background: #1d6fa3;
 }
 
+/* Badges de estado */
+.badges-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge-status {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.badge-status--active {
+  background: #22c55e;
+}
+
+.badge-status--resolved {
+  background: #1d6fa3;
+}
+
 .card__atributos {
   margin: 2px 0 0;
   font-size: 14px;
@@ -117,7 +144,7 @@
   color: #6b7680;
 }
 
-/* La direccion ocupa toda la fila y se recorta con "..." si es larga */
+
 .card__meta-item--ubicacion {
   flex: 0 0 100%;
   max-width: 100%;

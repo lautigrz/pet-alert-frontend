@@ -34,7 +34,7 @@ export class CardReporteComponent {
     return 'Avistamiento';
   });
 
-  /** Línea "Gato · Hembra · Pequeño" (lost) o "Perro · Marrón" (sighting). */
+  
   readonly atributos = computed(() => {
     const r = this.data();
     if (!r) return '';

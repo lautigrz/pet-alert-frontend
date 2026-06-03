@@ -8,7 +8,42 @@
 
     <div class="left-section">
       <app-galeria-reporte [report]="r" />
-      <app-info-reporte [report]="r" />
+      <app-info-reporte [report]="r">
+        
+        @if (r.status === 'ACTIVE') {
+          <div slot="resolve-button" class="action-wrapper">
+            @if (!confirmandoResolucion()) {
+              <button 
+                class="btn-resolve"
+                (click)="abrirConfirmacion()"
+                [disabled]="actualizando()"
+              >
+                Marcar Resuelto
+              </button>
+            } @else {
+              <div class="confirmacion-popup">
+                <p class="confirmacion-titulo">¿Marcar como Resuelto?</p>
+                <div class="confirmacion-botones">
+                  <button 
+                    class="btn-confirm"
+                    (click)="resolverReporte()"
+                    [disabled]="actualizando()"
+                  >
+                    @if (actualizando()) { ⏳ } @else { Sí }
+                  </button>
+                  <button 
+                    class="btn-cancel"
+                    (click)="cancelarConfirmacion()"
+                    [disabled]="actualizando()"
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </app-info-reporte>
     </div>
 
     <div class="right-section">

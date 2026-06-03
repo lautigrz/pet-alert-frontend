@@ -5,12 +5,52 @@
   border-radius: 12px;
 }
 
-.estado {
-  background: #ffedd5;
-  color: #ea580c;
+.badges-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.badges-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.badge-type {
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 14px;
+  font-weight: 600;
+}
+
+.badge-type--perdida {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.badge-type--avistado {
+  background: #dbeafe;
+  color: #1d6fa3;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.status-badge--active {
+  background: #22c55e;
+}
+
+.status-badge--resolved {
+  background: #1d6fa3;
 }
 
 h1 {
