@@ -2,6 +2,7 @@ import { Component, AfterViewInit, OnInit, inject, signal } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReportesService } from '../reportes/application/reportes.service';
 import { Reporte } from '../reportes/domain/reporte.model';
+import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
 
 @Component({
@@ -16,6 +17,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly reportesService = inject(ReportesService);
+  private readonly profileService = inject(ProfileService);
   readonly successReportId = signal<string | null>(null);
 
   readonly tipoFiltro = signal('todos');
@@ -69,6 +71,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     lat: -34.603734,
     lng: -58.38157,
   };
+  private profilePhotoUrl =
+    'https://ui-avatars.com/api/?name=Perfil&background=e2e8f0&color=12355B&size=128';
+
 
   private buildPin(color: string, imageUrl?: string): L.DivIcon {
     const imageHtml = imageUrl
@@ -151,10 +156,22 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       console.error('Error cargando reportes', error);
     }
   }
-  ngOnInit(): void {
-    const reportId = this.route.snapshot.queryParamMap.get('reporte');
-    if (reportId) this.successReportId.set(reportId);
+
+  
+  async ngOnInit(): Promise<void> {
+  const reportId = this.route.snapshot.queryParamMap.get('reporte');
+  if (reportId) this.successReportId.set(reportId);
+
+  try {
+    const profile = await this.profileService.getProfile();
+
+    this.profilePhotoUrl =
+      profile.photoUrl ||
+      'https://ui-avatars.com/api/?name=Perfil&background=e2e8f0&color=12355B&size=128';
+  } catch (error) {
+    console.error('Error cargando perfil', error);
   }
+}
 
   ngAfterViewInit(): void {
     this.initializeMap();
@@ -194,11 +211,11 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         const lng = position.coords.longitude;
         this.map.setView([lat, lng], 15);
         L.marker(
-          [lat, lng],
-          {
-            icon: this.buildPin('#000000'),
-          }
-        ).addTo(this.map);
+  [lat, lng],
+  {
+    icon: this.buildPin('#000000', this.profilePhotoUrl),
+  }
+).addTo(this.map);
         setTimeout(() => this.map.invalidateSize(), 100);
       },
       () => {
