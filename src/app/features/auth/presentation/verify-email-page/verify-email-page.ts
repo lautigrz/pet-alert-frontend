@@ -53,6 +53,7 @@ export class VerifyEmailPage implements OnInit {
   private async finish(verified: 'ok' | 'error'): Promise<void> {
     if (this.tokenStorage.read()?.accessToken) {
       if (verified === 'ok') {
+        await this.refreshSessionSilently();
         this.toastService.success('¡Tu cuenta fue verificada!');
       } else {
         this.toastService.error('El enlace de verificación es inválido o expiró.');
@@ -61,5 +62,13 @@ export class VerifyEmailPage implements OnInit {
       return;
     }
     await this.router.navigate(['/login'], { queryParams: { verified } });
+  }
+
+  private async refreshSessionSilently(): Promise<void> {
+    try {
+      await this.authService.refreshSession();
+    } catch {
+      // Si el refresh falla, el token se renueva igual al volver a iniciar sesión.
+    }
   }
 }
