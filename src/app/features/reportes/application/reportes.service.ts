@@ -40,8 +40,10 @@ export class ReportesService {
     return reportes.filter((r) => {
       if (filtros.reportType && r.type !== filtros.reportType) return false;
       if (filtros.animalType && this.animalDe(r) !== filtros.animalType) return false;
-      if (filtros.createdFrom && r.createdAt < filtros.createdFrom) return false;
-      if (filtros.createdTo && r.createdAt > `${filtros.createdTo}T23:59:59.999Z`) return false;
+
+      const fecha = r.createdAt.slice(0, 10);
+      if (filtros.createdFrom && fecha < filtros.createdFrom) return false;
+      if (filtros.createdTo && fecha > filtros.createdTo) return false;
       return true;
     });
   }
