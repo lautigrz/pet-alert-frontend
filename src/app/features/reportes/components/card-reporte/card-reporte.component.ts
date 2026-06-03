@@ -88,4 +88,5 @@ export class CardReporteComponent {
     const dias = Math.floor(horas / 24);
     return `Hace ${dias}d`;
   }
+  
 }

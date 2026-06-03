@@ -2,13 +2,14 @@ import { Component, AfterViewInit, OnInit, inject, signal } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReportesService } from '../reportes/application/reportes.service';
 import { Reporte } from '../reportes/domain/reporte.model';
+import { CardReporteComponent } from '../reportes/components/card-reporte/card-reporte.component';
 import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
 
 @Component({
   selector: 'app-home-map',
   standalone: true,
-  imports: [],
+  imports: [CardReporteComponent],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
 })
@@ -25,47 +26,12 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly mascotaFiltro = signal('todos');
   readonly centrosFiltro = signal('todos');
 
-  readonly misReportes = [
-    {
-      nombre: 'Cari',
-      hace: 'Hace 2hs',
-      tipo: 'Mascota perdida',
-      direccion: 'Bartolomé Mitre 2000',
-      fecha: '01 Ene 2026',
-      hora: '13hs',
-      img: 'https://res.cloudinary.com/dbemu2gdd/image/upload/v1780504478/cats-8096304_1280_haesyr.jpg',
-    },
-  ];
 
-  readonly reportesCercanos = [
-    {
-      nombre: 'Cari',
-      hace: 'Hace 2hs',
-      tipo: 'Mascota perdida',
-      direccion: 'Bartolomé Mitre 2000',
-      fecha: '01 Ene 2026',
-      hora: '13hs',
-      img: 'https://res.cloudinary.com/dbemu2gdd/image/upload/v1780504325/OIP_kxmxxf.webp',
-    },
-    {
-      nombre: 'Charles',
-      hace: 'Hace 2hs',
-      tipo: 'Mascota avistada',
-      direccion: 'Bartolomé Mitre 2000',
-      fecha: '01 Ene 2026',
-      hora: '13hs',
-      img: 'https://res.cloudinary.com/dbemu2gdd/image/upload/v1780504325/black-bombay-cat-min-1536x1020_d6dhis.jpg',
-    },
-    {
-      nombre: 'Mandarina',
-      hace: 'Hace 2hs',
-      tipo: 'Mascota perdida',
-      direccion: 'Bartolomé Mitre 2000',
-      fecha: '01 Ene 2026',
-      hora: '13hs',
-      img: 'https://res.cloudinary.com/dbemu2gdd/image/upload/v1780504326/dog-5357794_1280_ehghha.jpg',
-    },
-  ];
+  readonly reportes = signal<Reporte[]>([]);
+  readonly misReportes = signal<Reporte[]>([]);
+  readonly reportesCercanos = signal<Reporte[]>([]);
+  readonly totalMisReportes = signal(0);
+  
 
   private readonly DEFAULT_LOCATION = {
     lat: -34.603734,
@@ -132,10 +98,16 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   private async cargarReportes(): Promise<void> {
     try {
-      const reportes: Reporte[] = await this.reportesService.getGenerales();
+      const [reportes, misReportes] = await Promise.all([
+  this.reportesService.getGenerales(),
+  this.reportesService.getMisReportes(),
+]);
 
       console.log('REPORTES', reportes);
-
+      this.reportes.set(reportes);
+      this.totalMisReportes.set(misReportes.length);
+      this.misReportes.set(misReportes.slice(0, 3));
+      this.reportesCercanos.set(reportes.slice(0, 5));
       reportes.forEach((reporte) => {
         const lat = reporte.location.latitude;
         const lng = reporte.location.longitude;

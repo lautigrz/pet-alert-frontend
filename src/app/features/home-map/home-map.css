@@ -1,0 +1,7 @@
+.home-card {
+  width: 100%;
+}
+
+.home-card app-card-reporte .card {
+  min-height: 185px;
+}
