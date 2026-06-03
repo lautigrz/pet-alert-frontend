@@ -14,9 +14,23 @@
         <span class="card__tiempo">{{ tiempoRelativo() }}</span>
       </div>
 
-      <span class="badge" [class.badge--perdida]="esPerdida()" [class.badge--avistado]="!esPerdida()">
-        @if (esPerdida()) { Mascota perdida } @else { Mascota avistada }
-      </span>
+      <div class="badges-group">
+        <span class="badge" [class.badge--perdida]="esPerdida()" [class.badge--avistado]="!esPerdida()">
+          @if (esPerdida()) { Mascota perdida } @else { Mascota avistada }
+        </span>
+        
+        @if (r.status && r.status !== 'ACTIVE') {
+          <span class="badge-status" [class.badge-status--resolved]="r.status === 'RESOLVED'">
+            @switch (r.status) {
+              @case ('RESOLVED') { ✔ Resuelto }
+            }
+          </span>
+        } @else if (r.status === 'ACTIVE') {
+          <span class="badge-status badge-status--active">
+            ✓ Activo
+          </span>
+        }
+      </div>
 
       <p class="card__atributos">{{ atributos() }}</p>
 

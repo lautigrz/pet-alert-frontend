@@ -23,6 +23,17 @@ export class InfoReporteComponent {
     );
   });
 
+  statusText = computed(() => {
+    const status = this.report().status;
+    return status === 'ACTIVE' ? 'Activo' : status === 'RESOLVED' ? 'Resuelto' : status;
+  });
+
+  statusBadgeClass = computed(() => ({
+    'status-badge': true,
+    'status-badge--active': this.report().status === 'ACTIVE',
+    'status-badge--resolved': this.report().status === 'RESOLVED',
+  }));
+
   estado = computed(() => (this.esPerdida() ? 'Mascota perdida' : 'Mascota avistada'));
 
   datos = computed(() => {

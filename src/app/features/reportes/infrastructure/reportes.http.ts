@@ -34,4 +34,14 @@ export class ReportesHttp {
       this.http.get<ReportesPaginados>(`${this.baseUrl}/reports`, { params }),
     );
   }
+
+  /** Actualizar estado del reporte a RESOLVED (PATCH /api/reports/status/:publicId). */
+  updateStatus(publicId: string, status: 'RESOLVED'): Promise<void> {
+    return firstValueFrom(
+      this.http.patch<void>(
+        `${this.baseUrl}/reports/status/${publicId}`,
+        { status }
+      ),
+    );
+  }
 }

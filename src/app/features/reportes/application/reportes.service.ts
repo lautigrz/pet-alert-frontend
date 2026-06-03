@@ -26,6 +26,15 @@ export class ReportesService {
     }
   }
 
+  /** Actualizar estado del reporte a RESOLVED. */
+  async updateToResolved(publicId: string): Promise<void> {
+    try {
+      await this.reportesHttp.updateStatus(publicId, 'RESOLVED');
+    } catch (error) {
+      throw this.mapError(error);
+    }
+  }
+
   /** Filtra en memoria (el endpoint paginado no recibe filtros). */
   private aplicarFiltros(reportes: Reporte[], filtros: ReporteFiltros): Reporte[] {
     return reportes.filter((r) => {

@@ -1,7 +1,16 @@
 <div class="info-card">
-  <span class="estado">
-    {{ estado() }}
-  </span>
+  <div class="badges-header">
+    <div class="badges-group">
+      <span class="badge-type" [class.badge-type--perdida]="esPerdida()" [class.badge-type--avistado]="!esPerdida()">
+        {{ estado() }}
+      </span>
+      <span [ngClass]="statusBadgeClass()">
+        {{ statusText() }}
+      </span>
+    </div>
+    <!-- ng-content para el botón de resolver -->
+    <ng-content select="[slot='resolve-button']"></ng-content>
+  </div>
 
   <h1>{{ titulo() }}</h1>
 
