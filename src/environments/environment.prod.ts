@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.petfinder.example/api',
+  apiUrl: 'https://pet-alertapi-production.up.railway.app/api',
 };
