@@ -10,7 +10,7 @@
       <app-galeria-reporte [report]="r" />
       <app-info-reporte [report]="r">
         
-        @if (r.status === 'ACTIVE') {
+        @if (r.status === 'ACTIVE' && esPropio()) {
           <div slot="resolve-button" class="action-wrapper">
             @if (!confirmandoResolucion()) {
               <button 
