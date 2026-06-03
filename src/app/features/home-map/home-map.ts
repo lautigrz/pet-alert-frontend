@@ -66,7 +66,23 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     lng: -58.38157,
   };
 
-  private buildPin(color: string): L.DivIcon {
+  private buildPin(color: string, imageUrl?: string): L.DivIcon {
+    const imageHtml = imageUrl
+      ? `
+      <img
+        src="${imageUrl}"
+        alt=""
+        style="
+          width:30px;
+          height:30px;
+          border-radius:50%;
+          object-fit:cover;
+          display:block;
+        "
+      />
+    `
+      : '';
+
     const html = `
     <div style="position:relative;width:44px;height:44px;">
       <div style="
@@ -86,8 +102,14 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         height:34px;
         border-radius:50%;
         border:2px solid #fff;
-        background:white;
-      "></div>
+        background:#fff;
+        overflow:hidden;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">
+        ${imageHtml}
+      </div>
     </div>
   `;
 
@@ -110,14 +132,25 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         const lng = reporte.location.longitude;
 
         const color = reporte.type === 'LOST' ? '#E8842E' : '#1D6FA3';
+        const imageUrl = reporte.details?.images?.[0]?.url;
+
+        const marker = L.marker([lat, lng], {
+          icon: this.buildPin(color, imageUrl),
+        })
+          .addTo(this.map)
+          .bindPopup(this.buildPopup(reporte), {
+            maxWidth: 270,
+            minWidth: 240,
+          });
 
         L.marker([lat, lng], {
-          icon: this.buildPin(color),
-        }).addTo(this.map).bindPopup(`
-        <strong>${reporte.type === 'LOST' ? 'Mascota perdida' : 'Mascota avistada'}</strong>
-        <br>
-        ${reporte.location.address}
-      `);
+          icon: this.buildPin(color, imageUrl),
+        })
+          .addTo(this.map)
+          .bindPopup(this.buildPopup(reporte), {
+            maxWidth: 270,
+            minWidth: 240,
+          });
       });
     } catch (error) {
       console.error('Error cargando reportes', error);
@@ -167,12 +200,12 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         this.map.setView([lat, lng], 15);
-       L.marker(
-  [lat, lng],
-  {
-    icon: this.buildPin('#000000'),
-  }
-).addTo(this.map);
+        L.marker(
+          [lat, lng],
+          {
+            icon: this.buildPin('#000000'),
+          }
+        ).addTo(this.map);
         setTimeout(() => this.map.invalidateSize(), 100);
       },
       () => {
@@ -180,5 +213,162 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         setTimeout(() => this.map.invalidateSize(), 100);
       },
     );
+  }
+
+  private buildPopup(reporte: Reporte): string {
+    const details = reporte.details as {
+      images?: { url: string }[];
+    };
+
+    const imageUrl = details.images?.[0]?.url;
+
+    const tipoTexto =
+      reporte.type === 'LOST' ? 'Mascota perdida' : 'Mascota encontrada';
+
+    const tipoColor =
+      reporte.type === 'LOST' ? '#E8842E' : '#1D6FA3';
+
+    const fecha = reporte.occurredAt
+      ? new Date(reporte.occurredAt).toLocaleDateString('es-AR')
+      : 'No informada';
+
+    const descripcion =
+      reporte.description?.trim() || 'Sin descripción adicional';
+
+    return `
+    <div style="
+      width:240px;
+      font-family: Nunito, sans-serif;
+      color:#12355B;
+    ">
+      ${imageUrl
+        ? `
+            <img
+              src="${imageUrl}"
+              alt="Foto del reporte"
+              style="
+                width:100%;
+                height:130px;
+                object-fit:contain;
+                border-radius:14px;
+                margin-bottom:10px;
+              "
+            />
+          `
+        : `
+            <div style="
+              width:100%;
+              height:130px;
+              border-radius:14px;
+              margin-bottom:10px;
+              background:#e2e8f0;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              color:#64748b;
+              font-size:13px;
+              font-weight:600;
+            ">
+              Sin foto
+            </div>
+          `
+      }
+
+      <div style="
+        display:inline-flex;
+        align-items:center;
+        background:${tipoColor};
+        color:white;
+        font-size:12px;
+        font-weight:700;
+        padding:5px 9px;
+        border-radius:8px;
+        margin-bottom:10px;
+      ">
+        ${tipoTexto}
+      </div>
+
+      <div style="
+        font-size:13px;
+        line-height:1.5;
+        color:#334155;
+        margin-bottom:8px;
+      ">
+        ${descripcion}
+      </div>
+
+      <div style="
+        font-size:13px;
+        line-height:1.6;
+      ">
+        <div>
+          <strong>Ubicación:</strong><br />
+          <span style="color:#334155;">${reporte.location.address}</span>
+        </div>
+
+        <div style="margin-top:6px;">
+          <strong>Fecha:</strong>
+          <span style="color:#334155;">${fecha}</span>
+        </div>
+      </div>
+
+      <a
+  href="/detalle-reporte/${reporte.publicId}"
+  style="
+    display:block;
+    text-align:center;
+    text-decoration:none;
+    width:100%;
+    box-sizing:border-box;
+    margin-top:12px;
+    background:#12355B;
+    color:white;
+    border:none;
+    border-radius:8px;
+    padding:9px 12px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    font-family: Nunito, sans-serif;
+  "
+>
+  Ver detalle
+</a>
+    </div>
+  `;
+  }
+
+  private formatAnimalType(value?: string): string {
+    if (!value) return 'No informado';
+
+    const normalized = value.toLowerCase();
+
+    if (normalized === 'dog') return 'Perro';
+    if (normalized === 'cat') return 'Gato';
+
+    return value;
+  }
+
+  private formatGenderType(value?: string): string {
+    if (!value) return 'No informado';
+
+    const normalized = value.toLowerCase();
+
+    if (normalized === 'male') return 'Macho';
+    if (normalized === 'female') return 'Hembra';
+
+    return value;
+  }
+
+  private formatSizeType(value?: string): string {
+    if (!value) return 'No informado';
+
+    const normalized = value.toLowerCase();
+
+    if (normalized === 'small') return 'Pequeño';
+    if (normalized === 'medium') return 'Mediano';
+    if (normalized === 'large') return 'Grande';
+
+    return value;
   }
 }
