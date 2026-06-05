@@ -31,6 +31,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       direccion: 'Bartolomé Mitre 2000',
       fecha: '01 Ene 2026',
       hora: '13hs',
+      img: 'https://res.cloudinary.com/dbemu2gdd/image/upload/v1780504478/cats-8096304_1280_haesyr.jpg',
     },
   ];
 
@@ -42,6 +43,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       direccion: 'Bartolomé Mitre 2000',
       fecha: '01 Ene 2026',
       hora: '13hs',
+      img: 'https://res.cloudinary.com/dbemu2gdd/image/upload/v1780504325/OIP_kxmxxf.webp',
     },
     {
       nombre: 'Charles',
@@ -50,6 +52,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       direccion: 'Bartolomé Mitre 2000',
       fecha: '01 Ene 2026',
       hora: '13hs',
+      img: 'https://res.cloudinary.com/dbemu2gdd/image/upload/v1780504325/black-bombay-cat-min-1536x1020_d6dhis.jpg',
     },
     {
       nombre: 'Mandarina',
@@ -58,6 +61,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       direccion: 'Bartolomé Mitre 2000',
       fecha: '01 Ene 2026',
       hora: '13hs',
+      img: 'https://res.cloudinary.com/dbemu2gdd/image/upload/v1780504326/dog-5357794_1280_ehghha.jpg',
     },
   ];
 
