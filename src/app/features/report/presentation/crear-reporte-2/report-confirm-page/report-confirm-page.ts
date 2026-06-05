@@ -42,7 +42,7 @@ export class ReportConfirmPage implements OnInit {
       const dataUrls = report.pet?.imageUrls ?? [];
       const photoFiles = await Promise.all(
         dataUrls.map(async (url, i) => {
-          const blob = await fetch(url).then((r) => r.blob());
+          const blob = await this.dataUrlToBlob(url);
           return new File([blob], `avistamiento-${i + 1}.jpg`, {
             type: blob.type || 'image/jpeg',
           });
@@ -79,6 +79,21 @@ export class ReportConfirmPage implements OnInit {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  private async dataUrlToBlob(dataUrl: string): Promise<Blob> {
+    if (dataUrl.startsWith('data:')) {
+      const arr = dataUrl.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+      const bstr = atob(arr[1]);
+      const n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      for (let i = 0; i < n; i++) {
+        u8arr[i] = bstr.charCodeAt(i);
+      }
+      return new Blob([u8arr], { type: mime });
+    }
+    return fetch(dataUrl).then((r) => r.blob());
   }
 
   private mapAnimalType(animalType: string): 'DOG' | 'CAT' {

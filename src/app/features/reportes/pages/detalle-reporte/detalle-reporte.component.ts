@@ -1,6 +1,6 @@
 import { Component,  OnInit, computed, signal, inject  } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ReportService } from '../../../report/application/report.service';
 import { ReportesService } from '../../application/reportes.service';
 import { ReportDetail } from '../../../../features/report/infrastructure/report.http';
@@ -79,7 +79,7 @@ export class DetalleReporteComponent implements OnInit{
     this.actualizando.set(true);
     try {
       await this.reportesService.updateToResolved(r.publicId);
-      
+
       this.report.update((current) =>
         current ? { ...current, status: 'RESOLVED' } : null,
       );
@@ -91,5 +91,11 @@ export class DetalleReporteComponent implements OnInit{
     } finally {
       this.actualizando.set(false);
     }
+  }
+
+  private readonly router = inject(Router);
+  irAEditar(): void {
+    const r = this.report();
+    if (r) this.router.navigate(['/detalle-reporte', r.publicId, 'editar']);
   }
 }

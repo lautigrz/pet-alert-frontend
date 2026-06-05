@@ -14,6 +14,7 @@ export interface CreateLostReportRequest {
     longitude: number;
   };
   description: string;
+  photos?: File[];
 }
 
 export interface CreateSightingReportRequest {
@@ -73,7 +74,7 @@ export interface ReportDetail {
   };
   user: {
     publicId: string;
-    username:string;
+    username: string;
     photoUrl: string | null;
   };
 }
@@ -99,6 +100,12 @@ export class ReportHttp {
     };
 
     formData.append('data', JSON.stringify(reportData));
+
+    if (body.photos && body.photos.length > 0) {
+      body.photos.forEach((photo: File) => {
+        formData.append('photos', photo);
+      });
+    }
 
     return firstValueFrom(
       this.http.post<CreateReportResponse>(`${this.baseUrl}/reports`, formData),
@@ -148,6 +155,46 @@ export class ReportHttp {
       this.http.get<ReportResponse[]>(`${this.baseUrl}/reports`),
     );
   }
+
+  updateReport(publicId: string, body: {
+    description?: string;
+    occurredAt?: Date;
+    location?: { address: string; latitude: number; longitude: number };
+    keepImageIds?: string[];
+    newPhotos?: File[];
+    sightingDetails?: {
+      petName?: string | null;
+      animalType?: 'DOG' | 'CAT';
+      genderType?: 'MALE' | 'FEMALE' | null;
+      sizeType?: 'SMALL' | 'MEDIUM' | 'LARGE' | null;
+      breed?: string | null;
+      hasIdCollar?: boolean;
+      color?: string;
+      isInTransit?: boolean;
+    };
+    lostDetails?: {
+      petPublicId: string;
+      name?: string | null;
+      animalType?: 'DOG' | 'CAT';
+      genderType?: 'MALE' | 'FEMALE' | null;
+      sizeType?: 'SMALL' | 'MEDIUM' | 'LARGE' | null;
+      breed?: string | null;
+      color?: string;
+      hasIdCollar?: boolean;
+    };
+  }): Promise<void> {
+    const formData = new FormData();
+
+    const { newPhotos, ...rest } = body;
+    formData.append('data', JSON.stringify(rest));
+
+    (newPhotos ?? []).forEach(file => formData.append('photos', file));
+
+    return firstValueFrom(
+      this.http.patch<void>(`${this.baseUrl}/reports/${publicId}`, formData),
+    );
+  }
+
 
   getReportByPublicId(publicId: string): Promise<ReportDetail> {
     return firstValueFrom(
