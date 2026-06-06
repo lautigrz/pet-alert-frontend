@@ -47,6 +47,16 @@ export const routes: Routes = [
         './features/auth/presentation/reset-password-page/reset-password-page'
       ).then((m) => m.ResetPasswordPage),
   },
+
+  {
+    path: 'detalle-reporte/:publicId/editar',
+    canActivate: [authGuard, verifiedGuard],
+    loadComponent: () =>
+      import('./features/reportes/pages/edit-report-page/edit-report-page.component').then(
+        (m) => m.EditReportPageComponent,
+      ),
+    },
+
   {
     path: '',
     component: AppShellComponent,

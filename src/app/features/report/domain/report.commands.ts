@@ -5,6 +5,7 @@ export interface CreateLostReportCommand {
   location: Location;
   description: string;
   occurredAt: Date;
+  photos?: File[];
 }
 
 export interface CreateSightingReportCommand {
@@ -20,6 +21,43 @@ export interface CreateSightingReportCommand {
   description: string;
   occurredAt: Date;
   photos?: File[];
+}
+
+export interface UpdateSightingReportDetailsCommand {
+  petName?: string | null;
+  animalType?: 'DOG' | 'CAT';
+  genderType?: ('MALE' | 'FEMALE') | null;
+  sizeType?: ('SMALL' | 'MEDIUM' | 'LARGE') | null;
+  breed?: string | null;
+  hasIdCollar?: boolean;
+  color?: string;
+  isInTransit?: boolean;
+}
+
+export interface UpdateLostReportDetailsCommand {
+  petPublicId: string;
+  name?: string | null;
+  animalType?: 'DOG' | 'CAT';
+  genderType?: ('MALE' | 'FEMALE') | null;
+  sizeType?: ('SMALL' | 'MEDIUM' | 'LARGE') | null;
+  breed?: string | null;
+  color?: string;
+  hasIdCollar?: boolean;
+}
+
+export interface UpdateReportCommand {
+  publicId: string;
+  description?: string;
+  occurredAt?: Date;
+  location?: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+  sightingDetails?: UpdateSightingReportDetailsCommand;
+  lostDetails?: UpdateLostReportDetailsCommand;
+  keepImageIds?: string[];
+  newPhotos?: File[];
 }
 
 export type CreateReportCommand = CreateLostReportCommand | CreateSightingReportCommand;

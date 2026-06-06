@@ -6,7 +6,7 @@ import {
   NetworkError,
   ReportSubmissionError,
 } from '../domain/report.errors';
-import { CreateLostReportCommand, CreateSightingReportCommand } from '../domain/report.commands';
+import { CreateLostReportCommand, CreateSightingReportCommand, UpdateReportCommand } from '../domain/report.commands';
 
 @Injectable({ providedIn: 'root' })
 export class ReportService {
@@ -24,6 +24,7 @@ export class ReportService {
           longitude: command.location.longitude,
         },
         description: command.description.trim(),
+        photos: command.photos,
       });
       return response;
     } catch (error) {
@@ -35,7 +36,7 @@ export class ReportService {
     try {
       const response = await this.reportHttp.createSightingReport({
         type: 'sighting',
-        petName: command.petName?.trim() ,
+        petName: command.petName?.trim(),
         animalType: command.animalType,
         genderType: command.genderType,
         sizeType: command.sizeType,
@@ -71,12 +72,41 @@ export class ReportService {
     if (error.status === 404) {
       return new InvalidPetDataError('Mascota no encontrada');
     }
+    if (error.status === 403) {
+      return new ReportSubmissionError('No tenés permiso para editar este reporte');
+    }
     return new ReportSubmissionError(
       error.error?.error ?? 'Error al enviar reporte'
     );
   }
 
-   async getReportByPublicId(publicId: string): Promise<ReportDetail> {
+  async updateReport(command: UpdateReportCommand): Promise<void> {
+    try {
+      await this.reportHttp.updateReport(command.publicId, {
+        description: command.description?.trim(),
+        occurredAt: command.occurredAt,
+        location: command.location,
+        keepImageIds: command.keepImageIds,
+        newPhotos: command.newPhotos,
+        sightingDetails: command.sightingDetails
+          ? {
+            petName: command.sightingDetails.petName?.trim() ?? null,
+            animalType: command.sightingDetails.animalType,
+            genderType: command.sightingDetails.genderType ?? null,
+            sizeType: command.sightingDetails.sizeType ?? null,
+            breed: command.sightingDetails.breed?.trim() ?? null,
+            hasIdCollar: command.sightingDetails.hasIdCollar,
+            color: command.sightingDetails.color?.trim() ?? '',
+          }
+          : undefined,
+        lostDetails: command.lostDetails,
+      });
+    } catch (error) {
+      throw this.mapReportError(error);
+    }
+  }
+
+  async getReportByPublicId(publicId: string): Promise<ReportDetail> {
     try {
       return await this.reportHttp.getReportByPublicId(publicId);
     } catch (error) {
