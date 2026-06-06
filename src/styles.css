@@ -17,3 +17,53 @@ app-root {
   display: block;
   height: 100%;
 }
+
+.leaflet-bar,
+.leaflet-touch .leaflet-bar {
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(18, 53, 91, 0.2);
+}
+
+.leaflet-bar a,
+.leaflet-bar a:focus,
+.leaflet-bar a:active,
+.leaflet-touch .leaflet-bar a,
+.leaflet-touch .leaflet-bar a:focus,
+.leaflet-touch .leaflet-bar a:active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  background-color: #12355b;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+}
+
+.leaflet-bar a:hover,
+.leaflet-touch .leaflet-bar a:hover {
+  width: 34px;
+  height: 34px;
+  background-color: #1d6fa3;
+  color: #ffffff;
+}
+
+.leaflet-bar a + a,
+.leaflet-touch .leaflet-bar a + a {
+  border-top: 1px solid #1d6fa3;
+}
+
+.leaflet-bar a.leaflet-disabled,
+.leaflet-touch .leaflet-bar a.leaflet-disabled {
+  background-color: #6b7c92;
+  color: #d8dee6;
+}
+
+.focus-control a img {
+  width: 18px;
+  height: 18px;
+}
