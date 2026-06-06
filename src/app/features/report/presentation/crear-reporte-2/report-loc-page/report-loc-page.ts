@@ -5,6 +5,12 @@ import { WizardStepperComponent } from '../../../../../shared/component/wizard-s
 import { ReportWizardService } from '../../../application/report-wizard.service';
 import { Location } from '../../../domain/report.model';
 
+interface LocationSuggestion {
+  displayName: string;
+  lat: number;
+  lng: number;
+}
+
 @Component({
   selector: 'app-report-loc-page',
   standalone: true,
@@ -22,6 +28,7 @@ export class ReportLocationPage implements AfterViewInit, OnDestroy {
   readonly latitude = signal(0);
   readonly longitude = signal(0);
   readonly searchTerm = signal('');
+  readonly suggestions = signal<LocationSuggestion[]>([]);
   readonly maxDate: string;
   readonly hours = Array.from({ length: 24 }, (_, i) => this.pad(i));
   readonly minutes = Array.from({ length: 60 }, (_, i) => this.pad(i));
@@ -30,6 +37,7 @@ export class ReportLocationPage implements AfterViewInit, OnDestroy {
 
   private map!: L.Map;
   private marker!: L.Marker;
+  private searchDebounce?: ReturnType<typeof setTimeout>;
   private readonly defaultCenter: L.LatLngTuple = [-34.603734, -58.38157];
 
   constructor() {
@@ -58,9 +66,13 @@ export class ReportLocationPage implements AfterViewInit, OnDestroy {
     const center: L.LatLngTuple = editing ? [this.latitude(), this.longitude()] : this.defaultCenter;
 
     this.map = L.map('report-location-map').setView(center, editing ? 16 : 13);
+    this.map.attributionControl.setPrefix(false);
+    this.map.attributionControl.setPosition('bottomleft');
+    this.map.zoomControl.setPosition('bottomright');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap',
     }).addTo(this.map);
+    this.addFocusControl();
 
     this.marker = L.marker(center, { draggable: true, icon: this.buildPin() }).addTo(this.map);
 
@@ -96,19 +108,67 @@ export class ReportLocationPage implements AfterViewInit, OnDestroy {
     );
   }
 
-  async search(): Promise<void> {
+  private addFocusControl(): void {
+    const control = new L.Control({ position: 'bottomright' });
+    control.onAdd = () => {
+      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control focus-control');
+      const link = L.DomUtil.create('a', '', container) as HTMLAnchorElement;
+      link.href = '#';
+      link.title = 'Usar mi ubicación actual';
+      link.setAttribute('role', 'button');
+      link.innerHTML = '<img src="Focus-map.svg" alt="" />';
+      L.DomEvent.on(link, 'click', L.DomEvent.stop).on(link, 'click', () => this.locateMe());
+      return container;
+    };
+    control.addTo(this.map);
+  }
+
+  onSearchInput(value: string): void {
+    this.searchTerm.set(value);
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    if (value.trim().length < 3) {
+      this.suggestions.set([]);
+      return;
+    }
+    this.searchDebounce = setTimeout(() => this.fetchSuggestions(), 350);
+  }
+
+  private async fetchSuggestions(): Promise<void> {
     const query = this.searchTerm().trim();
     if (!query) return;
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
+        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`,
       );
       const data = await res.json();
-      if (!data.length) return;
-      this.applyLocation(parseFloat(data[0].lat), parseFloat(data[0].lon), data[0].display_name);
+      this.suggestions.set(
+        data.map((r: { display_name: string; lat: string; lon: string }) => ({
+          displayName: r.display_name,
+          lat: parseFloat(r.lat),
+          lng: parseFloat(r.lon),
+        })),
+      );
     } catch {
-      return;
+      this.suggestions.set([]);
     }
+  }
+
+  selectSuggestion(suggestion: LocationSuggestion): void {
+    this.searchTerm.set(suggestion.displayName);
+    this.suggestions.set([]);
+    this.applyLocation(suggestion.lat, suggestion.lng, suggestion.displayName);
+  }
+
+  async search(): Promise<void> {
+    if (!this.suggestions().length) await this.fetchSuggestions();
+    const first = this.suggestions()[0];
+    if (first) this.selectSuggestion(first);
+  }
+
+  clearSearch(): void {
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    this.searchTerm.set('');
+    this.suggestions.set([]);
   }
 
   nextStep(): void {
@@ -198,14 +258,22 @@ export class ReportLocationPage implements AfterViewInit, OnDestroy {
   }
 
   private buildPin(): L.DivIcon {
-    const photo = this.wizard.getCurrentReport().pet?.imageUrls?.[0];
+    const report = this.wizard.getCurrentReport();
+    const lost = report.type === 'lost';
+    const color = lost ? '#E8842E' : '#12355B';
+    const fallback = lost
+      ? 'Icono-mascota-perdida.png'
+      : this.wizard.inTransit()
+        ? 'Icono-avistamiento-transito.png'
+        : 'Icono-avistamiento-sin-transito.png';
+    const photo = report.pet?.imageUrls?.[0];
     const inner = photo
       ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;display:block;" />`
-      : '';
+      : `<img src="${fallback}" style="width:20px;height:20px;object-fit:contain;display:block;" />`;
     const html = `
       <div style="position:relative;width:44px;height:44px;">
-        <div style="width:44px;height:44px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#E8842E;box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>
-        <div style="position:absolute;top:5px;left:5px;width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid #fff;background:#12355B;">${inner}</div>
+        <div style="width:44px;height:44px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>
+        <div style="position:absolute;top:5px;left:5px;width:34px;height:34px;border-radius:50%;overflow:hidden;background:${color};display:flex;align-items:center;justify-content:center;">${inner}</div>
       </div>`;
     return L.divIcon({ html, className: '', iconSize: [44, 44], iconAnchor: [22, 44] });
   }

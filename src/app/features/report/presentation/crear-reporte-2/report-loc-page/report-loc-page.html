@@ -27,9 +27,31 @@
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.3-4.3" />
           </svg>
-          <input id="search" type="text" [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)"
-            (keyup.enter)="search()" placeholder="Buscar"
-            class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400" />
+          <input id="search" type="text" [value]="searchTerm()" (input)="onSearchInput($any($event.target).value)"
+            (keyup.enter)="search()" placeholder="Buscar" autocomplete="off"
+            class="w-full pl-9 pr-9 py-2.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400" />
+
+          @if (searchTerm()) {
+            <button type="button" (click)="clearSearch()" aria-label="Limpiar búsqueda"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+              </svg>
+            </button>
+          }
+
+          @if (suggestions().length) {
+            <ul class="absolute left-0 right-0 mt-1 z-[1000] bg-white border border-slate-200 rounded-md shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+              @for (s of suggestions(); track s.displayName) {
+                <li>
+                  <button type="button" (click)="selectSuggestion(s)"
+                    class="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 border-b border-slate-100 last:border-0">
+                    {{ s.displayName }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -61,21 +83,9 @@
       <div class="relative rounded-xl overflow-hidden border border-slate-200 h-[420px]">
         <div id="report-location-map" class="w-full h-full"></div>
 
-        <div class="absolute top-4 left-4 z-[1000] bg-[#12355B] text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-md pointer-events-none ml-8">
+        <div class="absolute top-4 left-4 z-[1000] bg-[#12355B] text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-md pointer-events-none">
           Arrastrá el pin para ajustar
         </div>
-
-        <button type="button" (click)="locateMe()" aria-label="Usar mi ubicación actual"
-          class="absolute bottom-4 right-4 z-[1000] w-11 h-11 rounded-full bg-[#E8842E] hover:bg-[#d57821] text-white shadow-lg flex items-center justify-center transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" x2="12" y1="2" y2="5" />
-            <line x1="12" x2="12" y1="19" y2="22" />
-            <line x1="2" x2="5" y1="12" y2="12" />
-            <line x1="19" x2="22" y1="12" y2="12" />
-            <circle cx="12" cy="12" r="6" />
-            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-          </svg>
-        </button>
       </div>
     </div>
 
