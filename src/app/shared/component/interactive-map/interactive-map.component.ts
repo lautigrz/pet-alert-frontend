@@ -5,7 +5,6 @@ import {
   input,
   output,
   signal,
-  computed,
 } from '@angular/core';
 import * as L from 'leaflet';
 

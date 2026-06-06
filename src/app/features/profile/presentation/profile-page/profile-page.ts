@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProfileService } from '../../application/profile.service';
 import { UpdatedProfile } from '../../domain/profile.model';
@@ -14,7 +14,7 @@ type ProfileTab = 'reports' | 'missions' | 'achievements';
 })
 
 
-export class ProfilePage {
+export class ProfilePage implements OnInit  {
   private readonly profileService = inject(ProfileService);
 
   readonly rutaMiPerfil = '/profile/edit';
