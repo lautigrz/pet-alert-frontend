@@ -66,14 +66,22 @@ export class ReportLocationComponent implements AfterViewInit, OnDestroy {
     this.map.invalidateSize();
   }
   private buildPin(): L.DivIcon {
-    const photo = this.report().details.images[0]?.url ?? null;
+    const r = this.report();
+    const lost = r.type === 'LOST';
+    const color = lost ? '#E8842E' : '#12355B';
+    const fallback = lost
+      ? 'Icono-mascota-perdida.png'
+      : r.details.isInTransit
+        ? 'Icono-avistamiento-transito.png'
+        : 'Icono-avistamiento-sin-transito.png';
+    const photo = r.details.images[0]?.url;
     const inner = photo
       ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;display:block;" />`
-      : '';
+      : `<img src="${fallback}" style="width:20px;height:20px;object-fit:contain;display:block;" />`;
     const html = `
         <div style="position:relative;width:44px;height:44px;">
-          <div style="width:44px;height:44px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#E8842E;box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>
-          <div style="position:absolute;top:5px;left:5px;width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid #fff;background:#12355B;">${inner}</div>
+          <div style="width:44px;height:44px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>
+          <div style="position:absolute;top:5px;left:5px;width:34px;height:34px;border-radius:50%;overflow:hidden;background:${color};display:flex;align-items:center;justify-content:center;">${inner}</div>
         </div>`;
     return L.divIcon({ html, className: '', iconSize: [44, 44], iconAnchor: [22, 44] });
   }

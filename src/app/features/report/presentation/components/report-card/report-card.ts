@@ -59,12 +59,12 @@ export class ReportCardComponent {
 
   readonly estadoLabel = computed(() => {
     const s = this.data()?.status;
-    return s === 'RESOLVED' ? 'Resuelto' : s === 'CLOSED' ? 'Cerrado' : 'Activo';
+    return s === 'ACTIVE' ? 'Activo' : 'Cerrado';
   });
 
   readonly estadoColor = computed(() => {
     const s = this.data()?.status;
-    return s === 'RESOLVED' ? '#1D6FA3' : s === 'CLOSED' ? '#94A3B8' : '#E8842E';
+    return s === 'ACTIVE' ? '#E8842E' : '#94A3B8';
   });
 
   

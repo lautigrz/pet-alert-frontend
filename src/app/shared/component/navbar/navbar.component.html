@@ -21,7 +21,7 @@
       <button type="button" (click)="toggleMenu()" class="flex items-center gap-2.5 select-none">
         <span class="w-9 h-9 rounded-full bg-slate-200 bg-cover bg-center shrink-0"
           [style.background-image]="'url(' + (fotoUsuario() || defaultAvatar) + ')'"></span>
-        <span class="font-semibold text-slate-700 hidden sm:inline">{{ nombreUsuario() }}</span>
+        <span class="font-semibold text-slate-700 hidden sm:inline capitalize">{{ nombreUsuario() }}</span>
         <svg class="w-4 h-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m6 9 6 6 6-6" />
         </svg>

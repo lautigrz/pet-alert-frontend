@@ -23,7 +23,7 @@ export class ReportInfoComponent {
 
   estadoColor = computed(() => {
     const s = this.report().status;
-    return s === 'RESOLVED' ? '#1D6FA3' : s === 'CLOSED' ? '#94A3B8' : '#E8842E';
+    return s === 'ACTIVE' ? '#E8842E' : '#94A3B8';
   });
 
   titulo = computed(() => {
@@ -37,7 +37,7 @@ export class ReportInfoComponent {
 
   statusText = computed(() => {
     const status = this.report().status;
-    return status === 'ACTIVE' ? 'Activo' : status === 'RESOLVED' ? 'Resuelto' : status;
+    return status === 'ACTIVE' ? 'Activo' : 'Cerrado';
   });
 
   statusBadgeClass = computed(() => ({

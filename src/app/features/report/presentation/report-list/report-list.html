@@ -65,8 +65,9 @@
   </div>
 </aside>
 
-<main class="flex-1 bg-[#f3f4f6] overflow-y-auto px-8 py-7">
-  <div class="max-w-[1180px]">
+<main class="flex-1 bg-[#f3f4f6] flex flex-col min-h-0 overflow-hidden">
+  <div class="shrink-0 px-8 pt-7">
+   <div class="max-w-[1180px]">
     <h1 class="text-2xl font-extrabold text-[#12355B] mb-5">Reportes</h1>
 
     <div class="inline-flex items-stretch mb-5 bg-white border border-slate-200 rounded-xl overflow-hidden divide-x divide-slate-200">
@@ -97,7 +98,11 @@
         (input)="busqueda.set($any($event.target).value)"
       />
     </div>
+   </div>
+  </div>
 
+  <div class="flex-1 min-h-0 overflow-y-auto px-8 pb-7">
+   <div class="max-w-[1180px]">
     @if (cargando()) {
       <div class="py-12 px-6 text-center text-slate-500 text-[15px] bg-white border border-dashed border-slate-200 rounded-2xl">Cargando reportes…</div>
     } @else if (error()) {
@@ -127,5 +132,6 @@
         }
       </div>
     }
+   </div>
   </div>
 </main>
