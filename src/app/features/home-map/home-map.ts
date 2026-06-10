@@ -1,7 +1,7 @@
 import { Component, AfterViewInit, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReportesService } from '../reportes/application/reportes.service';
-import { Reporte, SightingDetails } from '../reportes/domain/reporte.model';
+import { AnimalType, Reporte, SightingDetails } from '../reportes/domain/reporte.model';
 import { CardReporteComponent } from '../reportes/components/card-reporte/card-reporte.component';
 import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
@@ -10,6 +10,20 @@ interface LocationSuggestion {
   displayName: string;
   lat: number;
   lng: number;
+}
+
+interface Lugar {
+  nombre: string;
+  lat: number;
+  lng: number;
+}
+
+interface OverpassElement {
+  tags?: {
+    name?: string;
+  };
+  lat: number;
+  lon: number;
 }
 
 @Component({
@@ -42,7 +56,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly misReportes = signal<Reporte[]>([]);
   readonly reportesCercanos = signal<Reporte[]>([]);
   readonly totalMisReportes = signal(0);
-  readonly lugares = signal<any[]>([]);
+  readonly lugares = signal<Lugar[]>([]);
   
 
   private readonly DEFAULT_LOCATION = {
@@ -198,12 +212,10 @@ aplicarFiltros(): void {
   if (this.mascotaFiltro() === 'perro') {
 
     filtrados = filtrados.filter(reporte => {
-
       const animalType =
-        (reporte.details as any).animalType;
+        (reporte.details as { animalType?: AnimalType }).animalType;
 
       return animalType === 'DOG';
-
     });
 
   }
@@ -212,12 +224,10 @@ aplicarFiltros(): void {
 if (this.mascotaFiltro() === 'gato') {
 
   filtrados = filtrados.filter(reporte => {
-
     const animalType =
-      (reporte.details as any).animalType;
+      (reporte.details as { animalType?: AnimalType }).animalType;
 
     return animalType === 'CAT';
-
   });
 
 }
@@ -422,41 +432,28 @@ private async buscarLugares(
       }
     );
 
-    const data = await response.json();
+    const data = await response.json() as { elements: OverpassElement[] };
     console.log(
-  data.elements.map((l: any) => ({
-    nombre: l.tags?.name,
-    lat: l.lat,
-    lng: l.lon
-  }))
-);
-    
+      data.elements.map((l) => ({
+        nombre: l.tags?.name,
+        lat: l.lat,
+        lng: l.lon,
+      }))
+    );
 
     this.lugares.set(
-      data.elements.map((l: any) => ({
+      data.elements.map((l) => ({
         nombre:
           l.tags?.name ||
           (tipo === 'police'
             ? 'Comisaría'
             : 'Veterinaria'),
         lat: l.lat,
-        lng: l.lon
+        lng: l.lon,
       }))
     );
 
-    this.lugares.set(
-  data.elements.map((l: any) => ({
-    nombre:
-      l.tags?.name ||
-      (tipo === 'police'
-        ? 'Comisaría'
-        : 'Veterinaria'),
-    lat: l.lat,
-    lng: l.lon
-  }))
-);
-
-this.dibujarLugares();
+    this.dibujarLugares();
 
 
 
