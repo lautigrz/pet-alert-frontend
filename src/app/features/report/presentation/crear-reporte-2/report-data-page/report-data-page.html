@@ -20,7 +20,7 @@
     <input #fileInput type="file" accept="image/*" multiple class="hidden" (change)="onFilesSelected($event)" />
 
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-      <div class="bg-white border border-slate-200 rounded-xl p-5 flex flex-col gap-4">
+      <div class="bg-white border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
         <div class="flex items-start gap-4">
           <div class="flex-1 min-w-0">
             <span class="block text-sm font-semibold text-[#12355B]">Foto de la mascota</span>
@@ -141,9 +141,14 @@
           </div>
           <div>
             <label for="breed" class="block text-sm font-semibold text-[#12355B] mb-1.5">Raza</label>
-            <input id="breed" type="text" [value]="petBreed()" (input)="petBreed.set($any($event.target).value)"
-              placeholder="Raza"
-              class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400" />
+            <select id="breed" (change)="petBreed.set($any($event.target).value)"
+              [class.text-slate-400]="!petBreed()"
+              class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]">
+              <option value="" disabled hidden [selected]="!petBreed()">Raza</option>
+              @for (breed of breedOptions(); track breed) {
+                <option [value]="breed" [selected]="breed === petBreed()" class="text-slate-700">{{ breed }}</option>
+              }
+            </select>
           </div>
         </div>
 
@@ -165,9 +170,14 @@
           </div>
           <div class="w-[calc(50%-0.5rem)]">
             <label for="color" class="block text-sm font-semibold text-[#12355B] mb-1.5">Color</label>
-            <input id="color" type="text" [value]="petColor()" (input)="petColor.set($any($event.target).value)"
-              placeholder="Ej: marrón y blanco"
-              class="w-full px-4 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400" />
+            <select id="color" (change)="petColor.set($any($event.target).value)"
+              [class.text-slate-400]="!petColor()"
+              class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]">
+              <option value="" disabled hidden [selected]="!petColor()">Color</option>
+              @for (color of colorOptions(); track color) {
+                <option [value]="color" [selected]="color === petColor()" class="text-slate-700">{{ color }}</option>
+              }
+            </select>
           </div>
         </div>
 

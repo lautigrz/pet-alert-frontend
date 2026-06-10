@@ -1,0 +1,47 @@
+export const DOG_BREEDS = [
+  'Mestizo',
+  'Labrador',
+  'Caniche',
+  'Bulldog',
+  'Pastor Alemán',
+  'Golden Retriever',
+  'Chihuahua',
+  'Boxer',
+  'Dálmata',
+  'Salchicha',
+  'Pitbull',
+  'Rottweiler',
+  'Beagle',
+  'Border Collie',
+  'Pug',
+  'Otra',
+];
+
+export const CAT_BREEDS = [
+  'Mestizo',
+  'Siamés',
+  'Persa',
+  'Angora',
+  'Bengalí',
+  'Maine Coon',
+  'Esfinge',
+  'Común europeo',
+  'Otra',
+];
+
+export const PET_COLORS = [
+  'Negro',
+  'Blanco',
+  'Marrón',
+  'Gris',
+  'Atigrado',
+  'Naranja',
+  'Crema',
+  'Beige',
+  'Dorado',
+  'Negro y blanco',
+  'Marrón y blanco',
+  'Tricolor',
+  'Manchado',
+  'Otro',
+];
