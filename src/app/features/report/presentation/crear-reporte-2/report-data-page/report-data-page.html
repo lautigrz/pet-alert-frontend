@@ -70,18 +70,20 @@
           </div>
         </div>
 
-        <div class="flex flex-wrap gap-x-8 gap-y-3">
+        <div class="flex flex-wrap gap-x-6 gap-y-3">
           <div>
             <span class="block text-sm font-semibold text-[#12355B] mb-1.5">Especie</span>
             <div class="flex gap-2">
               <button type="button" (click)="petSpecies.set('gato')"
-                class="px-4 py-1.5 rounded-md text-sm font-semibold border transition"
+                class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petSpecies() === 'gato' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
+                <app-pet-icon name="gato" class="w-4 h-4" />
                 Gato
               </button>
               <button type="button" (click)="petSpecies.set('perro')"
-                class="px-4 py-1.5 rounded-md text-sm font-semibold border transition"
+                class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petSpecies() === 'perro' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
+                <app-pet-icon name="perro" class="w-4 h-4" />
                 Perro
               </button>
             </div>
@@ -91,13 +93,15 @@
             <span class="block text-sm font-semibold text-[#12355B] mb-1.5">Género</span>
             <div class="flex gap-2">
               <button type="button" (click)="petGender.set('macho')"
-                class="px-4 py-1.5 rounded-md text-sm font-semibold border transition"
+                class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petGender() === 'macho' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
+                <app-pet-icon name="macho" class="w-4 h-4" />
                 Macho
               </button>
               <button type="button" (click)="petGender.set('hembra')"
-                class="px-4 py-1.5 rounded-md text-sm font-semibold border transition"
+                class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petGender() === 'hembra' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
+                <app-pet-icon name="hembra" class="w-4 h-4" />
                 Hembra
               </button>
             </div>
@@ -107,18 +111,21 @@
             <span class="block text-sm font-semibold text-[#12355B] mb-1.5">Tamaño</span>
             <div class="flex gap-2">
               <button type="button" (click)="petSize.set('pequeño')"
-                class="px-4 py-1.5 rounded-md text-sm font-semibold border transition"
+                class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petSize() === 'pequeño' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
+                <app-pet-icon name="huella" class="w-3 h-3" />
                 Pequeño
               </button>
               <button type="button" (click)="petSize.set('mediano')"
-                class="px-4 py-1.5 rounded-md text-sm font-semibold border transition"
+                class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petSize() === 'mediano' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
+                <app-pet-icon name="huella" class="w-4 h-4" />
                 Mediano
               </button>
               <button type="button" (click)="petSize.set('grande')"
-                class="px-4 py-1.5 rounded-md text-sm font-semibold border transition"
+                class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petSize() === 'grande' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
+                <app-pet-icon name="huella" class="w-5 h-5" />
                 Grande
               </button>
             </div>
