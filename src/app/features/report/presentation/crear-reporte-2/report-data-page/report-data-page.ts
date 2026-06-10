@@ -1,13 +1,16 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { WizardStepperComponent } from '../../../../../shared/component/wizard-stepper/wizard-stepper.component';
+import { PetIconComponent } from '../../../../../shared/component/pet-icon/pet-icon.component';
 import { ReportWizardService } from '../../../application/report-wizard.service';
 import { Pet, SightingDetails } from '../../../domain/report.model';
+import { DOG_BREEDS, PET_COLORS } from '../../../domain/pet-options';
+import { CatalogService } from '../../../application/catalog.service';
 
 @Component({
   selector: 'app-report-data-page',
   standalone: true,
-  imports: [RouterLink, WizardStepperComponent],
+  imports: [RouterLink, WizardStepperComponent, PetIconComponent],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './report-data-page.html',
 })
@@ -28,7 +31,17 @@ export class ReportDataPage {
   hasIdentification = signal<'si' | 'no'>('no');
   photos = signal<string[]>([]);
 
+  private readonly catalog = inject(CatalogService);
+  readonly colorOptions = signal<string[]>(PET_COLORS);
+  readonly breedOptions = signal<string[]>(DOG_BREEDS);
+
   constructor() {
+    this.catalog.getColors().then((colors) => this.colorOptions.set(colors));
+    effect(() => {
+      const species = this.petSpecies() === 'gato' ? 'CAT' : 'DOG';
+      this.catalog.getBreeds(species).then((breeds) => this.breedOptions.set(breeds));
+    });
+
     const pet = this.wizardService.getCurrentReport().pet;
     if (!pet) return;
     this.petName.set(pet.name ?? '');

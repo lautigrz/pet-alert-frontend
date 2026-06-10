@@ -217,14 +217,14 @@
 </span>
 </div>
 <a
-  routerLink="/reportes/pages/lista-reportes/lista-reportes?misReportes=true"
+  routerLink="/reports"
   class="text-xs text-[#E8842E] font-semibold hover:underline"
 >
   Ver todos mis reportes
 </a>
     @for (r of misReportes(); track r.publicId) {
   <div class="home-card mt-3">
-  <app-card-reporte [reporte]="r"></app-card-reporte>
+  <app-report-card [reporte]="r"></app-report-card>
 </div>
 } 
   </div>
@@ -237,14 +237,14 @@
 </span>
 </div>
     <a
-  routerLink="/reportes/pages/lista-reportes/lista-reportes?cercanos=true"
+  routerLink="/reports"
   class="text-xs text-[#E8842E] font-semibold mb-1 block hover:underline"
 >
   Ver todos los reportes
 </a>
     @for (r of reportesCercanos(); track r.publicId) {
   <div class="home-card mt-3">
-  <app-card-reporte [reporte]="r"></app-card-reporte>
+  <app-report-card [reporte]="r"></app-report-card>
 </div>
 } 
   </div>
