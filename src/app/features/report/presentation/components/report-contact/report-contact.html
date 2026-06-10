@@ -1,0 +1,29 @@
+<div class="bg-white border border-slate-200 rounded-2xl p-5">
+  <h3 class="text-base font-bold text-[#12355B] mb-4">Contacto</h3>
+
+  <div class="flex items-center gap-3 mb-4">
+    <img [src]="imagenUsuario()" alt="" class="w-11 h-11 rounded-full object-cover bg-slate-100 shrink-0" />
+    <span class="text-sm font-semibold text-[#E8842E] truncate">
+      {{ username() }}@if (esPropio()) { (tú) }
+    </span>
+  </div>
+
+  @if (esPropio()) {
+    <button
+      type="button"
+      class="w-full inline-flex items-center justify-center gap-2 bg-[#1D6FA3] hover:bg-[#185c87] text-white text-sm font-semibold py-2.5 rounded-lg transition"
+    >
+      <app-pet-icon name="sparks" class="w-4 h-4" />
+      Coincidencias
+    </button>
+  } @else {
+    <button
+      type="button"
+      class="w-full bg-[#12355B] hover:bg-[#0e2a4a] text-white text-sm font-semibold py-2.5 rounded-lg transition"
+    >
+      Enviar mensaje
+    </button>
+  }
+
+  <ng-content></ng-content>
+</div>

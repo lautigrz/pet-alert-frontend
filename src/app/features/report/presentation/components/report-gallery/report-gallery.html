@@ -1,0 +1,66 @@
+<div class="flex flex-col gap-3">
+  @if (imagenPrincipal()) {
+    <div
+      class="rounded-2xl overflow-hidden bg-slate-100 aspect-[16/9] cursor-pointer"
+      role="button"
+      tabindex="0"
+      (click)="abrirModal()"
+      (keyup.enter)="abrirModal()"
+    >
+      <img [src]="imagenPrincipal()" alt="Foto principal de la mascota" class="w-full h-full object-cover" />
+    </div>
+  } @else {
+    <div class="rounded-2xl bg-white border-2 border-dashed border-slate-200 aspect-[16/9] flex items-center justify-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+        <circle cx="12" cy="13" r="3" />
+      </svg>
+    </div>
+  }
+
+  @if (imagenes().length > 1) {
+    <div class="flex gap-3">
+      @for (url of imagenes(); track url; let i = $index) {
+        <div
+          class="flex-1 min-w-0 aspect-[16/9] rounded-xl overflow-hidden bg-slate-100 cursor-pointer border-2 transition"
+          [class]="i === indiceActual() ? 'border-[#E8842E]' : 'border-transparent hover:border-slate-300'"
+          role="button"
+          tabindex="0"
+          (click)="seleccionarImagen(i)"
+          (keyup.enter)="seleccionarImagen(i)"
+        >
+          <img [src]="url" [alt]="'Foto ' + (i + 1)" class="w-full h-full object-cover" />
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (modalAbierto()) {
+  <div class="fixed inset-0 z-[3000] bg-black/80 flex items-center justify-center p-6" role="dialog" aria-modal="true" tabindex="0" (click)="onOverlayClick($event)" (keyup.escape)="cerrarModal()">
+    <button type="button" class="absolute top-5 right-7 text-white/80 hover:text-white text-4xl leading-none" aria-label="Cerrar" (click)="cerrarModal()">
+      &times;
+    </button>
+
+    @if (imagenes().length > 1) {
+      <button type="button" class="absolute left-4 md:left-10 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition" aria-label="Anterior" (click)="anterior()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      </button>
+      <button type="button" class="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition" aria-label="Siguiente" (click)="siguiente()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </button>
+    }
+
+    <img [src]="imagenModal()" alt="Imagen ampliada" class="max-w-[88vw] max-h-[85vh] rounded-xl" />
+
+    @if (imagenes().length > 1) {
+      <span class="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/90 text-sm bg-black/40 px-3 py-1 rounded-full">
+        {{ modalIndex() + 1 }} / {{ imagenes().length }}
+      </span>
+    }
+  </div>
+}

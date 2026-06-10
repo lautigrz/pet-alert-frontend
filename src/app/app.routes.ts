@@ -49,15 +49,6 @@ export const routes: Routes = [
   },
 
   {
-    path: 'detalle-reporte/:publicId/editar',
-    canActivate: [authGuard, verifiedGuard],
-    loadComponent: () =>
-      import('./features/reportes/pages/edit-report-page/edit-report-page.component').then(
-        (m) => m.EditReportPageComponent,
-      ),
-    },
-
-  {
     path: '',
     component: AppShellComponent,
     canActivate: [authGuard],
@@ -68,11 +59,11 @@ export const routes: Routes = [
           import('./features/home-map/home-map').then((m) => m.HomeMapComponent),
       },
       {
-        path: 'reportes',
+        path: 'reports',
         loadComponent: () =>
           import(
-            './features/reportes/pages/lista-reportes/lista-reportes.component'
-          ).then((m) => m.ListaReportesComponent),
+            './features/report/presentation/report-list/report-list'
+          ).then((m) => m.ReportListPage),
       },
       {
         path: 'profile',
@@ -89,11 +80,19 @@ export const routes: Routes = [
           ).then((m) => m.EditProfilePage),
       },
       {
-        path: 'detalle-reporte/:publicId',
+        path: 'reports/:publicId',
         loadComponent: () =>
           import(
-            './features/reportes/pages/detalle-reporte/detalle-reporte.component'
-          ).then((m) => m.DetalleReporteComponent),
+            './features/report/presentation/report-detail/report-detail'
+          ).then((m) => m.ReportDetailPage),
+      },
+      {
+        path: 'reports/:publicId/edit',
+        canActivate: [verifiedGuard],
+        loadComponent: () =>
+          import(
+            './features/report/presentation/report-edit/report-edit'
+          ).then((m) => m.ReportEditPage),
       },
       {
         path: 'report',

@@ -1,8 +1,8 @@
 import { Component, AfterViewInit, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ReportesService } from '../reportes/application/reportes.service';
-import { Reporte, SightingDetails } from '../reportes/domain/reporte.model';
-import { CardReporteComponent } from '../reportes/components/card-reporte/card-reporte.component';
+import { ReportListService } from '../report/application/report-list.service';
+import { Reporte, SightingDetails } from '../report/domain/report-read.model';
+import { ReportCardComponent } from '../report/presentation/components/report-card/report-card';
 import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
 
@@ -15,7 +15,7 @@ interface LocationSuggestion {
 @Component({
   selector: 'app-home-map',
   standalone: true,
-  imports: [CardReporteComponent],
+  imports: [ReportCardComponent],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
 })
@@ -23,7 +23,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly reportesService = inject(ReportesService);
+  private readonly reportesService = inject(ReportListService);
   private readonly profileService = inject(ProfileService);
   readonly successReportId = signal<string | null>(null);
 
@@ -159,7 +159,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   verReporte(): void {
     const reportId = this.successReportId();
     this.successReportId.set(null);
-    this.router.navigate(['/detalle-reporte', reportId]);
+    this.router.navigate(['/reports', reportId]);
   }
 
   closeSuccess(): void {
@@ -398,7 +398,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       </div>
 
       <a
-  href="/detalle-reporte/${reporte.publicId}"
+  href="/reports/${reporte.publicId}"
   style="
     display:block;
     text-align:center;
