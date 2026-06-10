@@ -87,12 +87,20 @@ export const routes: Routes = [
           ).then((m) => m.ReportDetailPage),
       },
       {
-        path: 'reports/:publicId/edit',
+        path: 'reports/:publicId/edit/datos',
         canActivate: [verifiedGuard],
         loadComponent: () =>
           import(
-            './features/report/presentation/report-edit/report-edit'
-          ).then((m) => m.ReportEditPage),
+            './features/report/presentation/report-edit-data/report-edit-data'
+          ).then((m) => m.ReportEditDataPage),
+      },
+      {
+        path: 'reports/:publicId/edit/ubicacion',
+        canActivate: [verifiedGuard],
+        loadComponent: () =>
+          import(
+            './features/report/presentation/report-edit-location/report-edit-location'
+          ).then((m) => m.ReportEditLocationPage),
       },
       {
         path: 'report',

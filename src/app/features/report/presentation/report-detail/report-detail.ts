@@ -83,7 +83,7 @@ export class ReportDetailPage implements OnInit{
       this.report.update((current) =>
         current ? { ...current, status: 'RESOLVED' } : null,
       );
-      this.toastService.success('✔️ Reporte marcado como Resuelto');
+      this.toastService.success('Reporte cerrado');
       this.confirmandoResolucion.set(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al actualizar estado';
@@ -94,8 +94,13 @@ export class ReportDetailPage implements OnInit{
   }
 
   private readonly router = inject(Router);
-  irAEditar(): void {
+  irAEditarDatos(): void {
     const r = this.report();
-    if (r) this.router.navigate(['/reports', r.publicId, 'edit']);
+    if (r) this.router.navigate(['/reports', r.publicId, 'edit', 'datos']);
+  }
+
+  irAEditarUbicacion(): void {
+    const r = this.report();
+    if (r) this.router.navigate(['/reports', r.publicId, 'edit', 'ubicacion']);
   }
 }
