@@ -5,53 +5,209 @@
     <div class="mb-4">
       <p class="text-xs font-semibold text-slate-500 mb-2">Tipo de reporte</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="tipoFiltro.set('todos')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="tipoFiltro() === 'todos' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Todos</button>
-        <button type="button" (click)="tipoFiltro.set('perdidos')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="tipoFiltro() === 'perdidos' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Perdidos</button>
-        <button type="button" (click)="tipoFiltro.set('avistados')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="tipoFiltro() === 'avistados' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Avistados</button>
+        <button
+      type="button"
+      (click)="tipoFiltro.set('todos'); aplicarFiltros()"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+      [class]="tipoFiltro() === 'todos'
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+      Todos
+    </button>
+
+    <button
+      type="button"
+      (click)="tipoFiltro.set('perdidos'); aplicarFiltros()"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+      [class]="tipoFiltro() === 'perdidos'
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+      Perdidos
+    </button>
+
+    <button
+      type="button"
+      (click)="tipoFiltro.set('avistados'); aplicarFiltros()"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+      [class]="tipoFiltro() === 'avistados'
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+      Avistados
+    </button>
       </div>
     </div>
 
     <div class="mb-4">
       <p class="text-xs font-semibold text-slate-500 mb-2">Cercanía</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="cercaniaFiltro.set('todos')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="cercaniaFiltro() === 'todos' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Todos</button>
-        <button type="button" (click)="cercaniaFiltro.set('5km')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="cercaniaFiltro() === '5km' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">5km</button>
-        <button type="button" (click)="cercaniaFiltro.set('10km')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="cercaniaFiltro() === '10km' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">10km</button>
-        <button type="button" (click)="cercaniaFiltro.set('20km')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="cercaniaFiltro() === '20km' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">20km</button>
+        <button
+  type="button"
+  (click)="cercaniaFiltro.set('todos'); aplicarFiltros()"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="cercaniaFiltro() === 'todos'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+  Todos
+</button>
+
+<button
+  type="button"
+  (click)="cercaniaFiltro.set('5km'); aplicarFiltros()"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="cercaniaFiltro() === '5km'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+  5km
+</button>
+
+<button
+  type="button"
+  (click)="cercaniaFiltro.set('10km'); aplicarFiltros()"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="cercaniaFiltro() === '10km'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+  10km
+</button>
+
+<button
+  type="button"
+  (click)="cercaniaFiltro.set('20km'); aplicarFiltros()"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="cercaniaFiltro() === '20km'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+  20km
+</button>
       </div>
     </div>
 
     <div class="mb-4">
       <p class="text-xs font-semibold text-slate-500 mb-2">Mascota</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="mascotaFiltro.set('todos')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="mascotaFiltro() === 'todos' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Todos</button>
-        <button type="button" (click)="mascotaFiltro.set('perro')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="mascotaFiltro() === 'perro' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Perro</button>
-        <button type="button" (click)="mascotaFiltro.set('gato')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="mascotaFiltro() === 'gato' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Gato</button>
+        <button
+  type="button"
+  (click)="mascotaFiltro.set('todos'); aplicarFiltros()"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="mascotaFiltro() === 'todos'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+  Todos
+</button>
+
+<button
+  type="button"
+  (click)="mascotaFiltro.set('perro'); aplicarFiltros()"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="mascotaFiltro() === 'perro'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+  Perro
+</button>
+
+<button
+  type="button"
+  (click)="mascotaFiltro.set('gato'); aplicarFiltros()"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="mascotaFiltro() === 'gato'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+  Gato
+</button>
       </div>
     </div>
 
     <div>
       <p class="text-xs font-semibold text-slate-500 mb-2">Centros</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="centrosFiltro.set('todos')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="centrosFiltro() === 'todos' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Todos</button>
-        <button type="button" (click)="centrosFiltro.set('comisarias')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="centrosFiltro() === 'comisarias' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Comisarías</button>
-        <button type="button" (click)="centrosFiltro.set('veterinarias')" class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="centrosFiltro() === 'veterinarias' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">Veterinarias</button>
-      </div>
-    </div>
+         <button
+      type="button"
+      (click)="centrosFiltro.set('todos'); aplicarFiltroCentros()"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+      [class]="centrosFiltro() === 'todos'
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+      Todos
+    </button>
+
+    <button
+      type="button"
+      (click)="centrosFiltro.set('comisarias'); aplicarFiltroCentros()"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+      [class]="centrosFiltro() === 'comisarias'
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+      Comisarías
+    </button>
+
+    <button
+      type="button"
+      (click)="centrosFiltro.set('veterinarias'); aplicarFiltroCentros()"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
+      [class]="centrosFiltro() === 'veterinarias'
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'">
+      Veterinarias
+    </button>
+
   </div>
+
+  @if (lugares().length > 0) {
+
+    <div class="mt-4 border border-slate-200 rounded-lg overflow-hidden">
+
+    <div class="bg-slate-50 px-3 py-2 border-b">
+      <h4 class="text-sm font-semibold text-[#12355B]">
+        Lugares cercanos
+      </h4>
+    </div>
+
+    @for (lugar of lugares(); track $index) {
+
+      <button
+        type="button"
+        class="w-full text-left px-3 py-3 hover:bg-slate-50 border-b last:border-b-0 transition"
+        (click)="irALugar(lugar.lat, lugar.lng)">
+
+        <div class="flex items-center gap-2 font-medium text-slate-700">
+
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4 text-[#E8842E] shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z" />
+
+            <circle
+              cx="12"
+              cy="10"
+              r="3" />
+
+          </svg>
+
+          <span>{{ lugar.nombre }}</span>
+
+        </div>
+
+      </button>
+
+
+      }
+
+    </div>
+
+  }
+
+</div>
+</div>
+
+  
 
   <div class="px-5 py-4 border-t border-slate-200">
     <div class="flex items-center justify-between mb-2">
