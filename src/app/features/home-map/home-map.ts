@@ -1,8 +1,8 @@
-import { Component, AfterViewInit, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, AfterViewInit, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReportListService } from '../report/application/report-list.service';
 import { AnimalType, Reporte, SightingDetails } from '../report/domain/report-read.model';
-import { ReportCardComponent } from '../report/presentation/components/report-card/report-card';
+import { HomeReportCardComponent } from './components/home-report-card/home-report-card';
 import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
 
@@ -29,7 +29,7 @@ interface OverpassElement {
 @Component({
   selector: 'app-home-map',
   standalone: true,
-  imports: [ReportCardComponent],
+  imports: [HomeReportCardComponent, RouterLink],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
 })
@@ -56,6 +56,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly misReportes = signal<Reporte[]>([]);
   readonly reportesCercanos = signal<Reporte[]>([]);
   readonly totalMisReportes = signal(0);
+  readonly totalCercanos = signal(0);
+  readonly badgeMisReportes = computed(() => this.formatBadge(this.totalMisReportes()));
+  readonly badgeCercanos = computed(() => this.formatBadge(this.totalCercanos()));
   readonly lugares = signal<Lugar[]>([]);
   
 
@@ -138,11 +141,16 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       this.dibujarMarcadores(reportes);
       this.totalMisReportes.set(misReportes.length);
       this.misReportes.set(misReportes.slice(0, 3));
+      this.totalCercanos.set(reportes.length);
       this.reportesCercanos.set(reportes.slice(0, 5));
     } catch (error) {
       console.error('Error cargando reportes', error);
     }
 };
+
+  private formatBadge(n: number): string {
+    return n > 10 ? '+10' : String(n);
+  }
 
 private dibujarMarcadores(reportes: Reporte[]): void {
 
@@ -178,8 +186,11 @@ private dibujarMarcadores(reportes: Reporte[]): void {
       .bindPopup(
         this.buildPopup(reporte),
         {
-          maxWidth: 270,
-          minWidth: 240,
+          className: 'report-popup',
+          maxWidth: 300,
+          minWidth: 300,
+          closeButton: false,
+          offset: [0, -8],
         }
       );
 
@@ -592,126 +603,89 @@ irALugar(
   }
 
   private buildPopup(reporte: Reporte): string {
-    const details = reporte.details as {
-      images?: { url: string }[];
-    };
+    const d = reporte.details as { images?: { url: string }[]; name?: string; animalType?: string; isInTransit?: boolean };
+    const imageUrl = d.images?.[0]?.url;
+    const esPerdida = reporte.type === 'LOST';
+    const enTransito = !esPerdida && d.isInTransit === true;
+    const badgeColor = esPerdida ? '#E8842E' : '#12355B';
+    const badgeText = esPerdida ? 'Mascota perdida' : enTransito ? 'En tránsito' : 'Mascota avistada';
+    const badgeIcon = esPerdida
+      ? '<img src="Icono-mascota-perdida.png" alt="" style="width:14px;height:14px;display:block;" />'
+      : enTransito
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>';
 
-    const imageUrl = details.images?.[0]?.url;
+    const orange = (paths: string) =>
+      `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E8842E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">${paths}</svg>`;
+    const pinSvg = orange('<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>');
+    const calSvg = orange('<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>');
+    const clockSvg = orange('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>');
 
-    const tipoTexto =
-      reporte.type === 'LOST' ? 'Mascota perdida' : 'Mascota encontrada';
-
-    const tipoColor =
-      reporte.type === 'LOST' ? '#E8842E' : '#12355B';
-
-    const fecha = reporte.occurredAt
-      ? new Date(reporte.occurredAt).toLocaleDateString('es-AR')
-      : 'No informada';
-
-    const descripcion =
-      reporte.description?.trim() || 'Sin descripción adicional';
+    const imgHtml = imageUrl
+      ? `<img src="${imageUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" />`
+      : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>';
 
     return `
-    <div style="
-      width:240px;
-      font-family: Nunito, sans-serif;
-      color:#12355B;
-    ">
-      ${imageUrl
-        ? `
-            <img
-              src="${imageUrl}"
-              alt="Foto del reporte"
-              style="
-                width:100%;
-                height:130px;
-                object-fit:contain;
-                border-radius:14px;
-                margin-bottom:10px;
-              "
-            />
-          `
-        : `
-            <div style="
-              width:100%;
-              height:130px;
-              border-radius:14px;
-              margin-bottom:10px;
-              background:#e2e8f0;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              color:#64748b;
-              font-size:13px;
-              font-weight:600;
-            ">
-              Sin foto
-            </div>
-          `
-      }
-
-      <div style="
-        display:inline-flex;
-        align-items:center;
-        background:${tipoColor};
-        color:white;
-        font-size:12px;
-        font-weight:700;
-        padding:5px 9px;
-        border-radius:8px;
-        margin-bottom:10px;
-      ">
-        ${tipoTexto}
+    <div style="font-family:Nunito,sans-serif;color:#12355B;">
+      <div style="position:relative;width:100%;height:160px;background:#e2e8f0;">
+        ${imgHtml}
+        <span style="position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:6px;background:${badgeColor};color:#fff;font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;">
+          ${badgeIcon} ${badgeText}
+        </span>
       </div>
-
-      <div style="
-        font-size:13px;
-        line-height:1.5;
-        color:#334155;
-        margin-bottom:8px;
-      ">
-        ${descripcion}
-      </div>
-
-      <div style="
-        font-size:13px;
-        line-height:1.6;
-      ">
-        <div>
-          <strong>Ubicación:</strong><br />
-          <span style="color:#334155;">${reporte.location.address}</span>
+      <div style="padding:14px 16px;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">
+          <span style="font-size:18px;font-weight:800;color:#12355B;line-height:1.2;">${this.nombrePopup(reporte, d.name)}</span>
+          <span style="font-size:12px;color:#94a3b8;white-space:nowrap;">${this.tiempoPopup(reporte.createdAt)}</span>
         </div>
-
-        <div style="margin-top:6px;">
-          <strong>Fecha:</strong>
-          <span style="color:#334155;">${fecha}</span>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#475569;margin-bottom:8px;">
+          ${pinSvg}<span>${this.direccionCorta(reporte.location.address)}</span>
         </div>
+        <div style="display:flex;align-items:center;gap:16px;font-size:13px;color:#475569;margin-bottom:14px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;">${calSvg}${this.fechaPopup(reporte.occurredAt)}</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;">${clockSvg}${this.horaPopup(reporte.occurredAt)}</span>
+        </div>
+        <a href="/reports/${reporte.publicId}" style="display:block;text-align:center;text-decoration:none;background:#12355B;color:#fff;border-radius:10px;padding:11px;font-size:14px;font-weight:700;font-family:Nunito,sans-serif;">
+          Ver detalle
+        </a>
       </div>
-
-      <a
-  href="/reports/${reporte.publicId}"
-  style="
-    display:block;
-    text-align:center;
-    text-decoration:none;
-    width:100%;
-    box-sizing:border-box;
-    margin-top:12px;
-    background:#12355B;
-    color:white;
-    border:none;
-    border-radius:8px;
-    padding:9px 12px;
-    font-size:13px;
-    font-weight:700;
-    cursor:pointer;
-    font-family: Nunito, sans-serif;
-  "
->
-  Ver detalle
-</a>
     </div>
   `;
+  }
+
+  private nombrePopup(reporte: Reporte, name?: string): string {
+    if (name?.trim()) return name;
+    const tipo = (reporte.details as { animalType?: string }).animalType;
+    const especie = tipo?.toUpperCase() === 'CAT' ? 'Gato' : 'Perro';
+    if (reporte.type === 'LOST') return `${especie} perdido`;
+    return (reporte.details as { isInTransit?: boolean }).isInTransit ? `${especie} en tránsito` : `${especie} avistado`;
+  }
+
+  private tiempoPopup(fecha: string): string {
+    const horas = Math.floor((Date.now() - new Date(fecha).getTime()) / 3_600_000);
+    if (horas < 1) return 'Hace instantes';
+    if (horas < 24) return `Hace ${horas}hs`;
+    return `Hace ${Math.floor(horas / 24)}d`;
+  }
+
+  private direccionCorta(address: string): string {
+    const parts = (address ?? '').split(',').map((p) => p.trim()).filter(Boolean);
+    if (parts.length === 0) return 'Sin ubicación';
+    if (parts.length >= 2 && /^\d+$/.test(parts[0])) return `${parts[1]} ${parts[0]}`;
+    return parts[0];
+  }
+
+  private fechaPopup(fecha: string): string {
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const d = new Date(fecha);
+    if (isNaN(d.getTime())) return 'Sin fecha';
+    return `${String(d.getDate()).padStart(2, '0')} ${meses[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  private horaPopup(fecha: string): string {
+    const d = new Date(fecha);
+    if (isNaN(d.getTime())) return '';
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} hs`;
   }
 
   

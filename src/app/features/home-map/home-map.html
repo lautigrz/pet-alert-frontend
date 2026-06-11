@@ -213,18 +213,19 @@
     <div class="flex items-center justify-between mb-2">
       <h3 class="text-base font-bold text-[#12355B]">Mis reportes</h3>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
-  {{ totalMisReportes() }}
+  {{ badgeMisReportes() }}
 </span>
 </div>
 <a
   routerLink="/reports"
+  [queryParams]="{ tab: 'mis-reportes' }"
   class="text-xs text-[#E8842E] font-semibold hover:underline"
 >
   Ver todos mis reportes
 </a>
     @for (r of misReportes(); track r.publicId) {
   <div class="home-card mt-3">
-  <app-report-card [reporte]="r"></app-report-card>
+  <app-home-report-card [reporte]="r"></app-home-report-card>
 </div>
 } 
   </div>
@@ -233,7 +234,7 @@
     <div class="flex items-center justify-between">
       <h3 class="text-base font-bold text-[#12355B]">Reportes cercanos</h3>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
-  {{ reportesCercanos().length }}
+  {{ badgeCercanos() }}
 </span>
 </div>
     <a
@@ -244,7 +245,7 @@
 </a>
     @for (r of reportesCercanos(); track r.publicId) {
   <div class="home-card mt-3">
-  <app-report-card [reporte]="r"></app-report-card>
+  <app-home-report-card [reporte]="r"></app-home-report-card>
 </div>
 } 
   </div>

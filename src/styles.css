@@ -67,3 +67,15 @@ app-root {
   width: 18px;
   height: 18px;
 }
+
+.report-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px -10px rgba(18, 53, 91, 0.4);
+}
+
+.report-popup .leaflet-popup-content {
+  margin: 0;
+  width: 300px !important;
+}
