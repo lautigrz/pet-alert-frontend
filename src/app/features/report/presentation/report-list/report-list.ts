@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { ReportListService } from '../../application/report-list.service';
 import {
   AnimalType,
@@ -31,6 +32,7 @@ const DIAS_RECIENTES = 3;
 })
 export class ReportListPage implements OnInit {
   private readonly reportesService = inject(ReportListService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly tab = signal<Tab>('todos');
   readonly cargando = signal(false);
@@ -83,7 +85,12 @@ export class ReportListPage implements OnInit {
   );
 
   async ngOnInit(): Promise<void> {
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab === 'todos' || tab === 'recientes' || tab === 'cercanos' || tab === 'mis-reportes') {
+      this.tab.set(tab);
+    }
     await this.cargar();
+    if (this.tab() === 'cercanos') this.pedirUbicacion();
   }
 
   async seleccionarTab(tab: Tab): Promise<void> {
