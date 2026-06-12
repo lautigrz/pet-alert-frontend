@@ -18,6 +18,10 @@ export class ReportListHttp {
     if (filtros.createdFrom) params = params.set('createdFrom', filtros.createdFrom);
     if (filtros.createdTo) params = params.set('createdTo', filtros.createdTo);
     if (filtros.userPublicId) params = params.set('userPublicId', filtros.userPublicId);
+    if (filtros.lat != null) params = params.set('lat', String(filtros.lat));
+    if (filtros.lng != null) params = params.set('lng', String(filtros.lng));
+    if (filtros.radiusKm != null) params = params.set('radiusKm', String(filtros.radiusKm));
+    if (filtros.sort) params = params.set('sort', filtros.sort);
 
     return firstValueFrom(
       this.http.get<Reporte[]>(`${this.baseUrl}/reports/filter`, { params }),
@@ -25,10 +29,18 @@ export class ReportListHttp {
   }
 
 
-  getMisReportesPaginado(page = 1, limit = 50): Promise<ReportesPaginados> {
-    const params = new HttpParams()
+  getMisReportesPaginado(filtros: ReporteFiltros = {}, page = 1, limit = 50): Promise<ReportesPaginados> {
+    let params = new HttpParams()
       .set('page', String(page))
       .set('limit', String(limit));
+
+    if (filtros.reportType) params = params.set('reportType', filtros.reportType);
+    if (filtros.animalType) params = params.set('animalType', filtros.animalType);
+    if (filtros.lat != null) params = params.set('lat', String(filtros.lat));
+    if (filtros.lng != null) params = params.set('lng', String(filtros.lng));
+    if (filtros.radiusKm != null) params = params.set('radiusKm', String(filtros.radiusKm));
+    if (filtros.createdFrom) params = params.set('createdFrom', filtros.createdFrom);
+    if (filtros.createdTo) params = params.set('createdTo', filtros.createdTo);
 
     return firstValueFrom(
       this.http.get<ReportesPaginados>(`${this.baseUrl}/reports`, { params }),

@@ -20,8 +20,8 @@ export class ReportListService {
   
   async getMisReportes(filtros: ReporteFiltros = {}): Promise<Reporte[]> {
     try {
-      const { data } = await this.reportesHttp.getMisReportesPaginado();
-      return this.aplicarFiltros(data, filtros);
+      const { data } = await this.reportesHttp.getMisReportesPaginado(filtros);
+      return data;
     } catch (error) {
       throw this.mapError(error);
     }
@@ -37,23 +37,6 @@ export class ReportListService {
   }
 
   
-  private aplicarFiltros(reportes: Reporte[], filtros: ReporteFiltros): Reporte[] {
-    return reportes.filter((r) => {
-      if (filtros.reportType && r.type !== filtros.reportType) return false;
-      if (filtros.animalType && this.animalDe(r) !== filtros.animalType) return false;
-
-      const fecha = r.createdAt.slice(0, 10);
-      if (filtros.createdFrom && fecha < filtros.createdFrom) return false;
-      if (filtros.createdTo && fecha > filtros.createdTo) return false;
-      return true;
-    });
-  }
-
-  private animalDe(r: Reporte): string | undefined {
-    const animal = (r.details as { animalType?: string }).animalType;
-    return animal?.toUpperCase();
-  }
-
   private mapError(error: unknown): Error {
     if (!(error instanceof HttpErrorResponse)) {
       return new Error('Ocurrió un error inesperado');
