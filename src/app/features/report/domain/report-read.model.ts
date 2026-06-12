@@ -51,6 +51,10 @@ export interface ReporteFiltros {
   createdFrom?: string;
   createdTo?: string;
   userPublicId?: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  sort?: 'recent';
 }
 
 export interface Paginacion {

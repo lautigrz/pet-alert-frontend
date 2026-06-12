@@ -64,44 +64,46 @@ describe('ReportListService', () => {
 
       expect(reportesHttp.getFiltered).toHaveBeenCalledWith({ reportType: 'LOST', animalType: 'CAT' });
     });
+
+    it('reenvía lat y lng al http para ordenar por cercanía', async () => {
+      reportesHttp.getFiltered.mockResolvedValue([]);
+
+      await service.getGenerales({ lat: -34.6, lng: -58.38 });
+
+      expect(reportesHttp.getFiltered).toHaveBeenCalledWith({ lat: -34.6, lng: -58.38 });
+    });
+
+    it('reenvía sort al http para ordenar por recientes', async () => {
+      reportesHttp.getFiltered.mockResolvedValue([]);
+
+      await service.getGenerales({ sort: 'recent' });
+
+      expect(reportesHttp.getFiltered).toHaveBeenCalledWith({ sort: 'recent' });
+    });
   });
 
   describe('getMisReportes', () => {
-    it('usa el endpoint paginado y devuelve el data', async () => {
+    it('pide al endpoint paginado y devuelve el data', async () => {
       const reportes = [makeReporte({ publicId: 'mio-1' })];
       reportesHttp.getMisReportesPaginado.mockResolvedValue(paginado(reportes));
 
       const result = await service.getMisReportes();
 
-      expect(reportesHttp.getMisReportesPaginado).toHaveBeenCalled();
+      expect(reportesHttp.getMisReportesPaginado).toHaveBeenCalledWith({});
       expect(reportesHttp.getFiltered).not.toHaveBeenCalled();
       expect(result).toEqual(reportes);
     });
 
-    it('filtra por tipo de reporte en memoria', async () => {
-      const lost = makeReporte({ publicId: 'lost', type: 'LOST' });
-      const sighting = makeReporte({ publicId: 'sight', type: 'SIGHTING' });
-      reportesHttp.getMisReportesPaginado.mockResolvedValue(paginado([lost, sighting]));
+    it('pasa los filtros al endpoint paginado', async () => {
+      reportesHttp.getMisReportesPaginado.mockResolvedValue(paginado([]));
 
-      const result = await service.getMisReportes({ reportType: 'LOST' });
+      await service.getMisReportes({ reportType: 'LOST', animalType: 'CAT', radiusKm: 5 });
 
-      expect(result).toEqual([lost]);
-    });
-
-    it('filtra por tipo de animal en memoria', async () => {
-      const perro = makeReporte({
-        publicId: 'perro',
-        details: { animalType: 'DOG', hasIdCollar: false, isInTransit: false, color: 'x', images: [] },
+      expect(reportesHttp.getMisReportesPaginado).toHaveBeenCalledWith({
+        reportType: 'LOST',
+        animalType: 'CAT',
+        radiusKm: 5,
       });
-      const gato = makeReporte({
-        publicId: 'gato',
-        details: { animalType: 'CAT', hasIdCollar: false, isInTransit: false, color: 'x', images: [] },
-      });
-      reportesHttp.getMisReportesPaginado.mockResolvedValue(paginado([perro, gato]));
-
-      const result = await service.getMisReportes({ animalType: 'CAT' });
-
-      expect(result).toEqual([gato]);
     });
   });
 

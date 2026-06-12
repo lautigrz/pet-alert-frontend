@@ -13,7 +13,6 @@ import { ReportCardComponent } from '../components/report-card/report-card';
 type Tab = 'todos' | 'recientes' | 'cercanos' | 'mis-reportes';
 type FiltroTipo = 'TODOS' | ReportType;
 type FiltroMascota = 'TODOS' | AnimalType;
-type FiltroFecha = 'TODOS' | 'HOY' | 'SEMANA';
 type FiltroCercania = 'TODOS' | '5' | '10' | '20';
 
 interface Coordenadas {
@@ -21,7 +20,11 @@ interface Coordenadas {
   lng: number;
 }
 
-const DIAS_RECIENTES = 3;
+interface LocationSuggestion {
+  displayName: string;
+  lat: number;
+  lng: number;
+}
 
 @Component({
   selector: 'app-report-list',
@@ -42,9 +45,12 @@ export class ReportListPage implements OnInit {
   readonly filtroTipo = signal<FiltroTipo>('TODOS');
   readonly filtroCercania = signal<FiltroCercania>('TODOS');
   readonly filtroMascota = signal<FiltroMascota>('TODOS');
-  readonly filtroFecha = signal<FiltroFecha>('TODOS');
+  readonly fechaDesde = signal('');
+  readonly fechaHasta = signal('');
 
   readonly busqueda = signal('');
+  readonly suggestions = signal<LocationSuggestion[]>([]);
+  private searchDebounce?: ReturnType<typeof setTimeout>;
 
   readonly ubicacion = signal<Coordenadas | null>(null);
   readonly ubicacionDenegada = signal(false);
@@ -52,32 +58,12 @@ export class ReportListPage implements OnInit {
   readonly reportesVisibles = computed(() => {
     const termino = this.normalizar(this.busqueda());
 
-    const filtrados = this.reportes().filter((r) => {
+    return this.reportes().filter((r) => {
       if (termino && !this.normalizar(r.location.address ?? '').includes(termino)) {
         return false;
       }
       return true;
     });
-
-    if (this.tab() === 'recientes') {
-  const limite = Date.now() - DIAS_RECIENTES * 24 * 60 * 60 * 1000;
-  return filtrados
-    .filter((r) => new Date(r.createdAt).getTime() >= limite)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-}
-
-    if (this.tab() !== 'cercanos') return filtrados;
-
-    const origen = this.ubicacion();
-    if (!origen) return [];
-
-    const radio = this.filtroCercania() === 'TODOS' ? Infinity : Number(this.filtroCercania());
-
-    return filtrados
-      .map((r) => ({ r, dist: this.distanciaKm(origen, r) }))
-      .filter((x) => x.dist <= radio)
-      .sort((a, b) => a.dist - b.dist)
-      .map((x) => x.r);
   });
 
   readonly sinResultados = computed(
@@ -90,47 +76,78 @@ export class ReportListPage implements OnInit {
       this.tab.set(tab);
     }
     await this.cargar();
-    if (this.tab() === 'cercanos') this.pedirUbicacion();
   }
 
   async seleccionarTab(tab: Tab): Promise<void> {
     if (this.tab() === tab) return;
     this.tab.set(tab);
     await this.cargar();
-    if (tab === 'cercanos') this.pedirUbicacion();
   }
 
-  private pedirUbicacion(): void {
-    if (this.ubicacion()) return;
+  onSearchInput(value: string): void {
+    this.busqueda.set(value);
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    if (value.trim().length < 3) {
+      this.suggestions.set([]);
+      return;
+    }
+    this.searchDebounce = setTimeout(() => this.fetchSuggestions(), 350);
+  }
+
+  private async fetchSuggestions(): Promise<void> {
+    const query = this.busqueda().trim();
+    if (!query) return;
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`,
+      );
+      const data = await res.json();
+      this.suggestions.set(
+        data.map((r: { display_name: string; lat: string; lon: string }) => ({
+          displayName: r.display_name,
+          lat: parseFloat(r.lat),
+          lng: parseFloat(r.lon),
+        })),
+      );
+    } catch {
+      this.suggestions.set([]);
+    }
+  }
+
+  selectSuggestion(suggestion: LocationSuggestion): void {
+    this.busqueda.set(suggestion.displayName.split(',')[0].trim());
+    this.suggestions.set([]);
+  }
+
+  async searchLocation(): Promise<void> {
+    if (!this.suggestions().length) await this.fetchSuggestions();
+    const first = this.suggestions()[0];
+    if (first) this.selectSuggestion(first);
+  }
+
+  private pedirUbicacion(): Promise<Coordenadas | null> {
+    const actual = this.ubicacion();
+    if (actual) return Promise.resolve(actual);
 
     if (!navigator.geolocation) {
       this.ubicacionDenegada.set(true);
-      return;
+      return Promise.resolve(null);
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        this.ubicacion.set({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        this.ubicacionDenegada.set(false);
-      },
-      () => this.ubicacionDenegada.set(true),
-    );
-  }
-
-  private distanciaKm(origen: Coordenadas, reporte: Reporte): number {
-    const radioTierra = 6371;
-    const dLat = this.aRad(reporte.location.latitude - origen.lat);
-    const dLng = this.aRad(reporte.location.longitude - origen.lng);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(this.aRad(origen.lat)) *
-        Math.cos(this.aRad(reporte.location.latitude)) *
-        Math.sin(dLng / 2) ** 2;
-    return radioTierra * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
-
-  private aRad(grados: number): number {
-    return (grados * Math.PI) / 180;
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          this.ubicacion.set(coords);
+          this.ubicacionDenegada.set(false);
+          resolve(coords);
+        },
+        () => {
+          this.ubicacionDenegada.set(true);
+          resolve(null);
+        },
+      );
+    });
   }
 
   async setFiltroTipo(valor: FiltroTipo): Promise<void> {
@@ -138,8 +155,9 @@ export class ReportListPage implements OnInit {
     await this.cargar();
   }
 
-  setFiltroCercania(valor: FiltroCercania): void {
+  async setFiltroCercania(valor: FiltroCercania): Promise<void> {
     this.filtroCercania.set(valor);
+    await this.cargar();
   }
 
   async setFiltroMascota(valor: FiltroMascota): Promise<void> {
@@ -147,8 +165,19 @@ export class ReportListPage implements OnInit {
     await this.cargar();
   }
 
-  async setFiltroFecha(valor: FiltroFecha): Promise<void> {
-    this.filtroFecha.set(valor);
+  async setFechaDesde(valor: string): Promise<void> {
+    this.fechaDesde.set(valor);
+    await this.cargar();
+  }
+
+  async setFechaHasta(valor: string): Promise<void> {
+    this.fechaHasta.set(valor);
+    await this.cargar();
+  }
+
+  async limpiarFechas(): Promise<void> {
+    this.fechaDesde.set('');
+    this.fechaHasta.set('');
     await this.cargar();
   }
 
@@ -157,13 +186,7 @@ export class ReportListPage implements OnInit {
     this.error.set(null);
 
     try {
-      const filtros = this.construirFiltros();
-      const data =
-        this.tab() === 'mis-reportes'
-          ? await this.reportesService.getMisReportes(filtros)
-          : await this.reportesService.getGenerales(filtros);
-
-      this.reportes.set(data);
+      this.reportes.set(await this.obtenerReportes());
     } catch (error) {
       this.error.set(
         error instanceof Error ? error.message : 'No se pudieron cargar los reportes',
@@ -174,6 +197,33 @@ export class ReportListPage implements OnInit {
     }
   }
 
+  private async obtenerReportes(): Promise<Reporte[]> {
+    const filtros = this.construirFiltros();
+
+    if (this.tab() === 'recientes') {
+      filtros.sort = 'recent';
+    }
+
+    const conRadio = this.filtroCercania() !== 'TODOS';
+
+    if (this.tab() === 'cercanos' || conRadio) {
+      const origen = await this.pedirUbicacion();
+      if (!origen) return [];
+      filtros.lat = origen.lat;
+      filtros.lng = origen.lng;
+      if (conRadio) {
+        filtros.radiusKm = Number(this.filtroCercania());
+      }
+    }
+
+    if (this.tab() === 'mis-reportes') {
+      return this.reportesService.getMisReportes(filtros);
+    }
+
+    filtros.status = 'ACTIVE';
+    return this.reportesService.getGenerales(filtros);
+  }
+
   private construirFiltros(): ReporteFiltros {
     const filtros: ReporteFiltros = {};
 
@@ -182,30 +232,12 @@ export class ReportListPage implements OnInit {
 
     if (this.filtroMascota() !== 'TODOS') filtros.animalType = this.filtroMascota() as AnimalType;
 
-    const rango = this.rangoFecha(this.filtroFecha());
-    if (rango) {
-      filtros.createdFrom = rango.from;
-      filtros.createdTo = rango.to;
-    }
+    const desde = this.fechaDesde();
+    const hasta = this.fechaHasta();
+    if (desde) filtros.createdFrom = desde;
+    if (hasta) filtros.createdTo = hasta;
 
     return filtros;
-  }
-
-  private rangoFecha(filtro: FiltroFecha): { from: string; to: string } | null {
-    if (filtro === 'TODOS') return null;
-
-    const hoy = new Date();
-    const to = this.aISO(hoy);
-
-    if (filtro === 'HOY') return { from: to, to };
-
-    const desde = new Date(hoy);
-    desde.setDate(desde.getDate() - 7);
-    return { from: this.aISO(desde), to };
-  }
-
-  private aISO(fecha: Date): string {
-    return fecha.toISOString().slice(0, 10);
   }
 
   private normalizar(texto: string): string {
