@@ -24,6 +24,9 @@
     ]
   },
   "private": true,
+   "overrides": {
+    "esbuild": "0.28.1"
+  },
   "dependencies": {
     "@angular/common": "21.2.10",
     "@angular/compiler": "21.2.10",
