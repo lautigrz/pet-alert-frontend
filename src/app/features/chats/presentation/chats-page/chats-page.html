@@ -16,32 +16,35 @@
     </div>
 
     <div class="contacts-list">
-      <button
-        type="button"
-        class="contact-card"
-        *ngFor="let contact of filteredContacts"
-        [class.active]="selectedContact().id === contact.id"
-        (click)="selectContact(contact)"
-      >
-        <div class="avatar">
-          <span>👤</span>
-        </div>
-
-        <div class="contact-info">
-          <div class="contact-top">
-            <strong>{{ contact.name }}</strong>
-            <small>{{ contact.time }}</small>
+      @for (contact of filteredContacts; track contact.id) {
+        <button
+          type="button"
+          class="contact-card"
+          [class.active]="selectedContact().id === contact.id"
+          (click)="selectContact(contact)"
+        >
+          <div class="avatar">
+            <span>👤</span>
           </div>
 
-          <div class="contact-bottom">
-            <p>{{ contact.lastMessage }}</p>
+          <div class="contact-info">
+            <div class="contact-top">
+              <strong>{{ contact.name }}</strong>
+              <small>{{ contact.time }}</small>
+            </div>
 
-            <span *ngIf="contact.unread" class="unread">
-              {{ contact.unread }}
-            </span>
+            <div class="contact-bottom">
+              <p>{{ contact.lastMessage }}</p>
+
+              @if (contact.unread) {
+                <span class="unread">
+                  {{ contact.unread }}
+                </span>
+              }
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
+      }
     </div>
   </aside>
 
@@ -53,35 +56,44 @@
 
       <div>
         <h3>{{ selectedContact().name }}</h3>
-        <p *ngIf="selectedContact().online">en línea</p>
+
+        @if (selectedContact().online) {
+          <p>en línea</p>
+        }
       </div>
     </header>
 
     <main class="messages-area">
       <div class="day-pill">Hoy</div>
 
-      <div
-        class="message-row"
-        *ngFor="let message of messages"
-        [class.mine]="message.sender === 'me'"
-      >
-        <div class="message-bubble">
-          <p *ngIf="message.text">{{ message.text }}</p>
+      @for (message of messages; track message.id) {
+        <div
+          class="message-row"
+          [class.mine]="message.sender === 'me'"
+        >
+          <div class="message-bubble">
+            @if (message.text) {
+              <p>{{ message.text }}</p>
+            }
 
-          <img
-            *ngIf="message.imageUrl"
-            [src]="message.imageUrl"
-            alt="Imagen enviada por chat"
-            class="message-image"
-          />
+            @if (message.imageUrl) {
+              <img
+                [src]="message.imageUrl"
+                alt="Imagen enviada por chat"
+                class="message-image"
+              />
+            }
 
-          <div *ngIf="message.audioUrl" class="audio-message">
-            🎤 Audio enviado
+            @if (message.audioUrl) {
+              <div class="audio-message">
+                🎤 Audio enviado
+              </div>
+            }
+
+            <span>{{ message.time }}</span>
           </div>
-
-          <span>{{ message.time }}</span>
         </div>
-      </div>
+      }
     </main>
 
     <footer class="message-composer">
