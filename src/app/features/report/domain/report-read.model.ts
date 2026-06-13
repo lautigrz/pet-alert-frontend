@@ -55,6 +55,7 @@ export interface ReporteFiltros {
   lng?: number;
   radiusKm?: number;
   sort?: 'recent';
+  q?:string,
 }
 
 export interface Paginacion {

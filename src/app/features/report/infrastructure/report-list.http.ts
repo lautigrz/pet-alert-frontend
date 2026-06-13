@@ -22,6 +22,7 @@ export class ReportListHttp {
     if (filtros.lng != null) params = params.set('lng', String(filtros.lng));
     if (filtros.radiusKm != null) params = params.set('radiusKm', String(filtros.radiusKm));
     if (filtros.sort) params = params.set('sort', filtros.sort);
+    if (filtros.q) params = params.set('q', filtros.q);
 
     return firstValueFrom(
       this.http.get<Reporte[]>(`${this.baseUrl}/reports/filter`, { params }),
@@ -41,6 +42,7 @@ export class ReportListHttp {
     if (filtros.radiusKm != null) params = params.set('radiusKm', String(filtros.radiusKm));
     if (filtros.createdFrom) params = params.set('createdFrom', filtros.createdFrom);
     if (filtros.createdTo) params = params.set('createdTo', filtros.createdTo);
+    if (filtros.q) params = params.set('q', filtros.q);
 
     return firstValueFrom(
       this.http.get<ReportesPaginados>(`${this.baseUrl}/reports`, { params }),

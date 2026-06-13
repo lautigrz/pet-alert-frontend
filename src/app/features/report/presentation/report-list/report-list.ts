@@ -48,22 +48,25 @@ export class ReportListPage implements OnInit {
   readonly fechaDesde = signal('');
   readonly fechaHasta = signal('');
 
-  readonly busqueda = signal('');
-  readonly suggestions = signal<LocationSuggestion[]>([]);
-  private searchDebounce?: ReturnType<typeof setTimeout>;
+  readonly busquedaDescripcion = signal('');
+  readonly busquedaLocalidad = signal('');
+  readonly locationSuggestions = signal<LocationSuggestion[]>([]);
+  private descriptionSearchDebounce?: ReturnType<typeof setTimeout>;
+  private locationSearchDebounce?: ReturnType<typeof setTimeout>;
 
   readonly ubicacion = signal<Coordenadas | null>(null);
   readonly ubicacionDenegada = signal(false);
 
   readonly reportesVisibles = computed(() => {
-    const termino = this.normalizar(this.busqueda());
+    const localidad = this.normalizar(this.busquedaLocalidad());
 
-    return this.reportes().filter((r) => {
-      if (termino && !this.normalizar(r.location.address ?? '').includes(termino)) {
-        return false;
-      }
-      return true;
-    });
+    if (!localidad) {
+      return this.reportes();
+    }
+
+    return this.reportes().filter((reporte) =>
+      this.normalizar(reporte.location.address ?? '').includes(localidad),
+    );
   });
 
   readonly sinResultados = computed(
@@ -84,45 +87,89 @@ export class ReportListPage implements OnInit {
     await this.cargar();
   }
 
-  onSearchInput(value: string): void {
-    this.busqueda.set(value);
-    if (this.searchDebounce) clearTimeout(this.searchDebounce);
-    if (value.trim().length < 3) {
-      this.suggestions.set([]);
-      return;
+  onDescriptionSearchInput(value: string): void {
+    this.busquedaDescripcion.set(value);
+
+    if (this.descriptionSearchDebounce !== undefined) {
+      clearTimeout(this.descriptionSearchDebounce);
     }
-    this.searchDebounce = setTimeout(() => this.fetchSuggestions(), 350);
+    this.descriptionSearchDebounce = setTimeout(() => {
+      this.descriptionSearchDebounce = undefined;
+      void this.cargar();
+    }, 350);
   }
 
-  private async fetchSuggestions(): Promise<void> {
-    const query = this.busqueda().trim();
-    if (!query) return;
+  async limpiarBusquedaDescripcion(): Promise<void> {
+    this.busquedaDescripcion.set('');
+
+    if (this.descriptionSearchDebounce !== undefined) {
+      clearTimeout(this.descriptionSearchDebounce);
+      this.descriptionSearchDebounce = undefined;
+    }
+
+    await this.cargar();
+  }
+  limpiarBusquedaLocalidad(): void {
+    this.busquedaLocalidad.set('');
+    this.locationSuggestions.set([]);
+  }
+
+  onLocationSearchInput(value: string): void {
+    this.busquedaLocalidad.set(value);
+    if (this.locationSearchDebounce) clearTimeout(this.locationSearchDebounce);
+    if (value.trim().length < 3) {
+      this.locationSuggestions.set([]);
+      return;
+    }
+    this.locationSearchDebounce = setTimeout(() => {
+      void this.fetchLocationSuggestions();
+    }, 350);
+  }
+
+  private async fetchLocationSuggestions(): Promise<void> {
+    const query = this.busquedaLocalidad().trim();
+
+    if (!query) {
+      this.locationSuggestions.set([]);
+      return;
+    }
+
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`,
       );
       const data = await res.json();
-      this.suggestions.set(
-        data.map((r: { display_name: string; lat: string; lon: string }) => ({
-          displayName: r.display_name,
-          lat: parseFloat(r.lat),
-          lng: parseFloat(r.lon),
+      this.locationSuggestions.set(
+        data.map((result: {
+          display_name: string;
+          lat: string;
+          lon: string;
+        }) => ({
+          displayName: result.display_name,
+          lat: Number.parseFloat(result.lat),
+          lng: Number.parseFloat(result.lon),
         })),
       );
     } catch {
-      this.suggestions.set([]);
+      this.locationSuggestions.set([]);
     }
   }
 
-  selectSuggestion(suggestion: LocationSuggestion): void {
-    this.busqueda.set(suggestion.displayName.split(',')[0].trim());
-    this.suggestions.set([]);
+  selectLocationSuggestion(suggestion: LocationSuggestion): void {
+    this.busquedaLocalidad.set(suggestion.displayName.split(',')[0]?.trim() ?? suggestion.displayName,);
+    this.locationSuggestions.set([]);
   }
 
   async searchLocation(): Promise<void> {
-    if (!this.suggestions().length) await this.fetchSuggestions();
-    const first = this.suggestions()[0];
-    if (first) this.selectSuggestion(first);
+    if (!this.locationSuggestions().length) {
+      await this.fetchLocationSuggestions();
+    }
+    const first = this.locationSuggestions()[0];
+
+
+    if (first) {
+      this.selectLocationSuggestion(first);
+    }
   }
 
   private pedirUbicacion(): Promise<Coordenadas | null> {
@@ -236,6 +283,9 @@ export class ReportListPage implements OnInit {
     const hasta = this.fechaHasta();
     if (desde) filtros.createdFrom = desde;
     if (hasta) filtros.createdTo = hasta;
+
+    const query = this.busquedaDescripcion().trim();
+    if (query.length >= 2) filtros.q = query;
 
     return filtros;
   }
