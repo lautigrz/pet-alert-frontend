@@ -16,6 +16,7 @@ interface Lugar {
   nombre: string;
   lat: number;
   lng: number;
+  distancia?: number;
 }
 
 interface OverpassElement {
@@ -351,7 +352,7 @@ if (
       }
     )
       .addTo(this.lugaresLayer)
-      .bindPopup(lugar.nombre);
+      .bindPopup(`${lugar.nombre}<br>${lugar.distancia?.toFixed(1)} km`);
 
   });
 
@@ -452,17 +453,75 @@ private async buscarLugares(
       }))
     );
 
-    this.lugares.set(
-      data.elements.map((l) => ({
-        nombre:
-          l.tags?.name ||
-          (tipo === 'police'
-            ? 'Comisaría'
-            : 'Veterinaria'),
-        lat: l.lat,
-        lng: l.lon,
-      }))
+   const lugares = data.elements
+  .filter((l) => {
+
+    const nombre =
+      (l.tags?.name || '')
+        .toLowerCase();
+
+    // If no name, include it (will get default name)
+    if (!nombre) return true;
+
+    if (tipo === 'police') {
+
+      return (
+        nombre.includes('comisaria') ||
+        nombre.includes('comisaría')
+      );
+
+    }
+
+    if (tipo === 'veterinary') {
+
+      return (
+        nombre.includes('veterinaria') ||
+        nombre.includes('veterinaria ') ||
+        nombre.includes('veterinary')
+      );
+
+    }
+
+    return true;
+
+  })
+  .map((l) => ({
+
+    nombre:
+      l.tags?.name ||
+      (tipo === 'police'
+        ? 'Comisaría'
+        : 'Veterinaria'),
+
+    lat: l.lat,
+
+    lng: l.lon,
+
+    distancia: this.calcularDistancia(
+      this.userLatLng!.lat,
+      this.userLatLng!.lng,
+      l.lat,
+      l.lon
+    )
+
+  }))
+  .sort((a, b) => {
+    const distA = this.calcularDistancia(
+      this.userLatLng!.lat,
+      this.userLatLng!.lng,
+      a.lat,
+      a.lng
     );
+    const distB = this.calcularDistancia(
+      this.userLatLng!.lat,
+      this.userLatLng!.lng,
+      b.lat,
+      b.lng
+    );
+    return distA - distB;
+  });
+
+  this.lugares.set(lugares);
 
     this.dibujarLugares();
 
