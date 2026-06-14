@@ -16,7 +16,7 @@ interface Lugar {
   nombre: string;
   lat: number;
   lng: number;
-  distancia: number;
+  distancia?: number;
 }
 
 interface OverpassElement {
@@ -352,8 +352,7 @@ if (
       }
     )
       .addTo(this.lugaresLayer)
-      .bindPopup(`${lugar.nombre}<br>${lugar.distancia.toFixed(1)} km`
-);
+      .bindPopup(`${lugar.nombre}<br>${lugar.distancia?.toFixed(1)} km`);
 
   });
 
@@ -461,6 +460,9 @@ private async buscarLugares(
       (l.tags?.name || '')
         .toLowerCase();
 
+    // If no name, include it (will get default name)
+    if (!nombre) return true;
+
     if (tipo === 'police') {
 
       return (
@@ -503,11 +505,23 @@ private async buscarLugares(
     )
 
   }))
-  .sort((a, b) =>
-    a.distancia - b.distancia
-  );
+  .sort((a, b) => {
+    const distA = this.calcularDistancia(
+      this.userLatLng!.lat,
+      this.userLatLng!.lng,
+      a.lat,
+      a.lng
+    );
+    const distB = this.calcularDistancia(
+      this.userLatLng!.lat,
+      this.userLatLng!.lng,
+      b.lat,
+      b.lng
+    );
+    return distA - distB;
+  });
 
-this.lugares.set(lugares);
+  this.lugares.set(lugares);
 
     this.dibujarLugares();
 

@@ -1141,6 +1141,7 @@ describe('HomeMapComponent', () => {
           nombre: 'Veterinaria Central',
           lat: -34.604,
           lng: -58.382,
+          distancia: expect.any(Number),
         },
       ]);
     });
