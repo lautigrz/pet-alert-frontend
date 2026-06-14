@@ -1,24 +1,186 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { describe, beforeEach, it, expect, vi } from 'vitest';
 import { ActivatedRoute, Router } from '@angular/router';
+import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { HomeMapComponent } from './home-map';
 import { ReportListService } from '../report/application/report-list.service';
 import { ProfileService } from '../profile/application/profile.service';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import type { Reporte } from '../report/domain/report-read.model';
+
+interface MapMock {
+  setView: ReturnType<typeof vi.fn>;
+  invalidateSize?: ReturnType<typeof vi.fn>;
+  attributionControl?: {
+    setPrefix: ReturnType<typeof vi.fn>;
+    setPosition: ReturnType<typeof vi.fn>;
+  };
+  zoomControl?: {
+    setPosition: ReturnType<typeof vi.fn>;
+  };
+}
+
+interface LayerMock {
+  clearLayers: ReturnType<typeof vi.fn>;
+}
+
+interface MarkerMock {
+  setLatLng?: ReturnType<typeof vi.fn>;
+  remove?: ReturnType<typeof vi.fn>;
+}
+
+interface LatLngMock {
+  lat: number;
+  lng: number;
+}
+
+interface PinMock {
+  options: {
+    html?: string;
+  };
+}
+
+interface LocationSuggestionMock {
+  displayName: string;
+  lat: number;
+  lng: number;
+}
+
+interface PlaceMock {
+  nombre: string;
+  lat: number;
+  lng: number;
+}
+
+interface ProfileMock {
+  photoUrl: string;
+}
+
+interface ReportListServiceMock {
+  getGenerales: ReturnType<typeof vi.fn>;
+  getMisReportes: ReturnType<typeof vi.fn>;
+}
+
+interface ProfileServiceMock {
+  getProfile: ReturnType<typeof vi.fn>;
+}
+
+interface RouterMock {
+  navigate: ReturnType<typeof vi.fn>;
+}
+
+interface HomeMapComponentTest {
+  map: MapMock;
+  lugaresLayer: LayerMock;
+  userLatLng?: LatLngMock;
+  userMarker?: MarkerMock;
+  searchMarker?: MarkerMock;
+  profilePhotoUrl: string;
+  dibujarMarcadores: (reportes: Reporte[]) => void;
+  markSearchResult: (lat: number, lng: number) => void;
+  fetchSuggestions: () => Promise<void>;
+  formatBadge: (n: number) => string;
+  calcularDistancia: (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ) => number;
+  direccionCorta: (address: string) => string;
+  fechaPopup: (date: string) => string;
+  horaPopup: (date: string) => string;
+  nombrePopup: (reporte: Reporte, nombre?: string) => string;
+  tiempoPopup: (fecha: string) => string;
+  fallbackIconFor: (reporte: Reporte) => string;
+  buildPopup: (reporte: Reporte) => string;
+  cargarReportes: () => Promise<void>;
+  initializeMap: () => void;
+  buscarLugares: (tipo: 'veterinary' | 'police') => Promise<void>;
+  dibujarLugares: () => void;
+  centerOnUser: () => void;
+  getUserLocation: () => void;
+  placeUserMarker: () => void;
+  buildPin: (
+    color: string,
+    imageUrl?: string,
+    fallbackIcon?: string,
+  ) => PinMock;
+}
+
+interface MockReporteOptions extends Partial<Omit<Reporte, 'details'>> {
+  details?: Record<string, unknown>;
+}
+
+const mockReporte = (overrides: MockReporteOptions = {}): Reporte =>
+  ({
+    publicId: 'rep-1',
+    type: 'LOST',
+    status: 'OPEN',
+    description: 'Descripción',
+    createdAt: '2026-06-01T10:00:00.000Z',
+    occurredAt: '2026-06-01T10:00:00.000Z',
+    location: {
+      address: 'Avenida Corrientes 123',
+      latitude: -34.6037,
+      longitude: -58.3816,
+    },
+    details: {
+      animalType: 'DOG',
+      images: [],
+    },
+    ...overrides,
+  }) as unknown as Reporte;
+
+const mockSuggestion = (
+  overrides: Partial<LocationSuggestionMock> = {},
+): LocationSuggestionMock => ({
+  displayName: 'Buenos Aires',
+  lat: -34.6037,
+  lng: -58.3816,
+  ...overrides,
+});
+
+const mockPlace = (overrides: Partial<PlaceMock> = {}): PlaceMock => ({
+  nombre: 'Veterinaria',
+  lat: -34.6,
+  lng: -58.3,
+  ...overrides,
+});
+
+const mockMap = (): MapMock => ({
+  setView: vi.fn(),
+  invalidateSize: vi.fn(),
+});
+
+const mockLayer = (): LayerMock => ({
+  clearLayers: vi.fn(),
+});
+
+const mockFetchJson = (data: unknown): void => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+    json: vi.fn().mockResolvedValue(data),
+  } as unknown as Response);
+};
 
 describe('HomeMapComponent', () => {
-  let reportListService: {
-    getGenerales: ReturnType<typeof vi.fn>;
-    getMisReportes: ReturnType<typeof vi.fn>;
+  let reportListService: ReportListServiceMock;
+  let profileService: ProfileServiceMock;
+  let router: RouterMock;
+  let component: HomeMapComponent;
+
+  const testingComponent = (): HomeMapComponentTest =>
+    component as unknown as HomeMapComponentTest;
+
+  const mockDibujarMarcadores = (): void => {
+    vi.spyOn(testingComponent(), 'dibujarMarcadores').mockImplementation(
+      (): void => undefined,
+    );
   };
 
-  let profileService: {
-    getProfile: ReturnType<typeof vi.fn>;
+  const mockDibujarLugares = (): void => {
+    vi.spyOn(testingComponent(), 'dibujarLugares').mockImplementation(
+      (): void => undefined,
+    );
   };
-    let router: {
-    navigate: ReturnType<typeof vi.fn>;
-    };
-  let component: HomeMapComponent;
 
   beforeEach(() => {
     reportListService = {
@@ -29,1131 +191,934 @@ describe('HomeMapComponent', () => {
     profileService = {
       getProfile: vi.fn(),
     };
+
     router = {
       navigate: vi.fn(),
     };
 
     TestBed.configureTestingModule({
-  imports: [HomeMapComponent],
-  providers: [
-    {
-      provide: ReportListService,
-      useValue: reportListService,
-    },
-    {
-      provide: ProfileService,
-      useValue: profileService,
-    },
-    {
-  provide: ActivatedRoute,
-  useValue: {
-    snapshot: {
-      queryParamMap: {
-        get: vi.fn().mockReturnValue(null),
-      },
-    },
-  },
-},
-    {
-      provide: Router,
-      useValue: router,
-    },
-  ],
-  schemas: [NO_ERRORS_SCHEMA],
-});
+      imports: [HomeMapComponent],
+      providers: [
+        {
+          provide: ReportListService,
+          useValue: reportListService,
+        },
+        {
+          provide: ProfileService,
+          useValue: profileService,
+        },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: vi.fn().mockReturnValue(null),
+              },
+            },
+          },
+        },
+        {
+          provide: Router,
+          useValue: router,
+        },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    });
 
     const fixture = TestBed.createComponent(HomeMapComponent);
-
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
   it('should create component without running lifecycle hooks', () => {
-  expect(component).toBeTruthy();
-});
-
-describe('applyFilters', () => {
-
-  it('filters lost reports', () => {
-
-    // Given
-    component.reportes.set([
-      {
-        publicId: '1',
-        type: 'LOST',
-        details: { animalType: 'DOG' },
-      } as any,
-      {
-        publicId: '2',
-        type: 'SIGHTING',
-        details: { animalType: 'DOG' },
-      } as any,
-    ]);
-
-    component.tipoFiltro.set('perdidos');
-
-    // When
-    vi.spyOn(component as any, 'dibujarMarcadores').mockImplementation(() => {});
-    component.aplicarFiltros();
-
-    // Then
-    expect(component.reportesFiltrados()).toHaveLength(1);
-    expect(component.reportesFiltrados()[0].publicId).toBe('1');
+    expect(component).toBeTruthy();
   });
 
-  it('filters sighting reports', () => {
-
-    // Given
-    component.reportes.set([
-      {
-        publicId: '1',
-        type: 'LOST',
-      } as any,
-      {
-        publicId: '2',
-        type: 'SIGHTING',
-      } as any,
-    ]);
-
-    component.tipoFiltro.set('avistados');
-
-    // When
-    vi.spyOn(component as any, 'dibujarMarcadores').mockImplementation(() => {});
-    component.aplicarFiltros();
-
-    // Then
-    expect(component.reportesFiltrados()).toHaveLength(1);
-    expect(component.reportesFiltrados()[0].publicId).toBe('2');
-  });
-
-});
-
-describe('applyFilters', () => {
-
-  it('filters dog reports', () => {
-
-  // Given
-  component.reportes.set([
-    {
-      publicId: '1',
-      type: 'LOST',
-      details: { animalType: 'DOG' },
-    } as any,
-    {
-      publicId: '2',
-      type: 'LOST',
-      details: { animalType: 'CAT' },
-    } as any,
-  ]);
-
-  component.mascotaFiltro.set('perro');
-
-  // When
-  vi.spyOn(component as any, 'dibujarMarcadores').mockImplementation(() => {});
-  component.aplicarFiltros();
-
-  // Then
-  expect(component.reportesFiltrados()).toHaveLength(1);
-  expect(component.reportesFiltrados()[0].publicId).toBe('1');
-});
-
-  it('filters cat reports', () => {
-
-  // Given
-  component.reportes.set([
-    {
-      publicId: '1',
-      type: 'LOST',
-      details: {
-        animalType: 'DOG',
-      },
-    } as any,
-    {
-      publicId: '2',
-      type: 'LOST',
-      details: {
-        animalType: 'CAT',
-      },
-    } as any,
-  ]);
-
-  component.mascotaFiltro.set('gato');
-
-  // When
-  vi.spyOn(component as any, 'dibujarMarcadores')
-    .mockImplementation(() => {});
-
-  component.aplicarFiltros();
-
-  // Then
-  expect(component.reportesFiltrados()).toHaveLength(1);
-  expect(component.reportesFiltrados()[0].publicId).toBe('2');
-});
-
-  it('does not filter reports when all filters are selected', () => {
-
-  // Given
-  component.reportes.set([
-    {
-      publicId: '1',
-      type: 'LOST',
-      details: { animalType: 'DOG' },
-    } as any,
-    {
-      publicId: '2',
-      type: 'SIGHTING',
-      details: { animalType: 'CAT' },
-    } as any,
-  ]);
-
-  component.tipoFiltro.set('todos');
-  component.mascotaFiltro.set('todos');
-  component.cercaniaFiltro.set('todos');
-
-  // When
-  vi.spyOn(component as any, 'dibujarMarcadores')
-    .mockImplementation(() => {});
-
-  component.aplicarFiltros();
-
-  // Then
-  expect(component.reportesFiltrados()).toHaveLength(2);
-});
-
-  it('filters reports by distance', () => {
-
-  // Given
-  component.reportes.set([
-    {
-      publicId: 'near',
-      type: 'LOST',
-      location: {
-        latitude: -34.6037,
-        longitude: -58.3816,
-      },
-      details: {
-        animalType: 'DOG',
-      },
-    } as any,
-    {
-      publicId: 'far',
-      type: 'LOST',
-      location: {
-        latitude: -35.6037,
-        longitude: -59.3816,
-      },
-      details: {
-        animalType: 'DOG',
-      },
-    } as any,
-  ]);
-
-  (component as any).userLatLng = {
-    lat: -34.6037,
-    lng: -58.3816,
-  };
-
-  component.cercaniaFiltro.set('5km');
-
-  // When
-  vi.spyOn(component as any, 'dibujarMarcadores')
-    .mockImplementation(() => {});
-
-  component.aplicarFiltros();
-
-  // Then
-  expect(component.reportesFiltrados()).toHaveLength(1);
-  expect(component.reportesFiltrados()[0].publicId).toBe('near');
-});
-
-});
-
-describe('clearSearch', () => {
-
-  it('clears search term and suggestions', () => {
-
-    // Given
-    component.searchTerm.set('Buenos Aires');
-
-    component.suggestions.set([
-      {
-        displayName: 'Buenos Aires',
-        lat: -34.6,
-        lng: -58.3,
-      },
-    ]);
-
-    // When
-    component.clearSearch();
-
-    // Then
-    expect(component.searchTerm()).toBe('');
-    expect(component.suggestions()).toEqual([]);
-  });
-
-});
-
-describe('selectSuggestion', () => {
-
-  it('updates search term and clears suggestions', () => {
-
-    // Given
-    const suggestion = {
-      displayName: 'La Plata',
-      lat: -34.9,
-      lng: -57.9,
-    };
-
-    component.suggestions.set([suggestion]);
-
-    (component as any).map = {
-      setView: vi.fn(),
-    };
-
-    vi.spyOn(component as any, 'markSearchResult')
-      .mockImplementation(() => {});
-
-    // When
-    component.selectSuggestion(suggestion);
-
-    // Then
-    expect(component.searchTerm()).toBe('La Plata');
-    expect(component.suggestions()).toEqual([]);
-  });
-
-});
-
-describe('searchLocation', () => {
-
-  it('selects the first existing suggestion', async () => {
-
-    // Given
-    const suggestion = {
-      displayName: 'Buenos Aires',
-      lat: -34.6037,
-      lng: -58.3816,
-    };
-
-    component.suggestions.set([suggestion]);
-
-    vi.spyOn(component, 'selectSuggestion')
-      .mockImplementation(() => {});
-
-    // When
-    await component.searchLocation();
-
-    // Then
-    expect(component.selectSuggestion).toHaveBeenCalledWith(suggestion);
-  });
-
-  it('does nothing when there are no suggestions after fetching', async () => {
-
-    // Given
-    component.suggestions.set([]);
-
-    vi.spyOn(component as any, 'fetchSuggestions')
-      .mockResolvedValue(undefined);
-
-    vi.spyOn(component, 'selectSuggestion')
-      .mockImplementation(() => {});
-
-    // When
-    await component.searchLocation();
-
-    // Then
-    expect(component.selectSuggestion).not.toHaveBeenCalled();
-  });
-
-});
-
-describe('closeSuccess', () => {
-
-  it('clears success report id', () => {
-
-    // Given
-    component.successReportId.set('report-123');
-
-    // When
-    component.closeSuccess();
-
-    // Then
-    expect(component.successReportId()).toBeNull();
-  });
-
-  it('navigates removing query params', () => {
-
-    // Given
-    component.successReportId.set('report-123');
-
-    // When
-    component.closeSuccess();
-
-    // Then
-    expect(router.navigate).toHaveBeenCalledWith(
-      [],
-      {
-        queryParams: {},
-        replaceUrl: true,
-      },
-    );
-  });
-
-});
-
-describe('verReporte', () => {
-
-  it('navigates to report detail', () => {
-
-    // Given
-    component.successReportId.set('report-123');
-
-    // When
-    component.verReporte();
-
-    // Then
-    expect(router.navigate).toHaveBeenCalledWith([
-      '/reports',
-      'report-123',
-    ]);
-  });
-
-  it('clears success report id after navigation', () => {
-
-    // Given
-    component.successReportId.set('report-123');
-
-    // When
-    component.verReporte();
-
-    // Then
-    expect(component.successReportId()).toBeNull();
-  });
-
-});
-describe('irALugar', () => {
-
-  it('moves the map to the selected place', () => {
-
-    // Given
-    (component as any).map = {
-      setView: vi.fn(),
-    };
-
-    // When
-    component.irALugar(-34.6037, -58.3816);
-
-    // Then
-    expect((component as any).map.setView).toHaveBeenCalledWith(
-      [-34.6037, -58.3816],
-      18,
-    );
-  });
-
-});
-
-describe('formatBadge', () => {
-
-  it('returns the number as text when it is less than or equal to ten', () => {
-
-    // When
-    const result = (component as any).formatBadge(10);
-
-    // Then
-    expect(result).toBe('10');
-  });
-
-  it('returns +10 when the number is greater than ten', () => {
-
-    // When
-    const result = (component as any).formatBadge(11);
-
-    // Then
-    expect(result).toBe('+10');
-  });
-
-});
-
-describe('calcularDistancia', () => {
-
-  it('returns zero when both points are the same', () => {
-
-    // When
-    const result = (component as any).calcularDistancia(
-      -34.6037,
-      -58.3816,
-      -34.6037,
-      -58.3816,
-    );
-
-    // Then
-    expect(result).toBe(0);
-  });
-
-  it('returns a positive distance when points are different', () => {
-
-    // When
-    const result = (component as any).calcularDistancia(
-      -34.6037,
-      -58.3816,
-      -34.6200,
-      -58.4000,
-    );
-
-    // Then
-    expect(result).toBeGreaterThan(0);
-  });
-
-});
-
-describe('onSearchInput', () => {
-
-  it('updates search term', () => {
-
-    // When
-    component.onSearchInput('Buenos Aires');
-
-    // Then
-    expect(component.searchTerm()).toBe('Buenos Aires');
-  });
-
-  it('clears suggestions when the search text has less than three characters', () => {
-
-    // Given
-    component.suggestions.set([
-      {
-        displayName: 'Buenos Aires',
+  describe('applyFilters', () => {
+    it('filters lost reports', () => {
+      // Given
+      component.reportes.set([
+        mockReporte({ publicId: '1', type: 'LOST' }),
+        mockReporte({ publicId: '2', type: 'SIGHTING' }),
+      ]);
+
+      component.tipoFiltro.set('perdidos');
+      mockDibujarMarcadores();
+
+      // When
+      component.aplicarFiltros();
+
+      // Then
+      expect(component.reportesFiltrados()).toHaveLength(1);
+      expect(component.reportesFiltrados()[0]?.publicId).toBe('1');
+    });
+
+    it('filters sighting reports', () => {
+      // Given
+      component.reportes.set([
+        mockReporte({ publicId: '1', type: 'LOST' }),
+        mockReporte({ publicId: '2', type: 'SIGHTING' }),
+      ]);
+
+      component.tipoFiltro.set('avistados');
+      mockDibujarMarcadores();
+
+      // When
+      component.aplicarFiltros();
+
+      // Then
+      expect(component.reportesFiltrados()).toHaveLength(1);
+      expect(component.reportesFiltrados()[0]?.publicId).toBe('2');
+    });
+
+    it('filters dog reports', () => {
+      // Given
+      component.reportes.set([
+        mockReporte({
+          publicId: '1',
+          details: { animalType: 'DOG', images: [] },
+        }),
+        mockReporte({
+          publicId: '2',
+          details: { animalType: 'CAT', images: [] },
+        }),
+      ]);
+
+      component.mascotaFiltro.set('perro');
+      mockDibujarMarcadores();
+
+      // When
+      component.aplicarFiltros();
+
+      // Then
+      expect(component.reportesFiltrados()).toHaveLength(1);
+      expect(component.reportesFiltrados()[0]?.publicId).toBe('1');
+    });
+
+    it('filters cat reports', () => {
+      // Given
+      component.reportes.set([
+        mockReporte({
+          publicId: '1',
+          details: { animalType: 'DOG', images: [] },
+        }),
+        mockReporte({
+          publicId: '2',
+          details: { animalType: 'CAT', images: [] },
+        }),
+      ]);
+
+      component.mascotaFiltro.set('gato');
+      mockDibujarMarcadores();
+
+      // When
+      component.aplicarFiltros();
+
+      // Then
+      expect(component.reportesFiltrados()).toHaveLength(1);
+      expect(component.reportesFiltrados()[0]?.publicId).toBe('2');
+    });
+
+    it('does not filter reports when all filters are selected', () => {
+      // Given
+      component.reportes.set([
+        mockReporte({ publicId: '1', type: 'LOST' }),
+        mockReporte({
+          publicId: '2',
+          type: 'SIGHTING',
+          details: { animalType: 'CAT', isInTransit: false, images: [] },
+        }),
+      ]);
+
+      component.tipoFiltro.set('todos');
+      component.mascotaFiltro.set('todos');
+      component.cercaniaFiltro.set('todos');
+      mockDibujarMarcadores();
+
+      // When
+      component.aplicarFiltros();
+
+      // Then
+      expect(component.reportesFiltrados()).toHaveLength(2);
+    });
+
+    it('filters reports by distance', () => {
+      // Given
+      component.reportes.set([
+        mockReporte({
+          publicId: 'near',
+          location: {
+            address: 'Cerca',
+            latitude: -34.6037,
+            longitude: -58.3816,
+          },
+        }),
+        mockReporte({
+          publicId: 'far',
+          location: {
+            address: 'Lejos',
+            latitude: -35.6037,
+            longitude: -59.3816,
+          },
+        }),
+      ]);
+
+      testingComponent().userLatLng = {
         lat: -34.6037,
         lng: -58.3816,
-      },
-    ]);
+      };
 
-    // When
-    component.onSearchInput('Bo');
+      component.cercaniaFiltro.set('5km');
+      mockDibujarMarcadores();
 
-    // Then
-    expect(component.suggestions()).toEqual([]);
+      // When
+      component.aplicarFiltros();
+
+      // Then
+      expect(component.reportesFiltrados()).toHaveLength(1);
+      expect(component.reportesFiltrados()[0]?.publicId).toBe('near');
+    });
   });
 
-  it('fetches suggestions after debounce when the search text has at least three characters', () => {
+  describe('clearSearch', () => {
+    it('clears search term and suggestions', () => {
+      // Given
+      component.searchTerm.set('Buenos Aires');
+      component.suggestions.set([mockSuggestion()]);
 
-    // Given
-    vi.useFakeTimers();
+      // When
+      component.clearSearch();
 
-    const fetchSuggestionsSpy = vi
-      .spyOn(component as any, 'fetchSuggestions')
-      .mockResolvedValue(undefined);
-
-    // When
-    component.onSearchInput('Buenos Aires');
-    vi.advanceTimersByTime(350);
-
-    // Then
-    expect(fetchSuggestionsSpy).toHaveBeenCalled();
-
-    vi.useRealTimers();
+      // Then
+      expect(component.searchTerm()).toBe('');
+      expect(component.suggestions()).toEqual([]);
+    });
   });
 
-});
+  describe('selectSuggestion', () => {
+    it('updates search term and clears suggestions', () => {
+      // Given
+      const suggestion = mockSuggestion({
+        displayName: 'La Plata',
+        lat: -34.9,
+        lng: -57.9,
+      });
 
-describe('direccionCorta', () => {
+      component.suggestions.set([suggestion]);
+      testingComponent().map = mockMap();
 
-  it('returns "Sin ubicación" when address is empty', () => {
+      vi.spyOn(testingComponent(), 'markSearchResult').mockImplementation(
+        (): void => undefined,
+      );
 
-    // When
-    const result = (component as any).direccionCorta('');
+      // When
+      component.selectSuggestion(suggestion);
 
-    // Then
-    expect(result).toBe('Sin ubicación');
+      // Then
+      expect(component.searchTerm()).toBe('La Plata');
+      expect(component.suggestions()).toEqual([]);
+      expect(testingComponent().map.setView).toHaveBeenCalledWith(
+        [-34.9, -57.9],
+        15,
+      );
+    });
   });
 
-  it('returns street and number when address starts with a number', () => {
-
-    // When
-    const result = (component as any).direccionCorta('123, Avenida Corrientes, Buenos Aires');
-
-    // Then
-    expect(result).toBe('Avenida Corrientes 123');
-  });
-
-  it('returns the first address part when address does not start with a number', () => {
-
-    // When
-    const result = (component as any).direccionCorta('Avenida Corrientes 123, Buenos Aires');
-
-    // Then
-    expect(result).toBe('Avenida Corrientes 123');
-  });
-
-});
-
-describe('fechaPopup', () => {
-
-  it('formats a valid date', () => {
-
-    // When
-    const result = (component as any).fechaPopup('2026-06-01T10:00:00.000Z');
-
-    // Then
-    expect(result).toContain('2026');
-  });
-
-  it('returns "Sin fecha" when date is invalid', () => {
-
-    // When
-    const result = (component as any).fechaPopup('invalid-date');
-
-    // Then
-    expect(result).toBe('Sin fecha');
-  });
-
-});
-
-describe('horaPopup', () => {
-
-  it('formats a valid time', () => {
-
-    // When
-    const result = (component as any).horaPopup('2026-06-01T10:30:00.000Z');
-
-    // Then
-    expect(result).toContain('hs');
-  });
-
-  it('returns empty text when date is invalid', () => {
-
-    // When
-    const result = (component as any).horaPopup('invalid-date');
-
-    // Then
-    expect(result).toBe('');
-  });
-
-});
-
-describe('nombrePopup', () => {
-
-  it('returns the provided name when it exists', () => {
-
-    // Given
-    const reporte = {
-      type: 'LOST',
-      details: {
-        animalType: 'DOG',
-      },
-    };
-
-    // When
-    const result = (component as any).nombrePopup(
-      reporte,
-      'Firulais',
-    );
-
-    // Then
-    expect(result).toBe('Firulais');
-  });
-
-  it('returns "Perro perdido" for lost dog reports without name', () => {
-
-    // Given
-    const reporte = {
-      type: 'LOST',
-      details: {
-        animalType: 'DOG',
-      },
-    };
-
-    // When
-    const result = (component as any).nombrePopup(
-      reporte,
-      undefined,
-    );
-
-    // Then
-    expect(result).toBe('Perro perdido');
-  });
-
-  it('returns "Gato perdido" for lost cat reports without name', () => {
-
-    // Given
-    const reporte = {
-      type: 'LOST',
-      details: {
-        animalType: 'CAT',
-      },
-    };
-
-    // When
-    const result = (component as any).nombrePopup(
-      reporte,
-      undefined,
-    );
-
-    // Then
-    expect(result).toBe('Gato perdido');
-  });
-
-  it('returns "Perro avistado" for dog sightings', () => {
-
-    // Given
-    const reporte = {
-      type: 'SIGHTING',
-      details: {
-        animalType: 'DOG',
-        isInTransit: false,
-      },
-    };
-
-    // When
-    const result = (component as any).nombrePopup(
-      reporte,
-      undefined,
-    );
-
-    // Then
-    expect(result).toBe('Perro avistado');
-  });
-
-  it('returns "Perro en tránsito" for dog sightings in transit', () => {
-
-    // Given
-    const reporte = {
-      type: 'SIGHTING',
-      details: {
-        animalType: 'DOG',
-        isInTransit: true,
-      },
-    };
-
-    // When
-    const result = (component as any).nombrePopup(
-      reporte,
-      undefined,
-    );
-
-    // Then
-    expect(result).toBe('Perro en tránsito');
-  });
-
-});
-
-describe('tiempoPopup', () => {
-
-  it('returns "Hace instantes" for reports less than one hour old', () => {
-
-    // Given
-    const fecha = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-
-    // When
-    const result = (component as any).tiempoPopup(fecha);
-
-    // Then
-    expect(result).toBe('Hace instantes');
-  });
-
-  it('returns hours for reports less than one day old', () => {
-
-    // Given
-    const fecha = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
-
-    // When
-    const result = (component as any).tiempoPopup(fecha);
-
-    // Then
-    expect(result).toBe('Hace 3hs');
-  });
-
-  it('returns days for reports older than one day', () => {
-
-    // Given
-    const fecha = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-
-    // When
-    const result = (component as any).tiempoPopup(fecha);
-
-    // Then
-    expect(result).toBe('Hace 2d');
-  });
-
-});
-
-describe('fallbackIconFor', () => {
-
-  it('returns the lost pet icon for lost reports', () => {
-
-    // Given
-    const reporte = {
-      type: 'LOST',
-      details: {
-        animalType: 'DOG',
-      },
-    };
-
-    // When
-    const result = (component as any).fallbackIconFor(reporte);
-
-    // Then
-    expect(result).toBe('Icono-mascota-perdida.png');
-  });
-
-  it('returns the in-transit sighting icon for sightings in transit', () => {
-
-    // Given
-    const reporte = {
-      type: 'SIGHTING',
-      details: {
-        animalType: 'DOG',
-        isInTransit: true,
-      },
-    };
-
-    // When
-    const result = (component as any).fallbackIconFor(reporte);
-
-    // Then
-    expect(result).toBe('Icono-avistamiento-transito.png');
-  });
-
-  it('returns the non-transit sighting icon for sightings not in transit', () => {
-
-    // Given
-    const reporte = {
-      type: 'SIGHTING',
-      details: {
-        animalType: 'DOG',
-        isInTransit: false,
-      },
-    };
-
-    // When
-    const result = (component as any).fallbackIconFor(reporte);
-
-    // Then
-    expect(result).toBe('Icono-avistamiento-sin-transito.png');
-  });
-
-});
-
-describe('buildPopup', () => {
-
-  it('includes the report name in the popup html', () => {
-
-    // Given
-    const reporte = {
-      publicId: 'rep-1',
-      type: 'LOST',
-      createdAt: '2026-06-01T10:00:00.000Z',
-      occurredAt: '2026-06-01T10:00:00.000Z',
-      location: {
-        address: 'Avenida Corrientes 123, Buenos Aires',
-      },
-      details: {
-        name: 'Firulais',
-        animalType: 'DOG',
-        images: [],
-      },
-    };
-
-    // When
-    const result = (component as any).buildPopup(reporte);
-
-    // Then
-    expect(result).toContain('Firulais');
-  });
-
-  it('includes the report detail link', () => {
-
-    // Given
-    const reporte = {
-      publicId: 'rep-123',
-      type: 'LOST',
-      createdAt: '2026-06-01T10:00:00.000Z',
-      occurredAt: '2026-06-01T10:00:00.000Z',
-      location: {
-        address: 'Avenida Corrientes 123',
-      },
-      details: {
-        animalType: 'DOG',
-        images: [],
-      },
-    };
-
-    // When
-    const result = (component as any).buildPopup(reporte);
-
-    // Then
-    expect(result).toContain('/reports/rep-123');
-  });
-
-  it('shows the lost pet badge text for lost reports', () => {
-
-    // Given
-    const reporte = {
-      publicId: 'rep-1',
-      type: 'LOST',
-      createdAt: '2026-06-01T10:00:00.000Z',
-      occurredAt: '2026-06-01T10:00:00.000Z',
-      location: {
-        address: 'Avenida Corrientes 123',
-      },
-      details: {
-        animalType: 'DOG',
-        images: [],
-      },
-    };
-
-    // When
-    const result = (component as any).buildPopup(reporte);
-
-    // Then
-    expect(result).toContain('Mascota perdida');
-  });
-
-  it('shows the sighting badge text for sighting reports', () => {
-
-    // Given
-    const reporte = {
-      publicId: 'rep-1',
-      type: 'SIGHTING',
-      createdAt: '2026-06-01T10:00:00.000Z',
-      occurredAt: '2026-06-01T10:00:00.000Z',
-      location: {
-        address: 'Avenida Corrientes 123',
-      },
-      details: {
-        animalType: 'DOG',
-        isInTransit: false,
-        images: [],
-      },
-    };
-
-    // When
-    const result = (component as any).buildPopup(reporte);
-
-    // Then
-    expect(result).toContain('Mascota avistada');
-  });
-
-});
-
-describe('ngOnInit', () => {
-
-  it('sets success report id when report query param exists', async () => {
-
-    // Given
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap.get =
-      vi.fn().mockReturnValue('report-123');
-
-    profileService.getProfile.mockResolvedValue({
-      photoUrl: 'https://image.com/profile.jpg',
+  describe('searchLocation', () => {
+    it('selects the first existing suggestion', async () => {
+      // Given
+      const suggestion = mockSuggestion();
+      component.suggestions.set([suggestion]);
+
+      vi.spyOn(component, 'selectSuggestion').mockImplementation(
+        (): void => undefined,
+      );
+
+      // When
+      await component.searchLocation();
+
+      // Then
+      expect(component.selectSuggestion).toHaveBeenCalledWith(suggestion);
     });
 
-    // When
-    await component.ngOnInit();
+    it('does nothing when there are no suggestions after fetching', async () => {
+      // Given
+      component.suggestions.set([]);
 
-    // Then
-    expect(component.successReportId()).toBe('report-123');
-  });
+      vi.spyOn(testingComponent(), 'fetchSuggestions').mockResolvedValue(
+        undefined,
+      );
 
-  it('loads profile photo when profile has photo url', async () => {
+      vi.spyOn(component, 'selectSuggestion').mockImplementation(
+        (): void => undefined,
+      );
 
-    // Given
-    profileService.getProfile.mockResolvedValue({
-      photoUrl: 'https://image.com/profile.jpg',
+      // When
+      await component.searchLocation();
+
+      // Then
+      expect(component.selectSuggestion).not.toHaveBeenCalled();
     });
 
-    // When
-    await component.ngOnInit();
+    it('fetches suggestions when there are none loaded', async () => {
+      // Given
+      component.suggestions.set([]);
 
-    // Then
-    expect((component as any).profilePhotoUrl).toBe('https://image.com/profile.jpg');
+      const fetchSuggestionsSpy = vi
+        .spyOn(testingComponent(), 'fetchSuggestions')
+        .mockResolvedValue(undefined);
+
+      // When
+      await component.searchLocation();
+
+      // Then
+      expect(fetchSuggestionsSpy).toHaveBeenCalled();
+    });
   });
 
-  it('keeps default profile photo when profile has no photo url', async () => {
+  describe('closeSuccess', () => {
+    it('clears success report id', () => {
+      // Given
+      component.successReportId.set('report-123');
 
-    // Given
-    profileService.getProfile.mockResolvedValue({
-      photoUrl: '',
+      // When
+      component.closeSuccess();
+
+      // Then
+      expect(component.successReportId()).toBeNull();
     });
 
-    // When
-    await component.ngOnInit();
+    it('navigates removing query params', () => {
+      // Given
+      component.successReportId.set('report-123');
 
-    // Then
-    expect((component as any).profilePhotoUrl).toContain('ui-avatars.com');
+      // When
+      component.closeSuccess();
+
+      // Then
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        queryParams: {},
+        replaceUrl: true,
+      });
+    });
   });
 
-  it('does not throw when profile loading fails', async () => {
+  describe('verReporte', () => {
+    it('navigates to report detail', () => {
+      // Given
+      component.successReportId.set('report-123');
 
-  // Given
-  profileService.getProfile.mockRejectedValue(new Error('Profile error'));
+      // When
+      component.verReporte();
 
-  // When
-  const action = component.ngOnInit();
+      // Then
+      expect(router.navigate).toHaveBeenCalledWith([
+        '/reports',
+        'report-123',
+      ]);
+    });
 
-  // Then
-  await expect(action).resolves.not.toThrow();
-});
+    it('clears success report id after navigation', () => {
+      // Given
+      component.successReportId.set('report-123');
 
-});
+      // When
+      component.verReporte();
 
+      // Then
+      expect(component.successReportId()).toBeNull();
+    });
+  });
 
-describe('cargarReportes', () => {
+  describe('irALugar', () => {
+    it('moves the map to the selected place', () => {
+      // Given
+      testingComponent().map = mockMap();
 
-  it('loads reports and updates counters', async () => {
+      // When
+      component.irALugar(-34.6037, -58.3816);
 
-    // Given
-    const reportes = [
-      {
-        publicId: 'r1',
-        location: {
-          latitude: -34.6,
-          longitude: -58.3,
+      // Then
+      expect(testingComponent().map.setView).toHaveBeenCalledWith(
+        [-34.6037, -58.3816],
+        18,
+      );
+    });
+  });
+
+  describe('formatBadge', () => {
+    it('returns the number as text when it is less than or equal to ten', () => {
+      // When
+      const result = testingComponent().formatBadge(10);
+
+      // Then
+      expect(result).toBe('10');
+    });
+
+    it('returns +10 when the number is greater than ten', () => {
+      // When
+      const result = testingComponent().formatBadge(11);
+
+      // Then
+      expect(result).toBe('+10');
+    });
+
+    it('returns zero as text', () => {
+      // When
+      const result = testingComponent().formatBadge(0);
+
+      // Then
+      expect(result).toBe('0');
+    });
+  });
+
+  describe('calcularDistancia', () => {
+    it('returns zero when both points are the same', () => {
+      // When
+      const result = testingComponent().calcularDistancia(
+        -34.6037,
+        -58.3816,
+        -34.6037,
+        -58.3816,
+      );
+
+      // Then
+      expect(result).toBe(0);
+    });
+
+    it('returns a positive distance when points are different', () => {
+      // When
+      const result = testingComponent().calcularDistancia(
+        -34.6037,
+        -58.3816,
+        -34.62,
+        -58.4,
+      );
+
+      // Then
+      expect(result).toBeGreaterThan(0);
+    });
+  });
+
+  describe('onSearchInput', () => {
+    it('updates search term', () => {
+      // When
+      component.onSearchInput('Buenos Aires');
+
+      // Then
+      expect(component.searchTerm()).toBe('Buenos Aires');
+    });
+
+    it('clears suggestions when the search text has less than three characters', () => {
+      // Given
+      component.suggestions.set([mockSuggestion()]);
+
+      // When
+      component.onSearchInput('Bo');
+
+      // Then
+      expect(component.suggestions()).toEqual([]);
+    });
+
+    it('fetches suggestions after debounce when the search text has at least three characters', () => {
+      // Given
+      vi.useFakeTimers();
+
+      const fetchSuggestionsSpy = vi
+        .spyOn(testingComponent(), 'fetchSuggestions')
+        .mockResolvedValue(undefined);
+
+      // When
+      component.onSearchInput('Buenos Aires');
+      vi.advanceTimersByTime(350);
+
+      // Then
+      expect(fetchSuggestionsSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('direccionCorta', () => {
+    it('returns "Sin ubicación" when address is empty', () => {
+      // When
+      const result = testingComponent().direccionCorta('');
+
+      // Then
+      expect(result).toBe('Sin ubicación');
+    });
+
+    it('returns street and number when address starts with a number', () => {
+      // When
+      const result = testingComponent().direccionCorta(
+        '123, Avenida Corrientes, Buenos Aires',
+      );
+
+      // Then
+      expect(result).toBe('Avenida Corrientes 123');
+    });
+
+    it('returns the first address part when address does not start with a number', () => {
+      // When
+      const result = testingComponent().direccionCorta(
+        'Avenida Corrientes 123, Buenos Aires',
+      );
+
+      // Then
+      expect(result).toBe('Avenida Corrientes 123');
+    });
+
+    it('returns address when it has no commas', () => {
+      // When
+      const result = testingComponent().direccionCorta(
+        'Avenida Corrientes 123',
+      );
+
+      // Then
+      expect(result).toBe('Avenida Corrientes 123');
+    });
+  });
+
+  describe('fechaPopup', () => {
+    it('formats a valid date', () => {
+      // When
+      const result = testingComponent().fechaPopup(
+        '2026-06-01T10:00:00.000Z',
+      );
+
+      // Then
+      expect(result).toContain('2026');
+    });
+
+    it('returns "Sin fecha" when date is invalid', () => {
+      // When
+      const result = testingComponent().fechaPopup('invalid-date');
+
+      // Then
+      expect(result).toBe('Sin fecha');
+    });
+  });
+
+  describe('horaPopup', () => {
+    it('formats a valid time', () => {
+      // When
+      const result = testingComponent().horaPopup(
+        '2026-06-01T10:30:00.000Z',
+      );
+
+      // Then
+      expect(result).toContain('hs');
+    });
+
+    it('returns empty text when date is invalid', () => {
+      // When
+      const result = testingComponent().horaPopup('invalid-date');
+
+      // Then
+      expect(result).toBe('');
+    });
+  });
+
+  describe('nombrePopup', () => {
+    it('returns the provided name when it exists', () => {
+      // When
+      const result = testingComponent().nombrePopup(
+        mockReporte(),
+        'Firulais',
+      );
+
+      // Then
+      expect(result).toBe('Firulais');
+    });
+
+    it('returns "Perro perdido" for lost dog reports without name', () => {
+      // When
+      const result = testingComponent().nombrePopup(
+        mockReporte({
+          type: 'LOST',
+          details: { animalType: 'DOG', images: [] },
+        }),
+        undefined,
+      );
+
+      // Then
+      expect(result).toBe('Perro perdido');
+    });
+
+    it('returns "Gato perdido" for lost cat reports without name', () => {
+      // When
+      const result = testingComponent().nombrePopup(
+        mockReporte({
+          type: 'LOST',
+          details: { animalType: 'CAT', images: [] },
+        }),
+        undefined,
+      );
+
+      // Then
+      expect(result).toBe('Gato perdido');
+    });
+
+    it('returns "Perro avistado" for dog sightings', () => {
+      // When
+      const result = testingComponent().nombrePopup(
+        mockReporte({
+          type: 'SIGHTING',
+          details: {
+            animalType: 'DOG',
+            isInTransit: false,
+            images: [],
+          },
+        }),
+        undefined,
+      );
+
+      // Then
+      expect(result).toBe('Perro avistado');
+    });
+
+    it('returns "Perro en tránsito" for dog sightings in transit', () => {
+      // When
+      const result = testingComponent().nombrePopup(
+        mockReporte({
+          type: 'SIGHTING',
+          details: {
+            animalType: 'DOG',
+            isInTransit: true,
+            images: [],
+          },
+        }),
+        undefined,
+      );
+
+      // Then
+      expect(result).toBe('Perro en tránsito');
+    });
+  });
+
+  describe('tiempoPopup', () => {
+    it('returns "Hace instantes" for reports less than one hour old', () => {
+      // Given
+      const fecha = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+
+      // When
+      const result = testingComponent().tiempoPopup(fecha);
+
+      // Then
+      expect(result).toBe('Hace instantes');
+    });
+
+    it('returns hours for reports less than one day old', () => {
+      // Given
+      const fecha = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+
+      // When
+      const result = testingComponent().tiempoPopup(fecha);
+
+      // Then
+      expect(result).toBe('Hace 3hs');
+    });
+
+    it('returns days for reports older than one day', () => {
+      // Given
+      const fecha = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+
+      // When
+      const result = testingComponent().tiempoPopup(fecha);
+
+      // Then
+      expect(result).toBe('Hace 2d');
+    });
+
+    it('returns one hour text', () => {
+      // Given
+      const fecha = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+      // When
+      const result = testingComponent().tiempoPopup(fecha);
+
+      // Then
+      expect(result).toContain('1');
+    });
+  });
+
+  describe('fallbackIconFor', () => {
+    it('returns the lost pet icon for lost reports', () => {
+      // When
+      const result = testingComponent().fallbackIconFor(
+        mockReporte({ type: 'LOST' }),
+      );
+
+      // Then
+      expect(result).toBe('Icono-mascota-perdida.png');
+    });
+
+    it('returns the in-transit sighting icon for sightings in transit', () => {
+      // When
+      const result = testingComponent().fallbackIconFor(
+        mockReporte({
+          type: 'SIGHTING',
+          details: {
+            animalType: 'DOG',
+            isInTransit: true,
+            images: [],
+          },
+        }),
+      );
+
+      // Then
+      expect(result).toBe('Icono-avistamiento-transito.png');
+    });
+
+    it('returns the non-transit sighting icon for sightings not in transit', () => {
+      // When
+      const result = testingComponent().fallbackIconFor(
+        mockReporte({
+          type: 'SIGHTING',
+          details: {
+            animalType: 'DOG',
+            isInTransit: false,
+            images: [],
+          },
+        }),
+      );
+
+      // Then
+      expect(result).toBe('Icono-avistamiento-sin-transito.png');
+    });
+  });
+
+  describe('buildPopup', () => {
+    it('includes the report name in the popup html', () => {
+      // Given
+      const reporte = mockReporte({
+        details: {
+          name: 'Firulais',
+          animalType: 'DOG',
+          images: [],
         },
-        details: {},
-      },
-      {
-        publicId: 'r2',
-        location: {
-          latitude: -34.7,
-          longitude: -58.4,
+      });
+
+      // When
+      const result = testingComponent().buildPopup(reporte);
+
+      // Then
+      expect(result).toContain('Firulais');
+    });
+
+    it('includes the report detail link', () => {
+      // Given
+      const reporte = mockReporte({ publicId: 'rep-123' });
+
+      // When
+      const result = testingComponent().buildPopup(reporte);
+
+      // Then
+      expect(result).toContain('/reports/rep-123');
+    });
+
+    it('shows the lost pet badge text for lost reports', () => {
+      // When
+      const result = testingComponent().buildPopup(
+        mockReporte({ type: 'LOST' }),
+      );
+
+      // Then
+      expect(result).toContain('Mascota perdida');
+    });
+
+    it('shows the sighting badge text for sighting reports', () => {
+      // Given
+      const reporte = mockReporte({
+        type: 'SIGHTING',
+        details: {
+          animalType: 'DOG',
+          isInTransit: false,
+          images: [],
         },
-        details: {},
-      },
-    ];
+      });
 
-    const misReportes = [
-      { publicId: 'm1' },
-      { publicId: 'm2' },
-      { publicId: 'm3' },
-      { publicId: 'm4' },
-    ];
+      // When
+      const result = testingComponent().buildPopup(reporte);
 
-    reportListService.getGenerales.mockResolvedValue(reportes);
-    reportListService.getMisReportes.mockResolvedValue(misReportes);
-
-    vi.spyOn(component as any, 'dibujarMarcadores')
-      .mockImplementation(() => {});
-
-    // When
-    await (component as any).cargarReportes();
-
-    // Then
-    expect(component.reportes()).toEqual(reportes);
-    expect(component.reportesFiltrados()).toEqual(reportes);
-
-    expect(component.totalMisReportes()).toBe(4);
-    expect(component.misReportes()).toHaveLength(3);
-
-    expect(component.totalCercanos()).toBe(2);
-    expect(component.reportesCercanos()).toHaveLength(2);
+      // Then
+      expect(result).toContain('Mascota avistada');
+    });
   });
 
-});
+  describe('ngOnInit', () => {
+    it('sets success report id when report query param exists', async () => {
+      // Given
+      TestBed.inject(ActivatedRoute).snapshot.queryParamMap.get =
+        vi.fn().mockReturnValue('report-123');
 
-describe('cargarReportes error handling', () => {
+      profileService.getProfile.mockResolvedValue({
+        photoUrl: 'https://image.com/profile.jpg',
+      } as ProfileMock);
 
-  it('does not throw when report loading fails', async () => {
+      // When
+      await component.ngOnInit();
 
-    // Given
-    reportListService.getGenerales.mockRejectedValue(
-      new Error('Backend error'),
-    );
+      // Then
+      expect(component.successReportId()).toBe('report-123');
+    });
 
-    // When
-    const action = (component as any).cargarReportes();
+    it('loads profile photo when profile has photo url', async () => {
+      // Given
+      profileService.getProfile.mockResolvedValue({
+        photoUrl: 'https://image.com/profile.jpg',
+      } as ProfileMock);
 
-    // Then
-    await expect(action).resolves.toBeUndefined();
+      // When
+      await component.ngOnInit();
+
+      // Then
+      expect(testingComponent().profilePhotoUrl).toBe(
+        'https://image.com/profile.jpg',
+      );
+    });
+
+    it('keeps default profile photo when profile has no photo url', async () => {
+      // Given
+      profileService.getProfile.mockResolvedValue({
+        photoUrl: '',
+      } as ProfileMock);
+
+      // When
+      await component.ngOnInit();
+
+      // Then
+      expect(testingComponent().profilePhotoUrl).toContain('ui-avatars.com');
+    });
+
+    it('does not throw when profile loading fails', async () => {
+      // Given
+      profileService.getProfile.mockRejectedValue(new Error('Profile error'));
+
+      // When
+      const action = component.ngOnInit();
+
+      // Then
+      await expect(action).resolves.not.toThrow();
+    });
   });
 
-});
+  describe('cargarReportes', () => {
+    it('loads reports and updates counters', async () => {
+      // Given
+      const reportes = [
+        mockReporte({ publicId: 'r1' }),
+        mockReporte({ publicId: 'r2' }),
+      ];
 
-describe('aplicarFiltroCentros', () => {
+      const misReportes = [
+        mockReporte({ publicId: 'm1' }),
+        mockReporte({ publicId: 'm2' }),
+        mockReporte({ publicId: 'm3' }),
+        mockReporte({ publicId: 'm4' }),
+      ];
 
-  it('searches veterinary places when veterinary filter is selected', async () => {
+      reportListService.getGenerales.mockResolvedValue(reportes);
+      reportListService.getMisReportes.mockResolvedValue(misReportes);
+      mockDibujarMarcadores();
 
-    // Given
-    component.centrosFiltro.set('veterinarias');
+      // When
+      await testingComponent().cargarReportes();
 
-    const buscarLugaresSpy = vi
-      .spyOn(component as any, 'buscarLugares')
-      .mockResolvedValue(undefined);
+      // Then
+      expect(component.reportes()).toEqual(reportes);
+      expect(component.reportesFiltrados()).toEqual(reportes);
+      expect(component.totalMisReportes()).toBe(4);
+      expect(component.misReportes()).toHaveLength(3);
+      expect(component.totalCercanos()).toBe(2);
+      expect(component.reportesCercanos()).toHaveLength(2);
+    });
 
-    // When
-    await component.aplicarFiltroCentros();
+    it('does not throw when report loading fails', async () => {
+      // Given
+      reportListService.getGenerales.mockRejectedValue(
+        new Error('Backend error'),
+      );
 
-    // Then
-    expect(buscarLugaresSpy).toHaveBeenCalledWith('veterinary');
+      // When
+      const action = testingComponent().cargarReportes();
+
+      // Then
+      await expect(action).resolves.toBeUndefined();
+    });
   });
 
-  it('searches police places when police filter is selected', async () => {
+  describe('aplicarFiltroCentros', () => {
+    it('searches veterinary places when veterinary filter is selected', async () => {
+      // Given
+      component.centrosFiltro.set('veterinarias');
 
-    // Given
-    component.centrosFiltro.set('comisarias');
+      const buscarLugaresSpy = vi
+        .spyOn(testingComponent(), 'buscarLugares')
+        .mockResolvedValue(undefined);
 
-    const buscarLugaresSpy = vi
-      .spyOn(component as any, 'buscarLugares')
-      .mockResolvedValue(undefined);
+      // When
+      await component.aplicarFiltroCentros();
 
-    // When
-    await component.aplicarFiltroCentros();
+      // Then
+      expect(buscarLugaresSpy).toHaveBeenCalledWith('veterinary');
+    });
 
-    // Then
-    expect(buscarLugaresSpy).toHaveBeenCalledWith('police');
+    it('searches police places when police filter is selected', async () => {
+      // Given
+      component.centrosFiltro.set('comisarias');
+
+      const buscarLugaresSpy = vi
+        .spyOn(testingComponent(), 'buscarLugares')
+        .mockResolvedValue(undefined);
+
+      // When
+      await component.aplicarFiltroCentros();
+
+      // Then
+      expect(buscarLugaresSpy).toHaveBeenCalledWith('police');
+    });
+
+    it('clears places when all centers filter is selected', async () => {
+      // Given
+      component.centrosFiltro.set('todos');
+      component.lugares.set([mockPlace()]);
+      testingComponent().lugaresLayer = mockLayer();
+
+      // When
+      await component.aplicarFiltroCentros();
+
+      // Then
+      expect(component.lugares()).toEqual([]);
+      expect(testingComponent().lugaresLayer.clearLayers).toHaveBeenCalled();
+    });
   });
 
-  it('clears places when all centers filter is selected', async () => {
+  describe('buscarLugares', () => {
+    it('does nothing when user location does not exist', async () => {
+      // Given
+      testingComponent().userLatLng = undefined;
 
-    // Given
-    component.centrosFiltro.set('todos');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-    component.lugares.set([
-      {
-        nombre: 'Veterinaria',
-        lat: -34.6,
-        lng: -58.3,
-      },
-    ]);
+      // When
+      await testingComponent().buscarLugares('veterinary');
 
-    (component as any).lugaresLayer = {
-      clearLayers: vi.fn(),
-    };
+      // Then
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
 
-    // When
-    await component.aplicarFiltroCentros();
+    it('loads nearby veterinary places', async () => {
+      // Given
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
 
-    // Then
-    expect(component.lugares()).toEqual([]);
-    expect((component as any).lugaresLayer.clearLayers).toHaveBeenCalled();
-  });
-
-});
-
-describe('buscarLugares', () => {
-
-  it('does nothing when user location does not exist', async () => {
-
-    // Given
-    (component as any).userLatLng = undefined;
-
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-
-    // When
-    await (component as any).buscarLugares('veterinary');
-
-    // Then
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
-  it('loads nearby veterinary places', async () => {
-
-    // Given
-    (component as any).userLatLng = {
-      lat: -34.6037,
-      lng: -58.3816,
-    };
-
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      json: vi.fn().mockResolvedValue({
+      mockFetchJson({
         elements: [
           {
             tags: {
@@ -1163,35 +1128,31 @@ describe('buscarLugares', () => {
             lon: -58.382,
           },
         ],
-      }),
-    } as any);
+      });
 
-    vi.spyOn(component as any, 'dibujarLugares')
-      .mockImplementation(() => {});
+      mockDibujarLugares();
 
-    // When
-    await (component as any).buscarLugares('veterinary');
+      // When
+      await testingComponent().buscarLugares('veterinary');
 
-    // Then
-    expect(component.lugares()).toEqual([
-      {
-        nombre: 'Veterinaria Central',
-        lat: -34.604,
-        lng: -58.382,
-      },
-    ]);
-  });
+      // Then
+      expect(component.lugares()).toEqual([
+        {
+          nombre: 'Veterinaria Central',
+          lat: -34.604,
+          lng: -58.382,
+        },
+      ]);
+    });
 
-  it('uses default police name when place has no name', async () => {
+    it('uses default police name when place has no name', async () => {
+      // Given
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
 
-    // Given
-    (component as any).userLatLng = {
-      lat: -34.6037,
-      lng: -58.3816,
-    };
-
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      json: vi.fn().mockResolvedValue({
+      mockFetchJson({
         elements: [
           {
             tags: {},
@@ -1199,29 +1160,25 @@ describe('buscarLugares', () => {
             lon: -58.382,
           },
         ],
-      }),
-    } as any);
+      });
 
-    vi.spyOn(component as any, 'dibujarLugares')
-      .mockImplementation(() => {});
+      mockDibujarLugares();
 
-    // When
-    await (component as any).buscarLugares('police');
+      // When
+      await testingComponent().buscarLugares('police');
 
-    // Then
-    expect(component.lugares()[0].nombre).toBe('Comisaría');
-  });
+      // Then
+      expect(component.lugares()[0]?.nombre).toBe('Comisaría');
+    });
 
-  it('uses default veterinary name when place has no name', async () => {
+    it('uses default veterinary name when place has no name', async () => {
+      // Given
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
 
-    // Given
-    (component as any).userLatLng = {
-      lat: -34.6037,
-      lng: -58.3816,
-    };
-
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      json: vi.fn().mockResolvedValue({
+      mockFetchJson({
         elements: [
           {
             tags: {},
@@ -1229,470 +1186,401 @@ describe('buscarLugares', () => {
             lon: -58.382,
           },
         ],
-      }),
-    } as any);
+      });
 
-    vi.spyOn(component as any, 'dibujarLugares')
-      .mockImplementation(() => {});
+      mockDibujarLugares();
 
-    // When
-    await (component as any).buscarLugares('veterinary');
+      // When
+      await testingComponent().buscarLugares('veterinary');
 
-    // Then
-    expect(component.lugares()[0].nombre).toBe('Veterinaria');
+      // Then
+      expect(component.lugares()[0]?.nombre).toBe('Veterinaria');
+    });
+
+    it('does not throw when nearby places request fails', async () => {
+      // Given
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
+
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(
+        new Error('Network error'),
+      );
+
+      // When
+      const action = testingComponent().buscarLugares('veterinary');
+
+      // Then
+      await expect(action).resolves.toBeUndefined();
+    });
   });
 
-  it('does not throw when nearby places request fails', async () => {
+  describe('centerOnUser', () => {
+    it('centers the map when user location exists', () => {
+      // Given
+      const userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
 
-    // Given
-    (component as any).userLatLng = {
-      lat: -34.6037,
-      lng: -58.3816,
-    };
+      testingComponent().userLatLng = userLatLng;
+      testingComponent().map = mockMap();
 
-    vi.spyOn(globalThis, 'fetch').mockRejectedValue(
-      new Error('Network error'),
-    );
+      // When
+      testingComponent().centerOnUser();
 
-    // When
-    const action = (component as any).buscarLugares('veterinary');
+      // Then
+      expect(testingComponent().map.setView).toHaveBeenCalledWith(
+        userLatLng,
+        16,
+      );
+    });
 
-    // Then
-    await expect(action).resolves.toBeUndefined();
+    it('tries to get user location when user location does not exist', () => {
+      // Given
+      testingComponent().userLatLng = undefined;
+
+      const getUserLocationSpy = vi
+        .spyOn(testingComponent(), 'getUserLocation')
+        .mockImplementation((): void => undefined);
+
+      // When
+      testingComponent().centerOnUser();
+
+      // Then
+      expect(getUserLocationSpy).toHaveBeenCalled();
+    });
   });
 
-});
+  describe('placeUserMarker', () => {
+    it('does nothing when user location does not exist', () => {
+      // Given
+      testingComponent().userLatLng = undefined;
 
-describe('centerOnUser', () => {
+      // When
+      testingComponent().placeUserMarker();
 
-  it('centers the map when user location exists', () => {
+      // Then
+      expect(testingComponent().userMarker).toBeUndefined();
+    });
 
-    // Given
-    const userLatLng = {
-      lat: -34.6037,
-      lng: -58.3816,
-    };
+    it('updates existing user marker position', () => {
+      // Given
+      const userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
 
-    (component as any).userLatLng = userLatLng;
+      const userMarker = {
+        setLatLng: vi.fn(),
+      };
 
-    (component as any).map = {
-      setView: vi.fn(),
-    };
+      testingComponent().userLatLng = userLatLng;
+      testingComponent().userMarker = userMarker;
 
-    // When
-    (component as any).centerOnUser();
+      // When
+      testingComponent().placeUserMarker();
 
-    // Then
-    expect((component as any).map.setView).toHaveBeenCalledWith(
-      userLatLng,
-      16,
-    );
+      // Then
+      expect(userMarker.setLatLng).toHaveBeenCalledWith(userLatLng);
+    });
   });
 
-  it('tries to get user location when user location does not exist', () => {
+  describe('markSearchResult', () => {
+    it('updates existing search marker position', () => {
+      // Given
+      const searchMarker = {
+        setLatLng: vi.fn(),
+      };
 
-    // Given
-    (component as any).userLatLng = undefined;
+      testingComponent().searchMarker = searchMarker;
 
-    const getUserLocationSpy = vi
-      .spyOn(component as any, 'getUserLocation')
-      .mockImplementation(() => {});
+      // When
+      testingComponent().markSearchResult(-34.6037, -58.3816);
 
-    // When
-    (component as any).centerOnUser();
-
-    // Then
-    expect(getUserLocationSpy).toHaveBeenCalled();
+      // Then
+      expect(searchMarker.setLatLng).toHaveBeenCalled();
+    });
   });
 
-});
+  describe('clearSearch with marker', () => {
+    it('removes search marker when it exists', () => {
+      // Given
+      const searchMarker = {
+        remove: vi.fn(),
+      };
 
-describe('placeUserMarker', () => {
+      testingComponent().searchMarker = searchMarker;
+      component.searchTerm.set('Buenos Aires');
 
-  it('does nothing when user location does not exist', () => {
+      // When
+      component.clearSearch();
 
-    // Given
-    (component as any).userLatLng = undefined;
-
-    // When
-    (component as any).placeUserMarker();
-
-    // Then
-    expect((component as any).userMarker).toBeUndefined();
+      // Then
+      expect(searchMarker.remove).toHaveBeenCalled();
+      expect(testingComponent().searchMarker).toBeUndefined();
+    });
   });
 
-  it('updates existing user marker position', () => {
+  describe('buildPin', () => {
+    it('creates a pin with image when image url exists', () => {
+      // When
+      const result = testingComponent().buildPin(
+        '#E8842E',
+        'https://image.com/dog.jpg',
+      );
 
-    // Given
-    const userLatLng = {
-      lat: -34.6037,
-      lng: -58.3816,
-    };
+      // Then
+      expect(result.options.html).toContain('dog.jpg');
+    });
 
-    const userMarker = {
-      setLatLng: vi.fn(),
-    };
+    it('creates a pin with fallback icon when image does not exist', () => {
+      // When
+      const result = testingComponent().buildPin(
+        '#E8842E',
+        undefined,
+        'Icono-mascota-perdida.png',
+      );
 
-    (component as any).userLatLng = userLatLng;
-    (component as any).userMarker = userMarker;
+      // Then
+      expect(result.options.html).toContain('Icono-mascota-perdida.png');
+    });
 
-    // When
-    (component as any).placeUserMarker();
+    it('creates a pin without image content when no image or fallback exists', () => {
+      // When
+      const result = testingComponent().buildPin('#E8842E');
 
-    // Then
-    expect(userMarker.setLatLng).toHaveBeenCalledWith(userLatLng);
+      // Then
+      expect(result.options.html).not.toContain('<img');
+    });
   });
 
-});
+  describe('dibujarLugares', () => {
+    it('clears previous places layer', () => {
+      // Given
+      testingComponent().lugaresLayer = mockLayer();
+      component.lugares.set([]);
 
-describe('markSearchResult', () => {
+      // When
+      testingComponent().dibujarLugares();
 
-  it('updates existing search marker position', () => {
-
-    // Given
-    const searchMarker = {
-      setLatLng: vi.fn(),
-    };
-
-    (component as any).searchMarker = searchMarker;
-
-    // When
-    (component as any).markSearchResult(-34.6037, -58.3816);
-
-    // Then
-    expect(searchMarker.setLatLng).toHaveBeenCalled();
+      // Then
+      expect(testingComponent().lugaresLayer.clearLayers).toHaveBeenCalled();
+    });
   });
 
-});
+  describe('getUserLocation', () => {
+    it('sets user location and centers the map when geolocation succeeds', () => {
+      // Given
+      vi.useFakeTimers();
 
-describe('clearSearch with marker', () => {
+      const placeUserMarkerSpy = vi
+        .spyOn(testingComponent(), 'placeUserMarker')
+        .mockImplementation((): void => undefined);
 
-  it('removes search marker when it exists', () => {
+      testingComponent().map = mockMap();
 
-    // Given
-    const searchMarker = {
-      remove: vi.fn(),
-    };
+      const getCurrentPosition = vi.fn().mockImplementation((success) => {
+        success({
+          coords: {
+            latitude: -34.6037,
+            longitude: -58.3816,
+          },
+        });
+      });
 
-    (component as any).searchMarker = searchMarker;
-    component.searchTerm.set('Buenos Aires');
-
-    // When
-    component.clearSearch();
-
-    // Then
-    expect(searchMarker.remove).toHaveBeenCalled();
-    expect((component as any).searchMarker).toBeUndefined();
-  });
-
-});
-
-describe('buildPin', () => {
-
-  it('creates a pin with image when image url exists', () => {
-
-    // When
-    const result = (component as any).buildPin(
-      '#E8842E',
-      'https://image.com/dog.jpg',
-    );
-
-    // Then
-    expect(result.options.html).toContain('dog.jpg');
-  });
-
-  it('creates a pin with fallback icon when image does not exist', () => {
-
-    // When
-    const result = (component as any).buildPin(
-      '#E8842E',
-      undefined,
-      'Icono-mascota-perdida.png',
-    );
-
-    // Then
-    expect(result.options.html).toContain(
-      'Icono-mascota-perdida.png',
-    );
-  });
-
-  it('creates a pin without image content when no image or fallback exists', () => {
-
-    // When
-    const result = (component as any).buildPin(
-      '#E8842E',
-    );
-
-    // Then
-    expect(result.options.html).not.toContain('<img');
-  });
-
-});
-
-describe('dibujarLugares', () => {
-
-  it('clears previous places layer', () => {
-
-    // Given
-    (component as any).lugaresLayer = {
-      clearLayers: vi.fn(),
-    };
-
-    component.lugares.set([]);
-
-    // When
-    (component as any).dibujarLugares();
-
-    // Then
-    expect(
-      (component as any).lugaresLayer.clearLayers,
-    ).toHaveBeenCalled();
-  });
-
-});
-
-describe('getUserLocation', () => {
-
-  it('sets user location and centers the map when geolocation succeeds', () => {
-
-    // Given
-    vi.useFakeTimers();
-
-    const placeUserMarkerSpy = vi
-      .spyOn(component as any, 'placeUserMarker')
-      .mockImplementation(() => {});
-
-    (component as any).map = {
-      setView: vi.fn(),
-      invalidateSize: vi.fn(),
-    };
-
-    const getCurrentPosition = vi.fn().mockImplementation((success) => {
-      success({
-        coords: {
-          latitude: -34.6037,
-          longitude: -58.3816,
+      vi.stubGlobal('navigator', {
+        geolocation: {
+          getCurrentPosition,
         },
       });
+
+      // When
+      testingComponent().getUserLocation();
+      vi.advanceTimersByTime(100);
+
+      // Then
+      expect(testingComponent().userLatLng?.lat).toBe(-34.6037);
+      expect(testingComponent().userLatLng?.lng).toBe(-58.3816);
+      expect(placeUserMarkerSpy).toHaveBeenCalled();
+      expect(testingComponent().map.setView).toHaveBeenCalledWith(
+        testingComponent().userLatLng,
+        15,
+      );
+      expect(testingComponent().map.invalidateSize).toHaveBeenCalled();
     });
 
-    vi.stubGlobal('navigator', {
-      geolocation: {
-        getCurrentPosition,
-      },
+    it('centers the map on default location when geolocation fails', () => {
+      // Given
+      vi.useFakeTimers();
+
+      testingComponent().map = mockMap();
+
+      const getCurrentPosition = vi.fn().mockImplementation((_success, error) => {
+        error();
+      });
+
+      vi.stubGlobal('navigator', {
+        geolocation: {
+          getCurrentPosition,
+        },
+      });
+
+      // When
+      testingComponent().getUserLocation();
+      vi.advanceTimersByTime(100);
+
+      // Then
+      expect(testingComponent().map.setView).toHaveBeenCalledWith(
+        [-34.603734, -58.38157],
+        13,
+      );
+      expect(testingComponent().map.invalidateSize).toHaveBeenCalled();
+    });
+  });
+
+  describe('fetchSuggestions', () => {
+    it('clears suggestions when request fails', async () => {
+      // Given
+      component.searchTerm.set('Buenos Aires');
+
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(
+        new Error('Network error'),
+      );
+
+      // When
+      await testingComponent().fetchSuggestions();
+
+      // Then
+      expect(component.suggestions()).toEqual([]);
     });
 
-    // When
-    (component as any).getUserLocation();
+    it('does nothing when search term is empty', async () => {
+      // Given
+      component.searchTerm.set('');
 
-    vi.advanceTimersByTime(100);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+      fetchSpy.mockClear();
 
-    // Then
-    expect((component as any).userLatLng.lat).toBe(-34.6037);
-    expect((component as any).userLatLng.lng).toBe(-58.3816);
+      // When
+      await testingComponent().fetchSuggestions();
 
-    expect(placeUserMarkerSpy).toHaveBeenCalled();
-
-    expect((component as any).map.setView).toHaveBeenCalledWith(
-      (component as any).userLatLng,
-      15,
-    );
-
-    expect((component as any).map.invalidateSize).toHaveBeenCalled();
-
-    vi.useRealTimers();
-    vi.unstubAllGlobals();
-  });
-
-  it('centers the map on default location when geolocation fails', () => {
-
-    // Given
-    vi.useFakeTimers();
-
-    (component as any).map = {
-      setView: vi.fn(),
-      invalidateSize: vi.fn(),
-    };
-
-    const getCurrentPosition = vi.fn().mockImplementation((_success, error) => {
-      error();
+      // Then
+      expect(fetchSpy).not.toHaveBeenCalled();
     });
 
-    vi.stubGlobal('navigator', {
-      geolocation: {
-        getCurrentPosition,
-      },
-    });
+    it('loads and maps location suggestions', async () => {
+      // Given
+      component.searchTerm.set('Buenos Aires');
 
-    // When
-    (component as any).getUserLocation();
-
-    vi.advanceTimersByTime(100);
-
-    // Then
-    expect((component as any).map.setView).toHaveBeenCalledWith(
-      [-34.603734, -58.38157],
-      13,
-    );
-
-    expect((component as any).map.invalidateSize).toHaveBeenCalled();
-
-    vi.useRealTimers();
-    vi.unstubAllGlobals();
-  });
-
-});
-
-describe('fetchSuggestions', () => {
-
-  it('clears suggestions when request fails', async () => {
-
-    // Given
-    component.searchTerm.set('Buenos Aires');
-
-    vi.spyOn(globalThis, 'fetch').mockRejectedValue(
-      new Error('Network error'),
-    );
-
-    // When
-    await (component as any).fetchSuggestions();
-
-    // Then
-    expect(component.suggestions()).toEqual([]);
-  });
-
-});
-
-describe('fetchSuggestions without query', () => {
-
-  it('does nothing when search term is empty', async () => {
-
-    // Given
-    component.searchTerm.set('');
-
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    fetchSpy.mockClear();
-
-    // When
-    await (component as any).fetchSuggestions();
-
-    // Then
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
-});
-
-describe('fetchSuggestions', () => {
-
-  it('loads and maps location suggestions', async () => {
-
-    // Given
-    component.searchTerm.set('Buenos Aires');
-
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      json: vi.fn().mockResolvedValue([
+      mockFetchJson([
         {
           display_name: 'Buenos Aires, Argentina',
           lat: '-34.6037',
           lon: '-58.3816',
         },
-      ]),
-    } as any);
+      ]);
 
-    // When
-    await (component as any).fetchSuggestions();
+      // When
+      await testingComponent().fetchSuggestions();
 
-    // Then
-    expect(component.suggestions()).toEqual([
-      {
-        displayName: 'Buenos Aires, Argentina',
-        lat: -34.6037,
-        lng: -58.3816,
-      },
-    ]);
+      // Then
+      expect(component.suggestions()).toEqual([
+        {
+          displayName: 'Buenos Aires, Argentina',
+          lat: -34.6037,
+          lng: -58.3816,
+        },
+      ]);
+    });
   });
 
-});
+  describe('initializeMap', () => {
+    it('creates the map, adds layers, gets user location and loads reports', () => {
+      // Given
+      vi.useFakeTimers();
 
-describe('formatBadge edge cases', () => {
+      const getUserLocationSpy = vi
+        .spyOn(testingComponent(), 'getUserLocation')
+        .mockImplementation((): void => undefined);
 
-  it('returns zero as text', () => {
+      const cargarReportesSpy = vi
+        .spyOn(testingComponent(), 'cargarReportes')
+        .mockResolvedValue(undefined);
 
-    // When
-    const result = (component as any).formatBadge(0);
+      // When
+      testingComponent().initializeMap();
+      vi.advanceTimersByTime(500);
 
-    // Then
-    expect(result).toBe('0');
+      // Then
+      expect(getUserLocationSpy).toHaveBeenCalled();
+      expect(cargarReportesSpy).toHaveBeenCalled();
+    });
   });
 
-});
+  describe('dibujarMarcadores', () => {
+    it('uses orange color for lost reports', () => {
+      // Given
+      const reporte = mockReporte({ type: 'LOST' });
 
-describe('tiempoPopup edge cases', () => {
+      const buildPinSpy = vi.spyOn(testingComponent(), 'buildPin');
 
-  it('returns one hour text', () => {
+      // When
+      testingComponent().dibujarMarcadores([reporte]);
 
-    // Given
-    const fecha = new Date(
-      Date.now() - 60 * 60 * 1000,
-    ).toISOString();
+      // Then
+      expect(buildPinSpy).toHaveBeenCalledWith(
+        '#E8842E',
+        undefined,
+        'Icono-mascota-perdida.png',
+      );
+    });
 
-    // When
-    const result = (component as any).tiempoPopup(fecha);
+    it('uses blue color for sighting reports', () => {
+      // Given
+      const reporte = mockReporte({
+        type: 'SIGHTING',
+        details: {
+          animalType: 'DOG',
+          isInTransit: false,
+          images: [],
+        },
+      });
 
-    // Then
-    expect(result).toContain('1');
+      const buildPinSpy = vi.spyOn(testingComponent(), 'buildPin');
+
+      // When
+      testingComponent().dibujarMarcadores([reporte]);
+
+      // Then
+      expect(buildPinSpy).toHaveBeenCalledWith(
+        '#12355B',
+        undefined,
+        'Icono-avistamiento-sin-transito.png',
+      );
+    });
+
+    it('uses the first report image when it exists', () => {
+      // Given
+      const reporte = mockReporte({
+        details: {
+          animalType: 'DOG',
+          images: [{ url: 'https://image.com/pet.jpg' }],
+        },
+      });
+
+      const buildPinSpy = vi.spyOn(testingComponent(), 'buildPin');
+
+      // When
+      testingComponent().dibujarMarcadores([reporte]);
+
+      // Then
+      expect(buildPinSpy).toHaveBeenCalledWith(
+        '#E8842E',
+        'https://image.com/pet.jpg',
+        'Icono-mascota-perdida.png',
+      );
+    });
   });
-
-});
-
-describe('direccionCorta edge cases', () => {
-
-  it('returns address when it has no commas', () => {
-
-    // When
-    const result = (component as any).direccionCorta(
-      'Avenida Corrientes 123',
-    );
-
-    // Then
-    expect(result).toBe('Avenida Corrientes 123');
-  });
-
-});
-
-describe('searchLocation edge cases', () => {
-
-  it('fetches suggestions when there are none loaded', async () => {
-
-    // Given
-    component.suggestions.set([]);
-
-    const fetchSuggestionsSpy = vi
-      .spyOn(component as any, 'fetchSuggestions')
-      .mockResolvedValue(undefined);
-
-    // When
-    await component.searchLocation();
-
-    // Then
-    expect(fetchSuggestionsSpy).toHaveBeenCalled();
-  });
-
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 });
