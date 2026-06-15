@@ -240,7 +240,7 @@
         <button type="button" (click)="cancelar()" class="text-slate-500 hover:text-[#12355B] font-medium">
           Cancelar
         </button>
-        <button type="button" (click)="guardar()" [disabled]="submitting() || totalPhotos === 0"
+        <button type="button" (click)="guardar()" [disabled]="submitting() || (esPerdida() && totalPhotos === 0)"
         class="bg-[#12355B] hover:bg-[#0e2a4a] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold px-8 py-2.5 rounded-md transition">
         {{ submitting() ? 'Guardando...' : 'Guardar cambios' }}
         </button>
