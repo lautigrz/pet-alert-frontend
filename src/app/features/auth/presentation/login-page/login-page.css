@@ -1,0 +1,9 @@
+.login-logo {
+  view-transition-name: petfinder-logo;
+}
+
+::view-transition-old(petfinder-logo),
+::view-transition-new(petfinder-logo) {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}

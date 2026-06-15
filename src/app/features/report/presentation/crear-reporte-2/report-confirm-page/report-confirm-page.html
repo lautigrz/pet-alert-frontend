@@ -1,0 +1,18 @@
+<div class="flex-1 flex items-center justify-center px-4">
+  @if (isLoading()) {
+    <div class="text-center">
+      <div class="w-12 h-12 mx-auto mb-4 border-4 border-slate-200 border-t-[#12355B] rounded-full animate-spin"></div>
+      <h2 class="text-lg font-bold text-[#12355B]">Enviando tu reporte...</h2>
+      <p class="text-sm text-slate-500 mt-1">Guardando tu información</p>
+    </div>
+  } @else if (error()) {
+    <div class="bg-white border border-slate-200 rounded-xl p-8 text-center max-w-md w-full">
+      <h2 class="text-lg font-bold text-[#12355B] mb-1">No se pudo enviar el reporte</h2>
+      <p class="text-sm text-slate-500 mb-5">{{ error() }}</p>
+      <button type="button" (click)="submitReport()"
+        class="bg-[#12355B] hover:bg-[#0e2a4a] text-white font-semibold px-6 py-2.5 rounded-md transition">
+        Reintentar
+      </button>
+    </div>
+  }
+</div>

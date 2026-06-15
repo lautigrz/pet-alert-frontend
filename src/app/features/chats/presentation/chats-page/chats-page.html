@@ -1,0 +1,129 @@
+<div class="chats-page">
+  <aside class="chats-sidebar">
+    <div class="sidebar-header">
+      <h2>Chats</h2>
+      <span class="chat-count">5</span>
+    </div>
+
+    <div class="search-box">
+      <span>🔍</span>
+      <input
+        type="text"
+        placeholder="Buscar conversación"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+      />
+    </div>
+
+    <div class="contacts-list">
+      @for (contact of filteredContacts; track contact.id) {
+        <button
+          type="button"
+          class="contact-card"
+          [class.active]="selectedContact().id === contact.id"
+          (click)="selectContact(contact)"
+        >
+          <div class="avatar">
+            <span>👤</span>
+          </div>
+
+          <div class="contact-info">
+            <div class="contact-top">
+              <strong>{{ contact.name }}</strong>
+              <small>{{ contact.time }}</small>
+            </div>
+
+            <div class="contact-bottom">
+              <p>{{ contact.lastMessage }}</p>
+
+              @if (contact.unread) {
+                <span class="unread">
+                  {{ contact.unread }}
+                </span>
+              }
+            </div>
+          </div>
+        </button>
+      }
+    </div>
+  </aside>
+
+  <section class="chat-content">
+    <header class="chat-header">
+      <div class="avatar big">
+        <span>👤</span>
+      </div>
+
+      <div>
+        <h3>{{ selectedContact().name }}</h3>
+
+        @if (selectedContact().online) {
+          <p>en línea</p>
+        }
+      </div>
+    </header>
+
+    <main class="messages-area">
+      <div class="day-pill">Hoy</div>
+
+      @for (message of messages; track message.id) {
+        <div
+          class="message-row"
+          [class.mine]="message.sender === 'me'"
+        >
+          <div class="message-bubble">
+            @if (message.text) {
+              <p>{{ message.text }}</p>
+            }
+
+            @if (message.imageUrl) {
+              <img
+                [src]="message.imageUrl"
+                alt="Imagen enviada por chat"
+                class="message-image"
+              />
+            }
+
+            @if (message.audioUrl) {
+              <div class="audio-message">
+                🎤 Audio enviado
+              </div>
+            }
+
+            <span>{{ message.time }}</span>
+          </div>
+        </div>
+      }
+    </main>
+
+    <footer class="message-composer">
+      <input
+        #fileInput
+        type="file"
+        accept="image/*"
+        hidden
+        (change)="sendImage($event)"
+      />
+
+      <button type="button" class="composer-icon" (click)="openFilePicker()">
+        📎
+      </button>
+
+      <button type="button" class="composer-icon" (click)="sendAudio()">
+        🎤
+      </button>
+
+      <input
+        type="text"
+        placeholder="Escribí un mensaje..."
+        [ngModel]="newMessage()"
+        (ngModelChange)="newMessage.set($event)"
+        (keyup.enter)="sendMessage()"
+      />
+
+      <button type="button" class="send-button" (click)="sendMessage()">
+        Enviar
+      </button>
+    </footer>
+  </section>
+</div>

@@ -1,0 +1,44 @@
+<div class="interactive-map-wrapper">
+
+  <div class="search-row">
+    <div class="search-input-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+      <input
+        type="text"
+        [value]="searchTerm()"
+        (input)="searchTerm.set($any($event.target).value)"
+        (keyup.enter)="search()"
+        placeholder="Buscar dirección..."
+        class="search-input"
+      />
+    </div>
+    <button type="button" (click)="search()" class="search-btn">Buscar</button>
+  </div>
+
+  @if (address()) {
+    <p class="resolved-address">📍 {{ address() }}</p>
+  }
+
+  <div class="map-container">
+    <div [id]="mapId()" class="map-canvas"></div>
+
+    <div class="map-hint">Arrastrá el pin o hacé click para ajustar</div>
+
+    <button type="button" (click)="locateMe()" aria-label="Usar mi ubicación actual" class="locate-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" class="locate-icon" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" x2="12" y1="2" y2="5" />
+        <line x1="12" x2="12" y1="19" y2="22" />
+        <line x1="2" x2="5" y1="12" y2="12" />
+        <line x1="19" x2="22" y1="12" y2="12" />
+        <circle cx="12" cy="12" r="6" />
+        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+      </svg>
+    </button>
+  </div>
+
+</div>

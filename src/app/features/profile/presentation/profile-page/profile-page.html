@@ -1,0 +1,113 @@
+<main class="flex-1 bg-slate-50 px-6 py-10">
+  <section class="mx-auto w-full max-w-5xl">
+    @if (loading()) {
+      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+        Cargando perfil...
+      </div>
+    } @else if (serverError()) {
+      <div
+        role="alert"
+        class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded"
+      >
+        {{ serverError() }}
+      </div>
+    } @else {
+      <section class="flex flex-col items-center text-center mb-8">
+        <img
+          [src]="profilePhotoUrl()"
+          alt="Foto de perfil"
+          class="w-28 h-28 rounded-full object-cover border-4 border-slate-200 shadow-sm bg-slate-100 mb-4"
+        />
+
+        <h1 class="text-3xl font-bold text-[#12355B] capitalize">
+          {{ displayName() }}
+        </h1>
+
+        <div class="flex items-center gap-2 mt-2 text-sm">
+          <span class="text-[#E8842E]">★</span>
+          <span class="font-semibold text-[#12355B]">4.7</span>
+          <span class="text-[#E8842E] font-medium">Leer reseñas</span>
+        </div>
+
+        <a
+          [routerLink]="rutaMiPerfil"
+          class="mt-4 inline-flex items-center gap-2 border border-slate-300 hover:border-[#12355B] text-[#12355B] font-semibold text-sm px-4 py-2 rounded-md bg-white transition-colors"
+        >
+          ✎ Editar perfil
+        </a>
+      </section>
+
+      <section class="mb-5">
+        <div class="inline-flex rounded-md overflow-hidden border border-slate-200 bg-white">
+          <button
+            type="button"
+            (click)="setTab('reports')"
+            class="px-4 py-2 text-sm font-medium transition-colors"
+            [class.bg-[#E8842E]]="activeTab() === 'reports'"
+            [class.text-white]="activeTab() === 'reports'"
+            [class.text-[#12355B]]="activeTab() !== 'reports'"
+          >
+            Mis reportes
+          </button>
+
+          <button
+            type="button"
+            (click)="setTab('missions')"
+            class="px-4 py-2 text-sm font-medium border-l border-slate-200 transition-colors"
+            [class.bg-[#E8842E]]="activeTab() === 'missions'"
+            [class.text-white]="activeTab() === 'missions'"
+            [class.text-[#12355B]]="activeTab() !== 'missions'"
+          >
+            Misiones
+          </button>
+
+          <button
+            type="button"
+            (click)="setTab('achievements')"
+            class="px-4 py-2 text-sm font-medium border-l border-slate-200 transition-colors"
+            [class.bg-[#E8842E]]="activeTab() === 'achievements'"
+            [class.text-white]="activeTab() === 'achievements'"
+            [class.text-[#12355B]]="activeTab() !== 'achievements'"
+          >
+            Logros
+          </button>
+        </div>
+      </section>
+
+      <section>
+        @if (activeTab() === 'reports') {
+          <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+            <h2 class="text-lg font-bold text-[#12355B] mb-2">
+              Mis reportes
+            </h2>
+            <p class="text-sm text-slate-500">
+              Todavía no tenés reportes cargados.
+            </p>
+          </div>
+        }
+
+        @if (activeTab() === 'missions') {
+          <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+            <h2 class="text-lg font-bold text-[#12355B] mb-2">
+              Misiones
+            </h2>
+            <p class="text-sm text-slate-500">
+              Todavía no tenés misiones disponibles.
+            </p>
+          </div>
+        }
+
+        @if (activeTab() === 'achievements') {
+          <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+            <h2 class="text-lg font-bold text-[#12355B] mb-2">
+              Logros
+            </h2>
+            <p class="text-sm text-slate-500">
+              Todavía no tenés logros obtenidos.
+            </p>
+          </div>
+        }
+      </section>
+    }
+  </section>
+</main>

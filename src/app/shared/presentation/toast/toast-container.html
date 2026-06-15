@@ -1,0 +1,18 @@
+<div
+  class="fixed bottom-20 sm:bottom-4 inset-x-4 sm:left-auto sm:right-4 sm:max-w-sm z-[3000] flex flex-col gap-2 pointer-events-none"
+  aria-live="polite"
+>
+  @for (toast of toasts(); track toast.id) {
+    <button
+      type="button"
+      role="status"
+      class="toast border text-sm px-4 py-3 rounded-md shadow-md text-center sm:text-left pointer-events-auto w-full"
+      [class]="classFor(toast.kind)"
+      [class.leaving]="toast.leaving"
+      (click)="dismiss(toast.id)"
+      [attr.aria-label]="'Cerrar mensaje: ' + toast.message"
+    >
+      {{ toast.message }}
+    </button>
+  }
+</div>

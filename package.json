@@ -24,6 +24,9 @@
     ]
   },
   "private": true,
+   "overrides": {
+    "esbuild": "0.28.1"
+  },
   "dependencies": {
     "@angular/common": "21.2.10",
     "@angular/compiler": "21.2.10",
@@ -32,6 +35,7 @@
     "@angular/platform-browser": "^21.2.10",
     "@angular/platform-browser-dynamic": "^21.2.10",
     "@angular/router": "21.2.10",
+    "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -44,6 +48,7 @@
     "@angular/compiler-cli": "21.2.10",
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "6.9.1",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "25.7.0",
     "@vitest/ui": "4.1.6",
     "angular-eslint": "21.4.0",

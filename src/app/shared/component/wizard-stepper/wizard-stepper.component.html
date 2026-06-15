@@ -1,0 +1,38 @@
+<div class="max-w-3xl mx-auto w-full mb-8">
+  <div class="flex items-start">
+    @for (step of steps; track step.n; let last = $last) {
+      <div class="flex flex-col items-center shrink-0">
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2"
+          [class]="step.n === current
+            ? 'bg-[#E8842E] border-[#E8842E] text-white'
+            : step.n < current
+              ? 'bg-[#12355B] border-[#12355B] text-white'
+              : 'bg-white border-slate-300 text-slate-400'"
+        >
+          @if (step.n < current) {
+            <img src="check.png" alt="" class="w-4 h-4" />
+          } @else {
+            {{ step.n }}
+          }
+        </div>
+        <span
+          class="text-xs mt-2 whitespace-nowrap"
+          [class]="step.n === current
+            ? 'text-[#E8842E] font-semibold'
+            : step.n < current
+              ? 'text-[#12355B]'
+              : 'text-slate-400'"
+        >
+          {{ step.label }}
+        </span>
+      </div>
+      @if (!last) {
+        <div
+          class="flex-1 h-0.5 mt-4 mx-2"
+          [class]="step.n < current ? 'bg-[#12355B]' : 'bg-slate-200'"
+        ></div>
+      }
+    }
+  </div>
+</div>
