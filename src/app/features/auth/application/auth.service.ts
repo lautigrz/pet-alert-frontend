@@ -17,6 +17,7 @@ import {
   InvalidResetTokenError,
 } from '../domain/auth.errors';
 
+
 export interface RegisterCommand {
   email: string;
   username: string;
@@ -56,6 +57,7 @@ export class AuthService {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       };
+
       this.tokenStorage.save(tokens);
       return tokens;
     } catch (error) {
@@ -89,6 +91,7 @@ export class AuthService {
     const stored = this.tokenStorage.read();
     if (stored) await this.tryRevokeRefreshToken(stored.refreshToken);
     this.tokenStorage.clear();
+
   }
 
   private async tryRevokeRefreshToken(refreshToken: string): Promise<void> {
@@ -170,5 +173,13 @@ export class AuthService {
       return new InvalidLoginDataError(error.error?.error ?? 'Datos inválidos');
     }
     return new UnexpectedAuthError();
+  }
+
+  getCurrentUserId(): string | null {
+    const token = this.tokenStorage.read()?.accessToken;
+    if (!token) return null;
+
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.sub; 
   }
 }
