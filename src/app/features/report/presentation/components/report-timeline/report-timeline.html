@@ -1,0 +1,18 @@
+@if (report) {
+  <div class="bg-white rounded-xl border border-slate-200 p-4">
+    <h3 class="text-sm font-semibold text-[#12355B] mb-4">Línea de tiempo</h3>
+
+    <ol class="relative ml-1.5">
+      @for (step of steps(); track step.label; let last = $last) {
+        <li class="relative pl-5 pb-5 border-l-2 border-slate-200"
+            [class.border-l-transparent]="last"
+            [class.pb-0]="last">
+          <span class="absolute -left-[5px] top-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white"
+                [class]="step.dotClass"></span>
+          <p class="text-xs font-semibold text-slate-700">{{ step.label }}</p>
+          <p class="text-xs text-slate-500">{{ step.date }}</p>
+        </li>
+      }
+    </ol>
+  </div>
+}

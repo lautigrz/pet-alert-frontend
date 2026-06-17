@@ -10,6 +10,7 @@ import { ReportLocationComponent } from '../components/report-location/report-lo
 import { ReportContactComponent } from '../components/report-contact/report-contact';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ProfileService } from '../../../profile/application/profile.service';
+import { ReportTimelineComponent } from '../components/report-timeline/report-timeline';
 
 @Component({
   selector: 'app-report-detail',
@@ -21,6 +22,7 @@ import { ProfileService } from '../../../profile/application/profile.service';
     ReportInfoComponent,
     ReportLocationComponent,
     ReportContactComponent,
+    ReportTimelineComponent
   ],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './report-detail.html',
