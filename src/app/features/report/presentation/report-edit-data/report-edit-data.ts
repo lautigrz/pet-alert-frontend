@@ -110,6 +110,11 @@ export class ReportEditDataPage implements OnInit {
   async guardar(): Promise<void> {
     const r = this.report();
     if (!r) return;
+    
+    if (r.type === 'LOST' && this.totalPhotos === 0) {
+    this.serverError.set('Necesitás agregar al menos una foto de la mascota.');
+    return;
+  }
 
     this.submitting.set(true);
     this.serverError.set(null);
