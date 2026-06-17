@@ -36,6 +36,14 @@ export class ChatsService {
     return this.socketService.on<MessagePayload>('message:received');
   }
 
+  readMessage(conversationId: string){
+    this.socketService.emit('message:read', { conversationId });
+  }
+
+  onMessageRead(): Observable<{ conversationId: string }> {
+    return this.socketService.on<{ conversationId: string }>('message:read');
+  }
+
   onError(): Observable<{ message: string }> {
     return this.socketService.on<{ message: string }>('message:error');
   }

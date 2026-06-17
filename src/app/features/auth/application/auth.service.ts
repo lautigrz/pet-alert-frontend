@@ -16,6 +16,7 @@ import {
   InvalidVerificationTokenError,
   InvalidResetTokenError,
 } from '../domain/auth.errors';
+import { SocketService } from '../../../core/services/socket.service';
 
 
 export interface RegisterCommand {
@@ -33,6 +34,7 @@ export interface LoginCommand {
 export class AuthService {
   private readonly authHttp = inject(AuthHttp);
   private readonly tokenStorage = inject(TokenStorage);
+  private readonly socketService = inject(SocketService);
 
   async register(command: RegisterCommand): Promise<RegisteredUser> {
     try {
@@ -57,8 +59,8 @@ export class AuthService {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       };
-
       this.tokenStorage.save(tokens);
+      this.socketService.connect(tokens.accessToken, () => this.refreshSession());
       return tokens;
     } catch (error) {
       throw this.mapLoginError(error);

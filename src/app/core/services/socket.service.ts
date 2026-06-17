@@ -1,18 +1,16 @@
-import { inject, Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
-import { AuthService } from '../../features/auth/application/auth.service';
+
 
 @Injectable({ providedIn: 'root' })
 export class SocketService implements OnDestroy {
 
   private socket: Socket | null = null;
   private string = 'http://localhost:3000';
-  private authService = inject(AuthService);
-  connect(token: string): void {
-    if (this.socket?.connected) return; 
-    console.log('Conectando socket con token:', token);
-    console.log('URL del socket:', this.string);
+
+  connect(token: string, onAuthenticationError?: () => Promise<string>): void {
+    if (this.socket?.connected) return;
     this.socket = io(this.string, {
       extraHeaders: {
         Authorization: `Bearer ${token}`
@@ -21,10 +19,18 @@ export class SocketService implements OnDestroy {
 
     this.socket.on('connect', () => console.log('Socket conectado'));
     this.socket.on('connect_error', async (err) => {
-      console.error('Error de conexión:', err.message);
+      if (
+        err.message.includes('Authentication error') &&
+        onAuthenticationError
+      ) {
+        try {
+          const newToken = await onAuthenticationError();
 
-      if (err.message.includes('Authentication error')) {
-        await this.authService.refreshSession();
+          this.disconnect();
+          this.connect(newToken, onAuthenticationError);
+        } catch (error) {
+          console.error('No se pudo refrescar la sesión', error);
+        }
       }
     });
   }
@@ -35,7 +41,7 @@ export class SocketService implements OnDestroy {
   }
 
 
- emit(event: string, data: unknown): void {
+  emit(event: string, data: unknown): void {
     if (!this.socket) throw new Error('Socket no inicializado');
 
     if (this.socket.connected) {

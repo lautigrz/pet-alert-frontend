@@ -23,10 +23,9 @@ export class ChatsPage implements OnInit, OnDestroy {
   searchTerm = signal('');
   newMessage = signal('');
   selectedContact = signal<ConversationSummaryOutput | null>(null);
-  // chats-page.ts
   currentUserId = signal<string>(this.authService.getCurrentUserId() ?? '');
   conversationOutput = signal<ConversationOutput | null>(null);
-  messages: MessagePayload[] = []; // solo los nuevos que llegan por socket
+  messages: MessagePayload[] = [];
   contacts: ConversationSummaryOutput[] = [];
   conversationId = '';
 
@@ -38,8 +37,16 @@ export class ChatsPage implements OnInit, OnDestroy {
 
     this.chatsService.onMessageReceived()
       .pipe(takeUntil(this.destroy$))
-      .subscribe(msg => { this.messages = [...this.messages, msg]; 
-        setTimeout(() => this.scrollToBottom(), 100); });
+      .subscribe(msg => {
+        this.messages = [...this.messages, msg];
+        setTimeout(() => this.scrollToBottom(), 100);
+      });
+     
+    this.chatsService.onMessageRead()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(msg => {
+        console.log('Mensajes leídos en conversación:', msg.conversationId);
+      });
 
     this.chatsService.onError()
       .pipe(takeUntil(this.destroy$))
@@ -52,15 +59,23 @@ export class ChatsPage implements OnInit, OnDestroy {
   }
 
   selectContact(contact: ConversationSummaryOutput): void {
+    setTimeout(() => this.scrollToBottom(), 100);
+
     this.selectedContact.set(contact);
     this.conversationId = contact.publicId;
-    this.messages = []; 
+    this.messages = [];
 
     this.chatsService.getMessagesForConversation(this.conversationId)
       .pipe(takeUntil(this.destroy$))
-      .subscribe(conv => this.conversationOutput.set(conv));
+      .subscribe(conv => {
+        this.conversationOutput.set(conv)
+        if (this.messagesNotRead()) {
+          this.chatsService.readMessage(this.conversationId);
+        }
+      });
 
-    setTimeout(() => this.scrollToBottom(), 100);
+
+
   }
 
   sendMessage(): void {
@@ -90,11 +105,11 @@ export class ChatsPage implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    // implementar subida de imagen
+    // subida de imagen - falta implementación
   }
 
   sendAudio(): void {
-    // implementar grabación de audio
+    // grabación de audio - falta implementación
   }
 
   get filteredContacts(): ConversationSummaryOutput[] {
@@ -114,5 +129,11 @@ export class ChatsPage implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error al hacer scroll:', error);
     }
+  }
+
+
+  private messagesNotRead() {
+
+    return this.allMessages.some(m => !m.isRead && m.senderId !== this.currentUserId());
   }
 }
