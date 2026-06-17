@@ -97,22 +97,6 @@
   border-left-color: #e8842e;
 }
 
-.avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  background: #12355b;
-  color: #ffffff;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-
-.avatar.big {
-  width: 48px;
-  height: 48px;
-}
-
 .contact-info {
   flex: 1;
   min-width: 0;

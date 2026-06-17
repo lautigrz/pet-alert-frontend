@@ -2,108 +2,72 @@
   <aside class="chats-sidebar">
     <div class="sidebar-header">
       <h2>Chats</h2>
-      <span class="chat-count">5</span>
+      <span class="chat-count">{{ contacts.length }}</span>
     </div>
 
     <div class="search-box">
       <span>🔍</span>
-      <input
-        type="text"
-        placeholder="Buscar conversación"
-        [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)"
-      />
+      <input type="text" placeholder="Buscar conversación" [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)" />
     </div>
 
     <div class="contacts-list">
-      @for (contact of filteredContacts; track contact.id) {
-        <button
-          type="button"
-          class="contact-card"
-          [class.active]="selectedContact().id === contact.id"
-          (click)="selectContact(contact)"
-        >
-          <div class="avatar">
-            <span>👤</span>
+      @for (contact of filteredContacts; track contact.publicId) {
+      <button type="button" class="contact-card" [class.active]="selectedContact()?.publicId === contact.publicId"
+        (click)="selectContact(contact)">
+        <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#12355b]">
+          <img [src]="contact.otherUser.photoUrl || 'assets/default-avatar.png'" alt="Avatar"
+            class="w-full h-full object-cover" />
+        </div>
+
+        <div class="contact-info">
+          <div class="contact-top">
+            <strong>{{ contact.otherUser.username }}</strong>
+            <small>{{ contact.createdAt | date:'short' }}</small>
           </div>
 
-          <div class="contact-info">
-            <div class="contact-top">
-              <strong>{{ contact.name }}</strong>
-              <small>{{ contact.time }}</small>
-            </div>
-
-            <div class="contact-bottom">
-              <p>{{ contact.lastMessage }}</p>
-
-              @if (contact.unread) {
-                <span class="unread">
-                  {{ contact.unread }}
-                </span>
-              }
-            </div>
+          <div class="contact-bottom">
+            <p>{{ contact.lastMessage?.text }}</p>
           </div>
-        </button>
+        </div>
+      </button>
       }
     </div>
   </aside>
 
   <section class="chat-content">
+
+    @if (selectedContact()) {
     <header class="chat-header">
-      <div class="avatar big">
-        <span>👤</span>
-      </div>
+       <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#12355b]">
+          <img [src]="selectedContact()!.otherUser.photoUrl || 'assets/default-avatar.png'" alt="Avatar"
+            class="w-full h-full object-cover" />
+        </div>
 
       <div>
-        <h3>{{ selectedContact().name }}</h3>
-
-        @if (selectedContact().online) {
-          <p>en línea</p>
-        }
+        <h3>{{ selectedContact()!.otherUser.username }}</h3>
+        
       </div>
     </header>
 
-    <main class="messages-area">
+    <main class="messages-area" #messagesContainer>
       <div class="day-pill">Hoy</div>
 
-      @for (message of messages; track message.id) {
-        <div
-          class="message-row"
-          [class.mine]="message.sender === 'me'"
-        >
-          <div class="message-bubble">
-            @if (message.text) {
-              <p>{{ message.text }}</p>
-            }
+      @for (message of allMessages; track message.publicId) {
+      <div class="message-row" [class.mine]="message.senderId === currentUserId()">
+        <div class="message-bubble">
+          @if (message.text) {
+          <p>{{ message.text }}</p>
+          }
 
-            @if (message.imageUrl) {
-              <img
-                [src]="message.imageUrl"
-                alt="Imagen enviada por chat"
-                class="message-image"
-              />
-            }
-
-            @if (message.audioUrl) {
-              <div class="audio-message">
-                🎤 Audio enviado
-              </div>
-            }
-
-            <span>{{ message.time }}</span>
-          </div>
+          <span>{{ message.createdAt | date:'shortTime' }}</span>
         </div>
+      </div>
       }
     </main>
 
     <footer class="message-composer">
-      <input
-        #fileInput
-        type="file"
-        accept="image/*"
-        hidden
-        (change)="sendImage($event)"
-      />
+      <input #fileInput type="file" accept="image/*" hidden (change)="sendImage($event)" />
 
       <button type="button" class="composer-icon" (click)="openFilePicker()">
         📎
@@ -113,17 +77,19 @@
         🎤
       </button>
 
-      <input
-        type="text"
-        placeholder="Escribí un mensaje..."
-        [ngModel]="newMessage()"
-        (ngModelChange)="newMessage.set($event)"
-        (keyup.enter)="sendMessage()"
-      />
+      <input type="text" placeholder="Escribí un mensaje..." [ngModel]="newMessage()"
+        (ngModelChange)="newMessage.set($event)" (keyup.enter)="sendMessage()" />
 
       <button type="button" class="send-button" (click)="sendMessage()">
         Enviar
       </button>
     </footer>
+
+    } @else {
+    <div class="no-contact-selected">
+      <p>Seleccioná una conversación para comenzar</p>
+    </div>
+    }
+
   </section>
 </div>
