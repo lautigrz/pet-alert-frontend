@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SocketService } from './socket.service';
 import { io } from 'socket.io-client';
 
-// Keep track of registered event callbacks
 let mockSocketEvents: Record<string, ((...args: unknown[]) => void)[]> = {};
 
 const mockSocket = {
