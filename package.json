@@ -25,14 +25,10 @@
   },
   "private": true,
   "overrides": {
-<<<<<<< HEAD
-    "esbuild": "0.28.1"
-=======
     "esbuild": "0.28.1",
     "vite": "7.3.5",
     "hono": "4.12.25",
     "@babel/core": "7.29.7"
->>>>>>> dev
   },
   "dependencies": {
     "@angular/common": "21.2.17",
