@@ -10,6 +10,7 @@ import { AuthService } from '../../../auth/application/auth.service';
   selector: 'app-chats-page',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  host: { class: 'flex flex-1 min-h-0 overflow-hidden bg-[#f4f4f4]' },
   templateUrl: './chats-page.html',
   styleUrl: './chats-page.css',
 })
