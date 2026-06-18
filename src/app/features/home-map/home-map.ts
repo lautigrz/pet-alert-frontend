@@ -3,6 +3,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReportListService } from '../report/application/report-list.service';
 import { AnimalType, Reporte, SightingDetails } from '../report/domain/report-read.model';
 import { HomeReportCardComponent } from './components/home-report-card/home-report-card';
+import { NotificationPrompt } from '../notifications/presentation/notification-prompt/notification-prompt';
+import { NotificationService } from '../notifications/application/notification.service';
 import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
 
@@ -30,7 +32,7 @@ interface OverpassElement {
 @Component({
   selector: 'app-home-map',
   standalone: true,
-  imports: [HomeReportCardComponent, RouterLink],
+  imports: [HomeReportCardComponent, RouterLink, NotificationPrompt],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
 })
@@ -43,7 +45,14 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private readonly reportesService = inject(ReportListService);
   private readonly profileService = inject(ProfileService);
   private readonly zone = inject(NgZone);
+  private readonly notifications = inject(NotificationService);
   readonly successReportId = signal<string | null>(null);
+
+  readonly notifBusy = this.notifications.busy;
+
+  readonly canAskNotifications = computed(
+    () => this.notifications.isSupported() && this.notifications.permission() === 'default' && !this.notifications.active(),
+  );
 
   readonly tipoFiltro = signal('todos');
   readonly cercaniaFiltro = signal('todos');
@@ -321,6 +330,10 @@ if (
   closeSuccess(): void {
     this.successReportId.set(null);
     this.router.navigate([], { queryParams: {}, replaceUrl: true });
+  }
+
+  async activarNotificaciones(): Promise<void> {
+    await this.notifications.enable();
   }
 
   private initializeMap(): void {

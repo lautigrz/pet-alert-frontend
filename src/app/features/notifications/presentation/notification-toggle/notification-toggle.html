@@ -1,0 +1,43 @@
+@if (supported) {
+  <div class="bg-white border border-slate-200 rounded-xl p-5">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <div class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#E8842E]/10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#E8842E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+            <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-extrabold text-[#12355B]">Notificaciones push</h3>
+          <p class="mt-0.5 text-[13px] text-slate-500">Recibí avisos de coincidencias y avistamientos cerca tuyo.</p>
+        </div>
+      </div>
+
+      @if (!blocked()) {
+        <button
+          type="button"
+          role="switch"
+          [attr.aria-checked]="active()"
+          [disabled]="busy()"
+          (click)="toggle()"
+          class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:cursor-wait"
+          [class.bg-[#E8842E]]="active()"
+          [class.bg-slate-300]="!active()"
+        >
+          <span
+            class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200"
+            [class.translate-x-5]="active()"
+            [class.translate-x-1]="!active()"
+          ></span>
+        </button>
+      }
+    </div>
+
+    @if (blocked()) {
+      <p class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-[13px] text-amber-700">
+        Están bloqueadas en el navegador. Habilitalas desde el candado 🔒 junto a la dirección y recargá la página.
+      </p>
+    }
+  </div>
+}
