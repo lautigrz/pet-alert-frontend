@@ -1,0 +1,46 @@
+<nav class="md:hidden shrink-0 relative z-[1000] bg-white border-t border-slate-200 h-16 flex items-stretch justify-around px-2">
+  <a [routerLink]="[rutaHome]" routerLinkActive="!text-[#E8842E]" [routerLinkActiveOptions]="{ exact: true }"
+    class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 text-[11px] font-medium whitespace-nowrap transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M9 22V12h6v10" />
+    </svg>
+    Inicio
+  </a>
+
+  <a routerLink="/reports" routerLinkActive="!text-[#E8842E]"
+    class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 text-[11px] font-medium whitespace-nowrap transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" />
+    </svg>
+    Reportes
+  </a>
+
+  <div class="flex flex-1 justify-center">
+    <button type="button" (click)="nuevoReporte()" aria-label="Reportar mascota"
+      class="absolute -top-5 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-[#E8842E] hover:bg-[#d2741f] text-white shadow-lg shadow-[#E8842E]/30 flex items-center justify-center transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14" /><path d="M12 5v14" />
+      </svg>
+    </button>
+  </div>
+
+  <a routerLink="/chats" routerLinkActive="!text-[#E8842E]"
+    class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 text-[11px] font-medium whitespace-nowrap transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+    Chats
+  </a>
+
+  <a [routerLink]="[rutaMiPerfil]" routerLinkActive="!text-[#E8842E]"
+    class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 text-[11px] font-medium whitespace-nowrap transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+    Perfil
+  </a>
+</nav>

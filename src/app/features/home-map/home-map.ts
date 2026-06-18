@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, AfterViewInit, OnInit, NgZone, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReportListService } from '../report/application/report-list.service';
 import { AnimalType, Reporte, SightingDetails } from '../report/domain/report-read.model';
@@ -42,6 +42,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
   private readonly reportesService = inject(ReportListService);
   private readonly profileService = inject(ProfileService);
+  private readonly zone = inject(NgZone);
   readonly successReportId = signal<string | null>(null);
 
   readonly tipoFiltro = signal('todos');
@@ -50,6 +51,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly centrosFiltro = signal('todos');
   readonly searchTerm = signal('');
   readonly suggestions = signal<LocationSuggestion[]>([]);
+  readonly mostrarFiltros = signal(false);
+  readonly reporteSeleccionado = signal<Reporte | null>(null);
 
 
   readonly reportes = signal<Reporte[]>([]);
@@ -173,7 +176,7 @@ private dibujarMarcadores(reportes: Reporte[]): void {
     const imageUrl =
       reporte.details?.images?.[0]?.url;
 
-    L.marker(
+    const marker = L.marker(
       [lat, lng],
       {
         icon: this.buildPin(
@@ -182,20 +185,31 @@ private dibujarMarcadores(reportes: Reporte[]): void {
           fallbackIcon
         ),
       }
-    )
-      .addTo(this.markersLayer)
-      .bindPopup(
-        this.buildPopup(reporte),
-        {
-          className: 'report-popup',
-          maxWidth: 300,
-          minWidth: 300,
-          closeButton: false,
-          offset: [0, -8],
-        }
-      );
+    ).addTo(this.markersLayer);
+
+    marker.bindPopup(
+      this.buildPopup(reporte),
+      {
+        className: 'report-popup',
+        maxWidth: 300,
+        minWidth: 300,
+        closeButton: false,
+        offset: [0, -8],
+      }
+    );
+
+    marker.on('click', () => {
+      if (this.esMobile()) {
+        marker.closePopup();
+        this.zone.run(() => this.reporteSeleccionado.set(reporte));
+      }
+    });
 
   });
+}
+
+private esMobile(): boolean {
+  return window.innerWidth < 1024;
 }
 
 aplicarFiltros(): void {
@@ -314,6 +328,9 @@ if (
     this.map.attributionControl.setPrefix(false);
     this.map.attributionControl.setPosition('bottomleft');
     this.map.zoomControl.setPosition('bottomright');
+    this.map.on('click', () =>
+      this.zone.run(() => this.reporteSeleccionado.set(null)),
+    );
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap',
@@ -647,6 +664,29 @@ irALugar(
     this.suggestions.set([]);
     this.searchMarker?.remove();
     this.searchMarker = undefined;
+  }
+
+  abrirFiltros(): void {
+    this.mostrarFiltros.set(true);
+  }
+
+  cerrarFiltros(): void {
+    this.mostrarFiltros.set(false);
+  }
+
+  aplicarYcerrar(): void {
+    this.aplicarFiltros();
+    this.aplicarFiltroCentros();
+    this.cerrarFiltros();
+  }
+
+  limpiarFiltros(): void {
+    this.tipoFiltro.set('todos');
+    this.cercaniaFiltro.set('todos');
+    this.mascotaFiltro.set('todos');
+    this.centrosFiltro.set('todos');
+    this.aplicarFiltros();
+    this.aplicarFiltroCentros();
   }
 
   private markSearchResult(lat: number, lng: number): void {

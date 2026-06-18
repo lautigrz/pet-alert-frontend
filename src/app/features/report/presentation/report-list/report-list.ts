@@ -57,6 +57,8 @@ export class ReportListPage implements OnInit {
   readonly ubicacion = signal<Coordenadas | null>(null);
   readonly ubicacionDenegada = signal(false);
 
+  readonly mostrarFiltros = signal(false);
+
   readonly reportesVisibles = computed(() => {
     const localidad = this.normalizar(this.busquedaLocalidad());
 
@@ -225,6 +227,25 @@ export class ReportListPage implements OnInit {
   async limpiarFechas(): Promise<void> {
     this.fechaDesde.set('');
     this.fechaHasta.set('');
+    await this.cargar();
+  }
+
+  abrirFiltros(): void {
+    this.mostrarFiltros.set(true);
+  }
+
+  cerrarFiltros(): void {
+    this.mostrarFiltros.set(false);
+  }
+
+  async limpiarTodo(): Promise<void> {
+    this.filtroTipo.set('TODOS');
+    this.filtroCercania.set('TODOS');
+    this.filtroMascota.set('TODOS');
+    this.fechaDesde.set('');
+    this.fechaHasta.set('');
+    this.busquedaLocalidad.set('');
+    this.locationSuggestions.set([]);
     await this.cargar();
   }
 

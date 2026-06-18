@@ -1,4 +1,4 @@
-<header class="sticky top-0 z-[1000] h-[75px] bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-8">
+<header class="sticky top-0 z-[1050] h-[75px] bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-8">
 
   <a [routerLink]="[rutaHome]" class="flex items-center shrink-0">
     <img src="nuevologo.png" alt="PetFinder" class="h-12 w-auto" />
@@ -13,7 +13,7 @@
 
   <div class="flex items-center gap-4 shrink-0">
     <button type="button" (click)="nuevoReporte()"
-      class="inline-flex items-center gap-1.5 bg-[#E8842E] hover:bg-[#d2741f] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
+      class="hidden md:inline-flex items-center gap-1.5 bg-[#E8842E] hover:bg-[#d2741f] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
       + Reportar mascota
     </button>
 

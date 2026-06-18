@@ -1,5 +1,25 @@
-<aside class="w-[430px] shrink-0 bg-white overflow-y-auto px-8 py-7">
-  <h2 class="text-lg font-bold text-[#12355B] mb-4">Filtros</h2>
+@if (mostrarFiltros()) {
+<button type="button" aria-label="Cerrar filtros" (click)="cerrarFiltros()" class="fixed inset-0 bg-black/40 z-[1090] lg:hidden"></button>
+}
+
+<aside
+  class="fixed inset-y-0 left-0 z-[1100] w-[88%] max-w-[380px] bg-white overflow-y-auto px-6 py-6 -translate-x-full transition-transform duration-300 lg:static lg:z-auto lg:w-[430px] lg:max-w-none lg:translate-x-0 lg:px-8 lg:py-7 lg:transition-none shrink-0"
+  [class.!translate-x-0]="mostrarFiltros()">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-bold text-[#12355B]">Filtros</h2>
+    <div class="flex items-center gap-3">
+      <button type="button" (click)="limpiarTodo()" class="text-xs font-semibold text-[#E8842E] hover:underline">
+        Limpiar
+      </button>
+      <button type="button" (click)="cerrarFiltros()" aria-label="Cerrar filtros"
+        class="lg:hidden text-slate-400 hover:text-[#12355B]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
 
   <div class="mb-4">
     <p class="text-xs font-semibold text-slate-500 mb-2">Tipo de reporte</p>
@@ -49,7 +69,7 @@
     </div>
   </div>
 
-  <div class="pt-4">
+  <div class="mb-4">
     <div class="flex items-center justify-between mb-2">
       <p class="text-xs font-semibold text-slate-500">Ubicación</p>
 
@@ -61,7 +81,7 @@
       }
     </div>
 
-    <div class="relative">
+    <div class="relative max-w-[264px]">
       <svg xmlns="http://www.w3.org/2000/svg"
         class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -116,22 +136,37 @@
 </aside>
 
 <main class="flex-1 bg-[#f3f4f6] flex flex-col min-h-0 overflow-hidden">
-  <div class="shrink-0 px-8 pt-7">
+  <div class="shrink-0 overflow-y-auto [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 pt-5 lg:pt-7">
     <div class="max-w-[1180px]">
-      <h1 class="text-2xl font-extrabold text-[#12355B] mb-5">Reportes</h1>
+      <div class="flex items-center justify-between gap-3 mb-5">
+        <h1 class="text-2xl font-extrabold text-[#12355B]">Reportes</h1>
+
+        <button type="button" (click)="abrirFiltros()"
+          class="lg:hidden inline-flex items-center gap-1.5 text-sm font-semibold text-[#E8842E]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          Filtros
+        </button>
+      </div>
 
       <div
-        class="inline-flex items-stretch mb-5 bg-white border border-slate-200 rounded-xl overflow-hidden divide-x divide-slate-200">
-        <button class="px-6 py-2.5 text-sm font-semibold transition"
+        class="flex items-stretch mb-5 bg-white border border-slate-200 rounded-xl overflow-hidden divide-x divide-slate-200 lg:inline-flex">
+        <button
+          class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'todos' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
           (click)="seleccionarTab('todos')">Todos</button>
-        <button class="px-6 py-2.5 text-sm font-semibold transition"
+        <button
+          class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'recientes' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
           (click)="seleccionarTab('recientes')">Recientes</button>
-        <button class="px-6 py-2.5 text-sm font-semibold transition"
+        <button
+          class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'cercanos' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
           (click)="seleccionarTab('cercanos')">Cercanos</button>
-        <button class="px-6 py-2.5 text-sm font-semibold transition"
+        <button
+          class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'mis-reportes' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
           (click)="seleccionarTab('mis-reportes')">Mis Reportes</button>
       </div>
@@ -160,7 +195,7 @@
     </div>
   </div>
 
-  <div class="flex-1 min-h-0 overflow-y-auto px-8 pb-7">
+  <div class="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 pb-7">
     <div class="max-w-[1180px]">
       @if (cargando()) {
       <div

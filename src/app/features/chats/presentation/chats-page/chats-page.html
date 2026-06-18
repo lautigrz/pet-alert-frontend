@@ -1,95 +1,123 @@
-<div class="chats-page">
-  <aside class="chats-sidebar">
-    <div class="sidebar-header">
-      <h2>Chats</h2>
-      <span class="chat-count">{{ contacts.length }}</span>
+<aside
+  class="w-full lg:w-[370px] shrink-0 bg-white lg:border-r lg:border-slate-200 flex-col lg:flex"
+  [class.flex]="!selectedContact()"
+  [class.hidden]="!!selectedContact()">
+
+  <div class="lg:hidden flex items-center justify-center px-5 pt-5 pb-4 shrink-0">
+    <h2 class="text-xl font-extrabold text-[#12355B]">Mis Chats</h2>
+  </div>
+
+  <div class="hidden lg:flex px-6 pt-5 pb-3 items-center justify-between shrink-0">
+    <h2 class="text-xl font-extrabold text-[#12355B]">Chats</h2>
+    <span class="min-w-[22px] h-[22px] px-1.5 bg-[#12355B] text-white rounded-full text-xs font-bold inline-flex items-center justify-center">
+      {{ contacts.length }}
+    </span>
+  </div>
+
+  <div class="hidden lg:block mx-5 mb-3 shrink-0">
+    <div class="h-10 bg-slate-100 rounded-lg flex items-center gap-2 px-3">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+      </svg>
+      <input type="text" placeholder="Buscar conversación" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
+        class="flex-1 min-w-0 bg-transparent outline-none text-sm text-[#12355B] placeholder:text-slate-400" />
     </div>
+  </div>
 
-    <div class="search-box">
-      <span>🔍</span>
-      <input type="text" placeholder="Buscar conversación" [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)" />
-    </div>
-
-    <div class="contacts-list">
-      @for (contact of filteredContacts; track contact.publicId) {
-      <button type="button" class="contact-card" [class.active]="selectedContact()?.publicId === contact.publicId"
-        (click)="selectContact(contact)">
-        <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#12355b]">
-          <img [src]="contact.otherUser.photoUrl || 'assets/default-avatar.png'" alt="Avatar"
-            class="w-full h-full object-cover" />
-        </div>
-
-        <div class="contact-info">
-          <div class="contact-top">
-            <strong>{{ contact.otherUser.username }}</strong>
-            <small>{{ contact.createdAt | date:'short' }}</small>
-          </div>
-
-          <div class="contact-bottom">
-            <p>{{ contact.lastMessage?.text }}</p>
-          </div>
-        </div>
-      </button>
-      }
-    </div>
-  </aside>
-
-  <section class="chat-content">
-
-    @if (selectedContact()) {
-    <header class="chat-header">
-       <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#12355b]">
-          <img [src]="selectedContact()!.otherUser.photoUrl || 'assets/default-avatar.png'" alt="Avatar"
-            class="w-full h-full object-cover" />
-        </div>
-
-      <div>
-        <h3>{{ selectedContact()!.otherUser.username }}</h3>
-        
+  <div class="flex-1 min-h-0 overflow-y-auto px-3 lg:px-0 pb-3 lg:pb-0">
+    @for (contact of filteredContacts; track contact.publicId) {
+    <button type="button" (click)="selectContact(contact)"
+      class="w-full flex items-center gap-3 text-left transition-colors mt-2 lg:mt-0 px-3 lg:px-5 py-3 rounded-2xl border border-slate-200 lg:rounded-none lg:border-0 lg:border-l-4 lg:border-transparent"
+      [class]="selectedContact()?.publicId === contact.publicId ? 'border-[#E8842E] lg:bg-slate-50' : 'lg:hover:bg-slate-50'">
+      <div class="w-11 h-11 lg:w-10 lg:h-10 rounded-full overflow-hidden shrink-0 bg-slate-200">
+        <img [src]="contact.otherUser.photoUrl || ('https://ui-avatars.com/api/?name=' + contact.otherUser.username + '&background=e2e8f0&color=12355B&size=128')" alt="" class="w-full h-full object-cover" />
       </div>
-    </header>
-
-    <main class="messages-area" #messagesContainer>
-      <div class="day-pill">Hoy</div>
-
-      @for (message of allMessages; track message.publicId) {
-      <div class="message-row" [class.mine]="message.senderId === currentUserId()">
-        <div class="message-bubble">
-          @if (message.text) {
-          <p>{{ message.text }}</p>
-          }
-
-          <span>{{ message.createdAt | date:'shortTime' }}</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between gap-2">
+          <strong class="text-sm font-bold text-[#12355B] truncate">{{ contact.otherUser.username }}</strong>
+          <small class="hidden lg:block text-[10px] text-[#E8842E] shrink-0 whitespace-nowrap">{{ contact.lastMessage?.createdAt | date:'shortTime' }}</small>
         </div>
+        <p class="text-xs text-slate-500 truncate mt-0.5">{{ contact.lastMessage?.text }}</p>
       </div>
-      }
-    </main>
+    </button>
+    }
+  </div>
+</aside>
 
-    <footer class="message-composer">
-      <input #fileInput type="file" accept="image/*" hidden (change)="sendImage($event)" />
+<section
+  class="flex-1 min-w-0 flex-col lg:flex"
+  [class.flex]="!!selectedContact()"
+  [class.hidden]="!selectedContact()">
 
-      <button type="button" class="composer-icon" (click)="openFilePicker()">
-        📎
-      </button>
+  @if (selectedContact(); as contact) {
+  <header class="relative shrink-0 bg-white border-b border-slate-200 flex items-center justify-center lg:justify-start gap-3.5 px-4 lg:px-7 py-3 lg:h-[78px]">
+    <button type="button" (click)="selectedContact.set(null)" aria-label="Volver"
+      class="lg:hidden absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#12355B]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
+      </svg>
+    </button>
 
-      <button type="button" class="composer-icon" (click)="sendAudio()">
-        🎤
-      </button>
+    <div class="flex flex-col lg:flex-row items-center gap-1 lg:gap-3.5">
+      <div class="w-12 h-12 lg:w-10 lg:h-10 rounded-full overflow-hidden shrink-0 bg-slate-200">
+        <img [src]="contact.otherUser.photoUrl || ('https://ui-avatars.com/api/?name=' + contact.otherUser.username + '&background=e2e8f0&color=12355B&size=128')" alt="" class="w-full h-full object-cover" />
+      </div>
+      <div class="text-center lg:text-left">
+        <h3 class="text-[15px] font-extrabold text-[#12355B]">{{ contact.otherUser.username }}</h3>
+        <p class="text-[11px] text-[#E8842E] flex items-center justify-center lg:justify-start gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#E8842E]"></span> en línea
+        </p>
+      </div>
+    </div>
+  </header>
 
-      <input type="text" placeholder="Escribí un mensaje..." [ngModel]="newMessage()"
-        (ngModelChange)="newMessage.set($event)" (keyup.enter)="sendMessage()" />
+  <main class="flex-1 min-h-0 overflow-y-auto px-4 lg:px-16 py-6" #messagesContainer>
+    <div class="w-fit mx-auto mb-5 px-3 py-1.5 rounded-full bg-white text-slate-400 text-[11px] shadow-sm">Hoy</div>
 
-      <button type="button" class="send-button" (click)="sendMessage()">
-        Enviar
-      </button>
-    </footer>
-
-    } @else {
-    <div class="no-contact-selected">
-      <p>Seleccioná una conversación para comenzar</p>
+    @for (message of allMessages; track message.publicId) {
+    <div class="flex mb-3.5" [class.justify-end]="message.senderId === currentUserId()">
+      <div class="max-w-[75%] lg:max-w-[420px] rounded-lg px-3.5 py-2.5 shadow-sm"
+        [class]="message.senderId === currentUserId() ? 'bg-[#dbe9f3]' : 'bg-white'">
+        @if (message.text) {
+        <p class="text-[13px] leading-snug text-[#12355B]">{{ message.text }}</p>
+        }
+        <span class="block mt-1 text-[10px] text-slate-400 text-right">{{ message.createdAt | date:'shortTime' }}</span>
+      </div>
     </div>
     }
+  </main>
 
-  </section>
-</div>
+  <footer class="shrink-0 bg-white border-t border-slate-200 flex items-center gap-2 lg:gap-2.5 px-3 lg:px-6 py-3">
+    <input #fileInput type="file" accept="image/*" hidden (change)="sendImage($event)" />
+
+    <button type="button" (click)="openFilePicker()" aria-label="Adjuntar imagen"
+      class="w-10 h-10 shrink-0 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+      </svg>
+    </button>
+
+    <button type="button" (click)="sendAudio()" aria-label="Mensaje de audio"
+      class="hidden lg:flex w-10 h-10 shrink-0 rounded-full bg-slate-100 hover:bg-slate-200 items-center justify-center text-slate-500 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" />
+      </svg>
+    </button>
+
+    <input type="text" placeholder="Enviá un mensaje..." [ngModel]="newMessage()" (ngModelChange)="newMessage.set($event)" (keyup.enter)="sendMessage()"
+      class="flex-1 min-w-0 h-[42px] border border-slate-200 rounded-full px-4 text-[13px] text-[#12355B] outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]" />
+
+    <button type="button" (click)="sendMessage()" aria-label="Enviar"
+      class="shrink-0 bg-[#E8842E] hover:bg-[#d57821] text-white font-bold rounded-full transition-colors w-10 h-10 flex items-center justify-center lg:w-auto lg:h-[42px] lg:px-5">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 lg:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4Z" />
+      </svg>
+      <span class="hidden lg:inline">Enviar</span>
+    </button>
+  </footer>
+  } @else {
+  <div class="hidden lg:flex flex-1 items-center justify-center text-slate-400 text-sm px-6 text-center">
+    Seleccioná una conversación para comenzar
+  </div>
+  }
+</section>
