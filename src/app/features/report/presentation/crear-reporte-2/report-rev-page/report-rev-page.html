@@ -1,4 +1,4 @@
-  <main class="flex-1 flex flex-col w-full max-w-6xl mx-auto px-10 py-6">
+  <main class="flex-1 flex flex-col w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6">
     <nav class="text-sm mb-3">
       <a routerLink="/home" class="text-[#1D6FA3] hover:underline">Inicio</a>
       <span class="text-slate-400"> &gt; </span>
@@ -20,12 +20,12 @@
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
       @if (report().pet; as pet) {
         <div class="bg-white border border-slate-200 rounded-xl p-5">
-          <div class="grid grid-cols-4 gap-3 mb-4">
+          <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4">
             @for (slot of slots; track slot) {
               @if (pet.imageUrls?.[slot]; as photo) {
-                <img [src]="photo" alt="" class="w-full h-28 object-cover rounded-lg border border-slate-200" />
+                <img [src]="photo" alt="" class="w-full aspect-square sm:aspect-auto sm:h-28 object-cover rounded-lg border border-slate-200" />
               } @else {
-                <div class="w-full h-28 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-300">
+                <div class="w-full aspect-square sm:aspect-auto sm:h-28 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-300">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
                     <circle cx="12" cy="13" r="3" />

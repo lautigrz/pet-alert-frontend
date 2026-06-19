@@ -17,7 +17,7 @@
           }
         </div>
         <span
-          class="text-xs mt-2 whitespace-nowrap"
+          class="text-[10px] sm:text-xs mt-2 whitespace-nowrap"
           [class]="step.n === current
             ? 'text-[#E8842E] font-semibold'
             : step.n < current
@@ -29,7 +29,7 @@
       </div>
       @if (!last) {
         <div
-          class="flex-1 h-0.5 mt-4 mx-2"
+          class="flex-1 h-0.5 mt-4 mx-1 sm:mx-2"
           [class]="step.n < current ? 'bg-[#12355B]' : 'bg-slate-200'"
         ></div>
       }
