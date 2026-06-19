@@ -85,8 +85,8 @@ export class NotificationService {
   }
 
   private showForeground(payload: MessagePayload): void {
-    const title = payload.notification?.title ?? 'PetFinder';
-    const body = payload.notification?.body ?? '';
+    const title = payload.data?.['title'] ?? payload.notification?.title ?? 'PetFinder';
+    const body = payload.data?.['body'] ?? payload.notification?.body ?? '';
     this.toast.info(body ? `${title}: ${body}` : title);
   }
 

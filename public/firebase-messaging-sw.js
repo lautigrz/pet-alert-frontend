@@ -11,9 +11,24 @@ firebase.initializeApp({
 });
 
 firebase.messaging().onBackgroundMessage((payload) => {
-  self.registration.showNotification(payload.notification?.title ?? 'PetFinder', {
-    body: payload.notification?.body ?? '',
+  const data = payload.data ?? {};
+  self.registration.showNotification(data.title || 'PetFinder', {
+    body: data.body || '',
     icon: '/icons/icon-192.v1.png',
     badge: '/icons/icon-192.v1.png',
+    data,
   });
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const reportId = event.notification.data?.reportId;
+  const target = new URL(reportId ? `/reports/${reportId}` : '/', self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      const exact = windowClients.find((client) => client.url === target);
+      if (exact) return exact.focus();
+      return self.clients.openWindow(target);
+    }),
+  );
 });
