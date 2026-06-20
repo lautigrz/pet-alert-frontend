@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { AuthHttp } from '../infrastructure/auth.http';
 import { TokenStorage } from '../infrastructure/token.storage';
 import { SocketService } from '../../../core/services/socket.service';
+import { NotificationsService } from '../../notifications/application/notifications.service';
 import {
   EmailAlreadyRegisteredError,
   InvalidCredentialsError,
@@ -368,24 +369,27 @@ describe('AuthService.refreshSession', () => {
 describe('AuthService.logout', () => {
   let authHttp: { refreshAccessToken: ReturnType<typeof vi.fn>; logout: ReturnType<typeof vi.fn> };
   let tokenStorage: { save: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; read: ReturnType<typeof vi.fn> };
+  let notificationsService: { clear: ReturnType<typeof vi.fn> };
   let service: AuthService;
 
   beforeEach(() => {
     authHttp = { refreshAccessToken: vi.fn(), logout: vi.fn() };
     tokenStorage = { save: vi.fn(), clear: vi.fn(), read: vi.fn() };
+    notificationsService = { clear: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
         AuthService,
         { provide: AuthHttp, useValue: authHttp },
         { provide: TokenStorage, useValue: tokenStorage },
         { provide: SocketService, useValue: socketServiceMock },
+        { provide: NotificationsService, useValue: notificationsService },
       ],
     });
     service = TestBed.inject(AuthService);
   });
 
   describe('when there is a stored refresh token', () => {
-    it('revokes it on the back and then clears local storage', async () => {
+    it('revokes it on the back and then clears local storage and notifications', async () => {
       tokenStorage.read.mockReturnValue({ accessToken: 'access-1', refreshToken: 'refresh-1' });
       authHttp.logout.mockResolvedValue(undefined);
 
@@ -394,6 +398,7 @@ describe('AuthService.logout', () => {
 
       expect(authHttp.logout).toHaveBeenCalledWith({ refreshToken: 'refresh-1' });
       expect(tokenStorage.clear).toHaveBeenCalled();
+      expect(notificationsService.clear).toHaveBeenCalled();
     });
   });
 
@@ -421,6 +426,7 @@ describe('AuthService.logout', () => {
       // Then no le pega al back pero igual limpia
       expect(authHttp.logout).not.toHaveBeenCalled();
       expect(tokenStorage.clear).toHaveBeenCalled();
+      expect(notificationsService.clear).toHaveBeenCalled();
     });
   });
 });
