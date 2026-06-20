@@ -1,6 +1,7 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { of } from 'rxjs';
 
 import { MatchesPage } from './matches';
 import { MatchService } from '../../application/match.service';
@@ -65,7 +66,7 @@ describe('MatchesPage', () => {
         { provide: ToastService, useValue: toastService },
         { provide: Router, useValue: router },
         { provide: SeenMatchesStore, useValue: seenMatchesStore },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'src' } } } },
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ publicId: 'src' })) } },
       ],
     });
 
@@ -78,7 +79,8 @@ describe('MatchesPage', () => {
     const matches = [makeMatch()];
     matchService.getReportMatches.mockResolvedValue({ report, matches });
 
-    await component.ngOnInit();
+    component.ngOnInit();
+    await new Promise((resolve) => setTimeout(resolve));
 
     expect(matchService.getReportMatches).toHaveBeenCalledWith('src');
     expect(component.report()).toEqual(report);
@@ -93,7 +95,8 @@ describe('MatchesPage', () => {
     matchService.getReportMatches.mockResolvedValue({ report, matches });
     seenMatchesStore.isNew.mockReturnValue(true);
 
-    await component.ngOnInit();
+    component.ngOnInit();
+    await new Promise((resolve) => setTimeout(resolve));
     expect(component.nuevos().has('r1')).toBe(true);
 
     component.marcarVista(makeMatch({ reportPublicId: 'r1' }));
@@ -105,7 +108,8 @@ describe('MatchesPage', () => {
   it('setea error cuando falla la carga', async () => {
     matchService.getReportMatches.mockRejectedValue(new Error('boom'));
 
-    await component.ngOnInit();
+    component.ngOnInit();
+    await new Promise((resolve) => setTimeout(resolve));
 
     expect(component.error()).toBe('No se pudieron cargar las coincidencias');
     expect(component.loading()).toBe(false);
