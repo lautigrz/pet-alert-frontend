@@ -1,7 +1,9 @@
 import { Component, computed, inject, Input, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 
 import { NotificationsService } from '../../application/notifications.service';
+import { NotificacionCoincidencia } from '../../domain/match-notification';
 
 @Component({
   selector: 'app-notifications-bell',
@@ -11,6 +13,7 @@ import { NotificationsService } from '../../application/notifications.service';
 })
 export class NotificationsBell implements OnInit {
   private readonly notificationsService = inject(NotificationsService);
+  private readonly router = inject(Router);
 
   @Input() variante: 'navbar' | 'bottom' = 'navbar';
 
@@ -38,6 +41,12 @@ export class NotificationsBell implements OnInit {
 
   marcarVista(matchPublicId: string): void {
     this.notificationsService.marcarVista(matchPublicId);
+  }
+
+  goToMatches(notificacion: NotificacionCoincidencia): void {
+    this.notificationsService.marcarVista(notificacion.matchPublicId);
+    this.cerrar();
+    this.router.navigate(['/reports', notificacion.lostReportPublicId, 'matches']);
   }
 
   porcentaje(score: number): string {

@@ -125,7 +125,7 @@ describe('ChatsService', () => {
         expect(res).toEqual(mockConversations);
       });
 
-      const req = httpMock.expectOne(`${environment.apiUrl}/conversations/my-conversations`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/conversations`);
       expect(req.request.method).toBe('GET');
       req.flush(mockConversations);
     });
