@@ -55,9 +55,11 @@ export class NotificationsBell implements OnInit {
 
   panelClase(): string {
     const base =
-      'absolute right-0 z-[1100] w-80 max-w-[calc(100vw-1.5rem)] max-h-[420px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl flex flex-col';
+      'z-[1100] max-h-[420px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl flex flex-col';
     const posicion =
-      this.variante === 'bottom' ? 'bottom-[calc(100%+14px)]' : 'top-[calc(100%+10px)]';
+      this.variante === 'bottom'
+        ? 'absolute right-0 w-80 max-w-[calc(100vw-1.5rem)] bottom-[calc(100%+14px)]'
+        : 'fixed inset-x-3 top-[80px] md:absolute md:inset-x-auto md:right-0 md:top-[calc(100%+10px)] md:w-80';
     return `${base} ${posicion}`;
   }
 
