@@ -93,6 +93,13 @@ export const routes: Routes = [
           ).then((m) => m.ReportDetailPage),
       },
       {
+        path: 'reports/:publicId/matches',
+        loadComponent: () =>
+          import(
+            './features/report/presentation/matches/matches'
+          ).then((m) => m.MatchesPage),
+      },
+      {
         path: 'reports/:publicId/edit/datos',
         canActivate: [verifiedGuard],
         loadComponent: () =>

@@ -44,13 +44,6 @@ export class ReportCardComponent {
     return `${especie} avistado`;
   });
 
-  readonly nombre = computed(() => {
-    const r = this.data();
-    if (!r) return '';
-    const name = (r.details as Partial<LostDetails>).name;
-    return name?.trim() ? name : this.titulo();
-  });
-
   readonly direccion = computed(() => {
     const address = this.data()?.location.address ?? '';
     if (!address) return 'Sin ubicación';

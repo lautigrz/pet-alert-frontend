@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { ChatsService, MessagePayload } from '../../application/chats.service';
 import { ConversationOutput, ConversationSummaryOutput } from '../../domain/chat.models';
 import { Subject, takeUntil } from 'rxjs';
@@ -17,6 +18,7 @@ import { AuthService } from '../../../auth/application/auth.service';
 export class ChatsPage implements OnInit, OnDestroy {
   private readonly chatsService = inject(ChatsService);
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -34,7 +36,11 @@ export class ChatsPage implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.chatsService.getConversations()
       .pipe(takeUntil(this.destroy$))
-      .subscribe(contacts => this.contacts = contacts);
+      .subscribe(contacts => {
+        this.contacts = contacts;
+        const conversationId = this.route.snapshot.queryParamMap.get('conversation');
+        if (conversationId) this.abrirConversacion(conversationId);
+      });
 
     this.chatsService.onMessageReceived()
       .pipe(takeUntil(this.destroy$))
@@ -77,6 +83,36 @@ export class ChatsPage implements OnInit, OnDestroy {
 
 
 
+  }
+
+  abrirConversacion(conversationId: string): void {
+    const contacto = this.contacts.find((c) => c.publicId === conversationId);
+    if (contacto) {
+      this.selectContact(contacto);
+      return;
+    }
+
+    this.conversationId = conversationId;
+    this.messages = [];
+    this.chatsService.getMessagesForConversation(conversationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(conv => {
+        this.conversationOutput.set(conv);
+        this.selectedContact.set({
+          publicId: conv.publicId,
+          otherUser: {
+            publicId: conv.otherUser.publicId,
+            username: conv.otherUser.username,
+            photoUrl: conv.otherUser.photoUrl ?? null,
+          },
+          lastMessage: null,
+          createdAt: conv.createdAt,
+        });
+        if (this.messagesNotRead()) {
+          this.chatsService.readMessage(conversationId);
+        }
+        setTimeout(() => this.scrollToBottom(), 100);
+      });
   }
 
   sendMessage(): void {

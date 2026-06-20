@@ -1,4 +1,5 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
 import { ChatsPage } from './chats-page';
 import { ChatsService, MessagePayload } from '../../application/chats.service';
 import { AuthService } from '../../../auth/application/auth.service';
@@ -26,7 +27,10 @@ describe('ChatsPage', () => {
   let messageReadSubject: Subject<{ conversationId: string }>;
   let errorSubject: Subject<{ message: string }>;
 
+  let queryParam: string | null;
+
   beforeEach(() => {
+    queryParam = null;
     messageReceivedSubject = new Subject<MessagePayload>();
     messageReadSubject = new Subject<{ conversationId: string }>();
     errorSubject = new Subject<{ message: string }>();
@@ -54,6 +58,10 @@ describe('ChatsPage', () => {
       providers: [
         { provide: ChatsService, useValue: chatsServiceMock },
         { provide: AuthService, useValue: authServiceMock },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: { get: () => queryParam } } },
+        },
       ],
     });
 
@@ -120,6 +128,26 @@ describe('ChatsPage', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith('some socket error');
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('deep link', () => {
+    it('opens the conversation from the query param on init', async () => {
+      queryParam = 'conv-123';
+
+      fixture.detectChanges();
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      expect(chatsServiceMock.getMessagesForConversation).toHaveBeenCalledWith('conv-123');
+      expect(component.conversationId).toBe('conv-123');
+      expect(component.selectedContact()?.publicId).toBe('conv-123');
+    });
+
+    it('does not open any conversation when there is no query param', () => {
+      fixture.detectChanges();
+
+      expect(chatsServiceMock.getMessagesForConversation).not.toHaveBeenCalled();
+      expect(component.selectedContact()).toBeNull();
     });
   });
 

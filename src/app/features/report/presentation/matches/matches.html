@@ -1,0 +1,43 @@
+<div class="flex-1 bg-[#f3f4f6]">
+  <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    @if (loading()) {
+      <p class="text-slate-500 py-12 text-center">Cargando...</p>
+    } @else if (error()) {
+      <p class="text-[#b04632] py-12 text-center">{{ error() }}</p>
+    } @else {
+      <nav class="flex items-center gap-1.5 text-sm text-slate-400 mb-5">
+        <a routerLink="/home" class="hover:text-[#1D6FA3]">Inicio</a>
+        <span>›</span>
+        <a routerLink="/reports" class="hover:text-[#1D6FA3]">Mis reportes</a>
+        <span>›</span>
+        <a [routerLink]="['/reports', report()?.publicId]" class="hover:text-[#1D6FA3]">{{ reportTitle() }}</a>
+        <span>›</span>
+        <span class="text-[#12355B] font-semibold">Coincidencias</span>
+      </nav>
+
+      <div class="flex items-center gap-2 mb-4">
+        <app-pet-icon name="sparks" class="w-6 h-6 text-[#12355B]" />
+        <h1 class="text-2xl font-extrabold text-[#12355B]">Coincidencias</h1>
+      </div>
+
+      <div class="flex items-start gap-2.5 bg-white border border-[#E8842E]/20 text-[#E8842E] rounded-xl px-4 py-3 text-sm mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4" />
+          <path d="M12 8h.01" />
+        </svg>
+        <span>Estas son las posibles coincidencias que la IA detectó para tu reporte. Revisá cada una y contactá si reconocés a tu mascota.</span>
+      </div>
+
+      @if (matches().length === 0) {
+        <p class="text-slate-400 py-12 text-center">Todavía no hay coincidencias para este reporte.</p>
+      } @else {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-5">
+          @for (m of matches(); track m.matchPublicId) {
+            <app-match-card [match]="m" [nueva]="nuevos().has(m.reportPublicId)" (open)="marcarVista(m)" (contact)="openChat(m)" />
+          }
+        </div>
+      }
+    }
+  </div>
+</div>

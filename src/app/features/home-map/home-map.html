@@ -22,7 +22,7 @@
       <div class="flex flex-wrap gap-2">
         <button
       type="button"
-      (click)="tipoFiltro.set('todos')"
+      (click)="seleccionarTipo('todos')"
       class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
       [class]="tipoFiltro() === 'todos'
         ? 'bg-[#E8842E] text-white'
@@ -32,7 +32,7 @@
 
     <button
       type="button"
-      (click)="tipoFiltro.set('perdidos')"
+      (click)="seleccionarTipo('perdidos')"
       class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
       [class]="tipoFiltro() === 'perdidos'
         ? 'bg-[#E8842E] text-white'
@@ -42,7 +42,7 @@
 
     <button
       type="button"
-      (click)="tipoFiltro.set('avistados')"
+      (click)="seleccionarTipo('avistados')"
       class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
       [class]="tipoFiltro() === 'avistados'
         ? 'bg-[#E8842E] text-white'
@@ -57,7 +57,7 @@
       <div class="flex flex-wrap gap-2">
         <button
   type="button"
-  (click)="cercaniaFiltro.set('todos')"
+  (click)="seleccionarCercania('todos')"
   class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
   [class]="cercaniaFiltro() === 'todos'
     ? 'bg-[#E8842E] text-white'
@@ -67,7 +67,7 @@
 
 <button
   type="button"
-  (click)="cercaniaFiltro.set('5km')"
+  (click)="seleccionarCercania('5km')"
   class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
   [class]="cercaniaFiltro() === '5km'
     ? 'bg-[#E8842E] text-white'
@@ -77,7 +77,7 @@
 
 <button
   type="button"
-  (click)="cercaniaFiltro.set('10km')"
+  (click)="seleccionarCercania('10km')"
   class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
   [class]="cercaniaFiltro() === '10km'
     ? 'bg-[#E8842E] text-white'
@@ -87,7 +87,7 @@
 
 <button
   type="button"
-  (click)="cercaniaFiltro.set('20km')"
+  (click)="seleccionarCercania('20km')"
   class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
   [class]="cercaniaFiltro() === '20km'
     ? 'bg-[#E8842E] text-white'
@@ -102,7 +102,7 @@
       <div class="flex flex-wrap gap-2">
         <button
   type="button"
-  (click)="mascotaFiltro.set('todos')"
+  (click)="seleccionarMascota('todos')"
   class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
   [class]="mascotaFiltro() === 'todos'
     ? 'bg-[#E8842E] text-white'
@@ -112,7 +112,7 @@
 
 <button
   type="button"
-  (click)="mascotaFiltro.set('perro')"
+  (click)="seleccionarMascota('perro')"
   class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
   [class]="mascotaFiltro() === 'perro'
     ? 'bg-[#E8842E] text-white'
@@ -122,7 +122,7 @@
 
 <button
   type="button"
-  (click)="mascotaFiltro.set('gato')"
+  (click)="seleccionarMascota('gato')"
   class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
   [class]="mascotaFiltro() === 'gato'
     ? 'bg-[#E8842E] text-white'
@@ -137,7 +137,7 @@
       <div class="flex flex-wrap gap-2">
          <button
       type="button"
-      (click)="centrosFiltro.set('todos')"
+      (click)="seleccionarCentros('todos')"
       class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
       [class]="centrosFiltro() === 'todos'
         ? 'bg-[#E8842E] text-white'
@@ -147,7 +147,7 @@
 
     <button
       type="button"
-      (click)="centrosFiltro.set('comisarias')"
+      (click)="seleccionarCentros('comisarias')"
       class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
       [class]="centrosFiltro() === 'comisarias'
         ? 'bg-[#E8842E] text-white'
@@ -157,7 +157,7 @@
 
     <button
       type="button"
-      (click)="centrosFiltro.set('veterinarias')"
+      (click)="seleccionarCentros('veterinarias')"
       class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
       [class]="centrosFiltro() === 'veterinarias'
         ? 'bg-[#E8842E] text-white'
@@ -268,16 +268,6 @@
 } 
   </div>
 
-  <div class="sticky bottom-0 bg-white border-t border-slate-200 px-5 py-3 flex gap-3">
-    <button type="button" (click)="limpiarFiltros()"
-      class="flex-1 border border-slate-300 text-[#12355B] font-semibold text-sm py-2.5 rounded-md hover:border-[#E8842E] transition-colors">
-      Limpiar
-    </button>
-    <button type="button" (click)="aplicarYcerrar()"
-      class="flex-1 bg-[#E8842E] hover:bg-[#d57821] text-white font-semibold text-sm py-2.5 rounded-md transition-colors">
-      Aplicar
-    </button>
-  </div>
 </aside>
 
 <div class="flex-1 relative min-w-0 h-full">

@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 
 import { SocketService } from '../../../core/services/socket.service';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { ConversationOutput, ConversationSummaryOutput } from '../domain/chat.models';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
@@ -13,6 +13,11 @@ export interface MessagePayload {
   receiverId: string;
   isRead:     boolean;
   createdAt:  Date;
+}
+
+export interface CreateConversationResponse {
+  publicId:  string;
+  createdAt: string;
 }
 
 
@@ -49,11 +54,27 @@ export class ChatsService {
   }
 
   getConversations(): Observable<ConversationSummaryOutput[]> {
-   return this.http.get<ConversationSummaryOutput[]>(`${this.apiUrl}/conversations/my-conversations`);
+   return this.http.get<ConversationSummaryOutput[]>(`${this.apiUrl}/conversations`);
   }
 
   getMessagesForConversation(conversationId: string): Observable<ConversationOutput> {
     return this.http.get<ConversationOutput>(`${this.apiUrl}/conversations/${conversationId}`);
+  }
+
+  createConversation(publicTargetId: string): Observable<CreateConversationResponse> {
+    return this.http.post<CreateConversationResponse>(`${this.apiUrl}/conversations`, { publicTargetId });
+  }
+
+  async getOrCreateConversation(publicTargetId: string): Promise<string> {
+    try {
+      const created = await firstValueFrom(this.createConversation(publicTargetId));
+      return created.publicId;
+    } catch {
+      const conversations = await firstValueFrom(this.getConversations());
+      const existing = conversations.find((c) => c.otherUser.publicId === publicTargetId);
+      if (existing) return existing.publicId;
+      throw new Error('No se pudo abrir el chat');
+    }
   }
 
 }

@@ -11,6 +11,7 @@
   @if (esPropio()) {
     <button
       type="button"
+      (click)="goToMatches()"
       class="w-full inline-flex items-center justify-center gap-2 bg-[#1D6FA3] hover:bg-[#185c87] text-white text-sm font-semibold py-2.5 rounded-lg transition"
     >
       <app-pet-icon name="sparks" class="w-4 h-4" />
@@ -19,6 +20,7 @@
   } @else {
     <button
       type="button"
+      (click)="enviarMensaje()"
       class="w-full bg-[#12355B] hover:bg-[#0e2a4a] text-white text-sm font-semibold py-2.5 rounded-lg transition"
     >
       Enviar mensaje

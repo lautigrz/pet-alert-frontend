@@ -687,18 +687,23 @@ irALugar(
     this.mostrarFiltros.set(false);
   }
 
-  aplicarYcerrar(): void {
+  seleccionarTipo(valor: string): void {
+    this.tipoFiltro.set(valor);
     this.aplicarFiltros();
-    this.aplicarFiltroCentros();
-    this.cerrarFiltros();
   }
 
-  limpiarFiltros(): void {
-    this.tipoFiltro.set('todos');
-    this.cercaniaFiltro.set('todos');
-    this.mascotaFiltro.set('todos');
-    this.centrosFiltro.set('todos');
+  seleccionarCercania(valor: string): void {
+    this.cercaniaFiltro.set(valor);
     this.aplicarFiltros();
+  }
+
+  seleccionarMascota(valor: string): void {
+    this.mascotaFiltro.set(valor);
+    this.aplicarFiltros();
+  }
+
+  seleccionarCentros(valor: string): void {
+    this.centrosFiltro.set(valor);
     this.aplicarFiltroCentros();
   }
 
