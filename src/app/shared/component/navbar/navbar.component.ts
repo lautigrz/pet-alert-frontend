@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { ProfileService } from '../../../features/profile/application/profile.service';
 import { AuthService } from '../../../features/auth/application/auth.service';
+import { NotificationsBell } from '../../../features/notifications/presentation/notifications-bell/notifications-bell';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NotificationsBell],
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent implements OnInit {

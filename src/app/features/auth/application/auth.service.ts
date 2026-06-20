@@ -17,6 +17,7 @@ import {
   InvalidResetTokenError,
 } from '../domain/auth.errors';
 import { SocketService } from '../../../core/services/socket.service';
+import { NotificationsService } from '../../notifications/application/notifications.service';
 
 
 export interface RegisterCommand {
@@ -35,6 +36,7 @@ export class AuthService {
   private readonly authHttp = inject(AuthHttp);
   private readonly tokenStorage = inject(TokenStorage);
   private readonly socketService = inject(SocketService);
+  private readonly notificationsService = inject(NotificationsService);
 
   async register(command: RegisterCommand): Promise<RegisteredUser> {
     try {
@@ -93,7 +95,7 @@ export class AuthService {
     const stored = this.tokenStorage.read();
     if (stored) await this.tryRevokeRefreshToken(stored.refreshToken);
     this.tokenStorage.clear();
-
+    this.notificationsService.clear();
   }
 
   private async tryRevokeRefreshToken(refreshToken: string): Promise<void> {
