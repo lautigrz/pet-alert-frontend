@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { MatchService } from '../../application/match.service';
@@ -24,6 +25,7 @@ export class MatchesPage implements OnInit {
   private readonly chatsService = inject(ChatsService);
   private readonly toastService = inject(ToastService);
   private readonly seenMatchesStore = inject(SeenMatchesStore);
+  private readonly destroyRef = inject(DestroyRef);
 
   private viewedPublicId = '';
 
@@ -43,9 +45,17 @@ export class MatchesPage implements OnInit {
     );
   });
 
-  async ngOnInit(): Promise<void> {
-    const publicId = this.route.snapshot.paramMap.get('publicId')!;
+  ngOnInit(): void {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const publicId = params.get('publicId');
+      if (publicId) void this.cargar(publicId);
+    });
+  }
+
+  private async cargar(publicId: string): Promise<void> {
     this.viewedPublicId = publicId;
+    this.loading.set(true);
+    this.error.set(null);
     try {
       const { report, matches } = await this.matchService.getReportMatches(publicId);
       this.report.set(report);
