@@ -149,8 +149,8 @@ describe('MatchService', () => {
     ]);
     notificationsHttp.getMine.mockResolvedValue([
       makeNotification({ lostReportPublicId: 'lost', matchedReportPublicId: 'r1', score: 0.76 }),
-      makeNotification({ lostReportPublicId: 'lost', matchedReportPublicId: 'r4', score: 0.2 }),
-      makeNotification({ lostReportPublicId: 'lost', matchedReportPublicId: 'r5', score: 0.2 }),
+      makeNotification({ lostReportPublicId: 'lost', matchedReportPublicId: 'r4', score: 0.6 }),
+      makeNotification({ lostReportPublicId: 'lost', matchedReportPublicId: 'r5', score: 0.55 }),
     ]);
     stubReports({ lost, r1, r4, r5 });
 
@@ -221,7 +221,7 @@ describe('MatchService', () => {
     const candidate = makeReportDetail({ publicId: 'cand', user: { publicId: 'other', username: 'ana', photoUrl: null } });
 
     matchHttp.getByReport.mockResolvedValue([
-      makeMatchResult({ publicId: 'm1', score: 0.4, details: { publicId: 'cand', images: [], animalType: 'dog' } }),
+      makeMatchResult({ publicId: 'm1', score: 0.6, details: { publicId: 'cand', images: [], animalType: 'dog' } }),
     ]);
     notificationsHttp.getMine.mockRejectedValue(new Error('401'));
     stubReports({ src: source, cand: candidate });
@@ -229,6 +229,22 @@ describe('MatchService', () => {
     const { matches } = await service.getReportMatches('src');
 
     expect(matches.map((m) => m.reportPublicId)).toEqual(['cand']);
+  });
+
+  it('excluye coincidencias con score menor al 50%', async () => {
+    const source = makeReportDetail({ publicId: 'src', user: { publicId: 'me', username: 'yo', photoUrl: null } });
+    const low = makeReportDetail({ publicId: 'cand-low', user: { publicId: 'other', username: 'ana', photoUrl: null } });
+    const high = makeReportDetail({ publicId: 'cand-high', user: { publicId: 'other2', username: 'eva', photoUrl: null } });
+
+    matchHttp.getByReport.mockResolvedValue([
+      makeMatchResult({ publicId: 'm1', score: 0.49, details: { publicId: 'cand-low', images: [], animalType: 'dog' } }),
+      makeMatchResult({ publicId: 'm2', score: 0.5, details: { publicId: 'cand-high', images: [], animalType: 'dog' } }),
+    ]);
+    stubReports({ src: source, 'cand-low': low, 'cand-high': high });
+
+    const { matches } = await service.getReportMatches('src');
+
+    expect(matches.map((m) => m.reportPublicId)).toEqual(['cand-high']);
   });
 
   it('retorna lista vacía cuando no hay coincidencias', async () => {
