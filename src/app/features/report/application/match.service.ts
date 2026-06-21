@@ -7,6 +7,8 @@ import { Match, ReportMatches } from '../domain/match.model';
 import { NotificationsHttp } from '../../notifications/infrastructure/notifications.http';
 import { MatchNotification } from '../../notifications/domain/match-notification';
 
+const MIN_MATCH_SCORE = 0.5;
+
 interface Candidate {
   publicId: string;
   score: number;
@@ -36,6 +38,7 @@ export class MatchService {
         .map((candidate, i) => this.toMatch(candidate, details[i], report))
         .filter(
           (match) =>
+            match.score >= MIN_MATCH_SCORE &&
             match.reportPublicId !== report.publicId &&
             match.userPublicId !== report.user.publicId,
         )
