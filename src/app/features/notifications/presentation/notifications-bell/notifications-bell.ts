@@ -46,7 +46,22 @@ export class NotificationsBell implements OnInit {
   goToMatches(notificacion: NotificacionCoincidencia): void {
     this.notificationsService.marcarVista(notificacion.matchPublicId);
     this.cerrar();
-    this.router.navigate(['/reports', notificacion.lostReportPublicId, 'matches']);
+    const reportId =
+      notificacion.rol === 'avistador'
+        ? notificacion.matchedReportPublicId
+        : notificacion.lostReportPublicId;
+    this.router.navigate(['/reports', reportId, 'matches']);
+  }
+
+  imagenDe(notificacion: NotificacionCoincidencia): string | null {
+    return notificacion.rol === 'avistador' ? notificacion.lostPetImage : notificacion.matchedImage;
+  }
+
+  tituloDe(notificacion: NotificacionCoincidencia): string {
+    if (notificacion.rol === 'avistador') {
+      return `Tu avistamiento coincide con ${notificacion.lostPetName ?? 'una mascota perdida'}`;
+    }
+    return `Coincidencia con ${notificacion.lostPetName ?? 'tu mascota'}`;
   }
 
   porcentaje(score: number): string {
