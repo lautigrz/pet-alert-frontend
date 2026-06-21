@@ -23,8 +23,10 @@ describe('NotificationsService', () => {
 
   const unMatch = (overrides: Partial<MatchNotification> = {}): MatchNotification => ({
     ownerPublicId: 'owner-1',
+    rol: 'dueno',
     lostReportPublicId: 'lost-1',
     lostPetName: 'Mandarina',
+    lostPetImage: null,
     matchPublicId: 'match-1',
     matchedReportPublicId: 'sighting-1',
     matchedImage: 'https://img/1.jpg',
