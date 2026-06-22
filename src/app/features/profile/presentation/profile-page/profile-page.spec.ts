@@ -5,10 +5,30 @@ import { provideRouter } from '@angular/router';
 import { ProfilePage } from './profile-page';
 import { ProfileService } from '../../application/profile.service';
 import { UserNotFoundError } from '../../domain/profile.errors';
+import { ReportListService } from '../../../report/application/report-list.service';
+import { Reporte } from '../../../report/domain/report-read.model';
+
+const mockReporte = (overrides: Partial<Reporte> = {}): Reporte =>
+  ({
+    publicId: 'rep-1',
+    user: { publicId: 'user-123' },
+    type: 'LOST',
+    status: 'ACTIVE',
+    description: 'Descripción',
+    location: { address: 'Calle 1', latitude: -34.6, longitude: -58.38 },
+    details: { animalType: 'DOG', images: [] },
+    occurredAt: '2026-06-01T10:00:00.000Z',
+    createdAt: '2026-06-01T10:00:00.000Z',
+    ...overrides,
+  }) as unknown as Reporte;
 
 describe('ProfilePage', () => {
   let profileService: {
     getProfile: ReturnType<typeof vi.fn>;
+  };
+
+  let reportListService: {
+    getMisReportes: ReturnType<typeof vi.fn>;
   };
 
   let component: ProfilePage;
@@ -16,6 +36,10 @@ describe('ProfilePage', () => {
   beforeEach(() => {
     profileService = {
       getProfile: vi.fn(),
+    };
+
+    reportListService = {
+      getMisReportes: vi.fn(),
     };
 
     profileService.getProfile.mockResolvedValue({
@@ -27,6 +51,8 @@ describe('ProfilePage', () => {
       photoUrl: null,
     });
 
+    reportListService.getMisReportes.mockResolvedValue([]);
+
     TestBed.configureTestingModule({
       imports: [ProfilePage],
       providers: [
@@ -34,6 +60,10 @@ describe('ProfilePage', () => {
         {
           provide: ProfileService,
           useValue: profileService,
+        },
+        {
+          provide: ReportListService,
+          useValue: reportListService,
         },
       ],
     });
@@ -169,6 +199,42 @@ describe('ProfilePage', () => {
     it('has edit profile route configured', () => {
       // Then
       expect(component.rutaMiPerfil).toBe('/profile/edit');
+    });
+  });
+
+  describe('my reports', () => {
+    it('loads all the user reports including resolved and closed ones', async () => {
+      // Given
+      const reportes = [
+        mockReporte({ publicId: 'r-activo', status: 'ACTIVE' }),
+        mockReporte({ publicId: 'r-resuelto', status: 'RESOLVED' }),
+        mockReporte({ publicId: 'r-cerrado', status: 'CLOSED' }),
+      ];
+      reportListService.getMisReportes.mockResolvedValue(reportes);
+
+      // When
+      await component.ngOnInit();
+
+      // Then
+      expect(reportListService.getMisReportes).toHaveBeenCalled();
+      expect(component.reports()).toEqual(reportes);
+      expect(component.reportsLoading()).toBe(false);
+      expect(component.reportsError()).toBeNull();
+    });
+
+    it('shows an error when reports loading fails', async () => {
+      // Given
+      reportListService.getMisReportes.mockRejectedValue(
+        new Error('No se pudieron cargar los reportes'),
+      );
+
+      // When
+      await component.ngOnInit();
+
+      // Then
+      expect(component.reportsError()).toBe('No se pudieron cargar los reportes');
+      expect(component.reportsLoading()).toBe(false);
+      expect(component.reports()).toEqual([]);
     });
   });
 });

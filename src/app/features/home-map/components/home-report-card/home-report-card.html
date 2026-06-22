@@ -3,7 +3,7 @@
     class="flex gap-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-sm no-underline text-inherit transition-all duration-200 hover:border-[#E8842E] hover:shadow-[0_6px_20px_-6px_rgba(18,53,91,0.18)]"
     [routerLink]="['/reports', r.publicId]"
   >
-    <div class="shrink-0 w-[92px] self-stretch rounded-2xl overflow-hidden bg-slate-100 flex items-center justify-center">
+    <div class="shrink-0 w-20 h-20 self-center rounded-2xl overflow-hidden bg-slate-100 flex items-center justify-center">
       @if (imagen()) {
         <img [src]="imagen()" [alt]="nombre()" class="w-full h-full object-cover" />
       } @else {
@@ -20,6 +20,7 @@
         <span class="text-xs text-slate-400 shrink-0">{{ tiempoRelativo() }}</span>
       </div>
 
+      <div class="flex flex-wrap items-center gap-2">
       <span
         class="inline-flex w-fit items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold text-white"
         [class]="esPerdida() ? 'bg-[#E8842E]' : 'bg-[#12355B]'"
@@ -42,6 +43,15 @@
         }
       </span>
 
+        @if (estadoLabel()) {
+          <span
+            class="inline-flex w-fit items-center px-2.5 py-1 rounded-md text-xs font-bold bg-slate-200 text-slate-600"
+          >
+            {{ estadoLabel() }}
+          </span>
+        }
+      </div>
+
       <span class="inline-flex items-center gap-1.5 min-w-0 text-[13px] text-slate-500">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 text-[#E8842E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
@@ -49,7 +59,7 @@
         <span class="truncate">{{ direccion() }}</span>
       </span>
 
-      <div class="flex items-center gap-x-4 text-[13px] text-slate-500">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate-500">
         <span class="inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 text-[#E8842E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" />
