@@ -1015,10 +1015,10 @@ describe('HomeMapComponent', () => {
       ];
 
       const misReportes = [
-        mockReporte({ publicId: 'm1' }),
-        mockReporte({ publicId: 'm2' }),
-        mockReporte({ publicId: 'm3' }),
-        mockReporte({ publicId: 'm4' }),
+        mockReporte({ publicId: 'm1', status: 'ACTIVE' }),
+        mockReporte({ publicId: 'm2', status: 'ACTIVE' }),
+        mockReporte({ publicId: 'm3', status: 'RESOLVED' }),
+        mockReporte({ publicId: 'm4', status: 'CLOSED' }),
       ];
 
       reportListService.getGenerales.mockResolvedValue(reportes);
@@ -1029,10 +1029,13 @@ describe('HomeMapComponent', () => {
       await testingComponent().cargarReportes();
 
       // Then
+      expect(reportListService.getGenerales).toHaveBeenCalledWith({
+        status: 'ACTIVE',
+      });
       expect(component.reportes()).toEqual(reportes);
       expect(component.reportesFiltrados()).toEqual(reportes);
-      expect(component.totalMisReportes()).toBe(4);
-      expect(component.misReportes()).toHaveLength(3);
+      expect(component.totalMisReportes()).toBe(2);
+      expect(component.misReportes()).toHaveLength(2);
       expect(component.totalCercanos()).toBe(2);
       expect(component.reportesCercanos()).toHaveLength(2);
     });

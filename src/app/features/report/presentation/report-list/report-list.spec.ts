@@ -378,6 +378,23 @@ describe('ReportListPage', () => {
         reporteFacundo,
       ]);
     });
+
+    it('shows only active reports, hiding resolved and closed ones', async () => {
+      // Given
+      reportListService.getMisReportes.mockResolvedValue([
+        reporteFacundo,
+        { ...reporteFacundo, publicId: 'mio-resuelto', status: 'RESOLVED' },
+        { ...reporteFacundo, publicId: 'mio-cerrado', status: 'CLOSED' },
+      ]);
+
+      // When
+      await component.seleccionarTab('mis-reportes');
+
+      // Then
+      expect(component.reportes()).toEqual([
+        reporteFacundo,
+      ]);
+    });
   });
 
   describe('location filter', () => {
