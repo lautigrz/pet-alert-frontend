@@ -285,7 +285,8 @@ export class ReportListPage implements OnInit {
     }
 
     if (this.tab() === 'mis-reportes') {
-      return this.reportesService.getMisReportes(filtros);
+      const misReportes = await this.reportesService.getMisReportes(filtros);
+      return misReportes.filter((r) => r.status === 'ACTIVE');
     }
 
     filtros.status = 'ACTIVE';

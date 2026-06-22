@@ -144,16 +144,16 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private async cargarReportes(): Promise<void> {
     try {
       const [reportes, misReportes] = await Promise.all([
-  this.reportesService.getGenerales(),
+  this.reportesService.getGenerales({ status: 'ACTIVE' }),
   this.reportesService.getMisReportes(),
 ]);
 
-      console.log('REPORTES', reportes);
+      const misReportesActivos = misReportes.filter((r) => r.status === 'ACTIVE');
       this.reportes.set(reportes);
       this.reportesFiltrados.set(reportes);
       this.dibujarMarcadores(reportes);
-      this.totalMisReportes.set(misReportes.length);
-      this.misReportes.set(misReportes.slice(0, 3));
+      this.totalMisReportes.set(misReportesActivos.length);
+      this.misReportes.set(misReportesActivos.slice(0, 3));
       this.totalCercanos.set(reportes.length);
       this.reportesCercanos.set(reportes.slice(0, 5));
     } catch (error) {
