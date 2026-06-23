@@ -34,7 +34,29 @@ export class ChatsPage implements OnInit, OnDestroy {
   selectedImageFile = signal<File | null>(null);
   selectedImagePreview = signal<string | null>(null);
   activePreviewImageUrl = signal<string | null>(null);
+  mostrandoModalDenuncia = signal(false);
+  denunciaEnviada = signal(false);
 
+
+  abrirModalDenuncia() {
+    this.mostrandoModalDenuncia.set(true);
+    this.denunciaEnviada.set(false);
+  }
+
+  enviarDenuncia() {
+
+    this.denunciaEnviada.set(true);
+
+
+    setTimeout(() => {
+      this.cerrarModalDenuncia();
+    }, 3000);
+  }
+
+  cerrarModalDenuncia() {
+    this.mostrandoModalDenuncia.set(false);
+    this.denunciaEnviada.set(false);
+  }
 
   ngOnInit(): void {
     this.chatsService.getConversations()
