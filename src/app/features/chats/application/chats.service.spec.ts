@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ChatsService } from './chats.service';
+import { ChatsService, MessagePayload } from './chats.service';
 import { SocketService } from '../../../core/services/socket.service';
 import { environment } from '../../../../environments/environment';
 import { of } from 'rxjs';
@@ -50,6 +50,56 @@ describe('ChatsService', () => {
         conversationId: 'conv-123',
         text: 'Hello world',
       });
+    });
+  });
+
+  describe('sendImage', () => {
+    it('should send an image message using FormData via HTTP POST', () => {
+      const mockFile = new File(['image-content'], 'test.png', { type: 'image/png' });
+      const mockResponse: MessagePayload = {
+        publicId: 'm-img',
+        text: 'Hello with image',
+        senderId: 'u-current',
+        receiverId: 'u-other',
+        isRead: false,
+        createdAt: new Date(),
+        imageUrl: 'http://cloudinary/test.png',
+        images: [{ publicId: 'img-1', url: 'http://cloudinary/test.png' }]
+      };
+
+      service.sendImage('conv-123', mockFile, 'Hello with image').subscribe(res => {
+        expect(res).toEqual(mockResponse);
+      });
+
+      const req = httpMock.expectOne(`${environment.apiUrl}/messages`);
+      expect(req.request.method).toBe('POST');
+
+      const body = req.request.body;
+      expect(body).toBeInstanceOf(FormData);
+      expect(body.get('photos')).toBe(mockFile);
+
+      const dataStr = body.get('data') as string;
+      expect(JSON.parse(dataStr)).toEqual({
+        conversationId: 'conv-123',
+        content: 'Hello with image'
+      });
+
+      req.flush(mockResponse);
+    });
+
+    it('should use empty string as default content if text is not provided', () => {
+      const mockFile = new File(['image-content'], 'test.png', { type: 'image/png' });
+
+      service.sendImage('conv-123', mockFile).subscribe();
+
+      const req = httpMock.expectOne(`${environment.apiUrl}/messages`);
+      const body = req.request.body;
+      const dataStr = body.get('data') as string;
+      expect(JSON.parse(dataStr)).toEqual({
+        conversationId: 'conv-123',
+        content: ''
+      });
+      req.flush({});
     });
   });
 

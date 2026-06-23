@@ -31,6 +31,9 @@ export class ChatsPage implements OnInit, OnDestroy {
   messages: MessagePayload[] = [];
   contacts: ConversationSummaryOutput[] = [];
   conversationId = '';
+  selectedImageFile = signal<File | null>(null);
+  selectedImagePreview = signal<string | null>(null);
+  activePreviewImageUrl = signal<string | null>(null);
 
 
   ngOnInit(): void {
@@ -48,7 +51,7 @@ export class ChatsPage implements OnInit, OnDestroy {
         this.messages = [...this.messages, msg];
         setTimeout(() => this.scrollToBottom(), 100);
       });
-     
+
     this.chatsService.onMessageRead()
       .pipe(takeUntil(this.destroy$))
       .subscribe(msg => {
@@ -116,37 +119,106 @@ export class ChatsPage implements OnInit, OnDestroy {
   }
 
   sendMessage(): void {
-
     const text = this.newMessage().trim();
-    if (!text || !this.conversationId) return;
-    this.chatsService.sendMessage(this.conversationId, text);
+    const imageFile = this.selectedImageFile();
+    const imagePreview = this.selectedImagePreview();
 
-    this.messages = [...this.messages, {
-      publicId: crypto.randomUUID(),
-      text,
-      senderId: this.currentUserId(),
-      receiverId: this.selectedContact()!.otherUser.publicId,
-      isRead: false,
-      createdAt: new Date(),
-    }];
+    if ((!text && !imageFile) || !this.conversationId) return;
 
-    this.newMessage.set('');
-    setTimeout(() => this.scrollToBottom(), 100);
+    if (imageFile && imagePreview) {
+
+      const tempPublicId = crypto.randomUUID();
+      const localMessage: MessagePayload = {
+        publicId: tempPublicId,
+        text,
+        senderId: this.currentUserId(),
+        receiverId: this.selectedContact()!.otherUser.publicId,
+        isRead: false,
+        createdAt: new Date(),
+        imageUrl: imagePreview
+      };
+
+      this.messages = [...this.messages, localMessage];
+
+      this.newMessage.set('');
+      this.clearSelectedImage();
+      setTimeout(() => this.scrollToBottom(), 100);
+
+      this.chatsService.sendImage(this.conversationId, imageFile, text).subscribe({
+        next: (response) => {
+          this.messages = this.messages.map(msg => {
+            if (msg.publicId === tempPublicId) {
+              return {
+                ...msg,
+                publicId: response.publicId || msg.publicId,
+                text: response.text || msg.text,
+                imageUrl: response.imageUrl || (response.images?.[0]?.url) || msg.imageUrl,
+                images: response.images || msg.images
+              };
+            }
+            return msg;
+          });
+          setTimeout(() => this.scrollToBottom(), 100);
+        },
+        error: (err) => {
+          console.error('Error al enviar la imagen:', err);
+          this.messages = this.messages.filter(msg => msg.publicId !== tempPublicId);
+        }
+      });
+    } else {
+      this.chatsService.sendMessage(this.conversationId, text);
+
+      this.messages = [...this.messages, {
+        publicId: crypto.randomUUID(),
+        text,
+        senderId: this.currentUserId(),
+        receiverId: this.selectedContact()!.otherUser.publicId,
+        isRead: false,
+        createdAt: new Date(),
+      }];
+
+      this.newMessage.set('');
+      setTimeout(() => this.scrollToBottom(), 100);
+    }
   }
 
   openFilePicker(): void {
     this.fileInput.nativeElement.click();
   }
 
-  sendImage(event: Event): void {
+  onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    // subida de imagen - falta implementación
+
+    this.selectedImageFile.set(file);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.selectedImagePreview.set(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    input.value = '';
   }
 
-  sendAudio(): void {
-    // grabación de audio - falta implementación
+  clearSelectedImage(): void {
+    this.selectedImageFile.set(null);
+    this.selectedImagePreview.set(null);
+  }
+
+  openImage(url?: string): void {
+    if (url) {
+      this.activePreviewImageUrl.set(url);
+    }
+  }
+
+  closeImage(): void {
+    this.activePreviewImageUrl.set(null);
+  }
+
+  getMessageImageUrl(message: { images?: { url: string }[] }): string {
+    return message.images?.[0]?.url || '';
   }
 
   get filteredContacts(): ConversationSummaryOutput[] {

@@ -13,6 +13,8 @@ export interface MessagePayload {
   receiverId: string;
   isRead:     boolean;
   createdAt:  Date;
+  imageUrl?:  string;
+  images?:    { publicId: string; url: string }[];
 }
 
 export interface CreateConversationResponse {
@@ -31,6 +33,18 @@ export class ChatsService {
   private readonly apiUrl = environment.apiUrl;
   sendMessage(conversationId: string, text: string): void {
     this.socketService.emit('message:send', { conversationId, text });
+  }
+
+  sendImage(conversationId: string, file: File, text?: string): Observable<MessagePayload> {
+    const formData = new FormData();
+    const data = {
+      conversationId,
+      content: text || ''
+    };
+    formData.append('data', JSON.stringify(data));
+    formData.append('photos', file);
+
+    return this.http.post<MessagePayload>(`${this.apiUrl}/messages`, formData);
   }
 
   onMessageSent(): Observable<MessagePayload> {
