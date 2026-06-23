@@ -31,7 +31,30 @@ export class ChatsPage implements OnInit, OnDestroy {
   messages: MessagePayload[] = [];
   contacts: ConversationSummaryOutput[] = [];
   conversationId = '';
+  mostrandoModalDenuncia = signal(false);
+  denunciaEnviada = signal(false);
 
+  
+  abrirModalDenuncia() {
+    this.mostrandoModalDenuncia.set(true);
+    this.denunciaEnviada.set(false);
+  }
+
+  enviarDenuncia() {
+    // Aqui iria la logica para enviar la denuncia
+    // Por ahora solo mostramos el mensaje de exito
+    this.denunciaEnviada.set(true);
+
+    //Cerrar automaticamente despues de 3 segundos
+    setTimeout(() => {
+    this.cerrarModalDenuncia();
+    }, 3000);
+  }
+
+  cerrarModalDenuncia() {
+    this.mostrandoModalDenuncia.set(false);
+    this.denunciaEnviada.set(false);
+  }
 
   ngOnInit(): void {
     this.chatsService.getConversations()

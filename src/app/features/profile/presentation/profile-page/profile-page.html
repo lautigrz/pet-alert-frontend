@@ -28,13 +28,24 @@
           <span class="font-semibold text-[#12355B]">4.7</span>
           <span class="text-[#E8842E] font-medium">Leer reseñas</span>
         </div>
+        <div class="flex justify-center items-center gap-2 mt-2">
 
-        <a
-          [routerLink]="rutaMiPerfil"
-          class="mt-4 inline-flex items-center gap-2 border border-slate-300 hover:border-[#12355B] text-[#12355B] font-semibold text-sm px-4 py-2 rounded-md bg-white transition-colors"
-        >
-          ✎ Editar perfil
-        </a>
+          <a
+            [routerLink]="rutaMiPerfil"
+            class="inline-flex items-center gap-1 border border-slate-300 hover:border-[#12355B] text-[#12355B] font-semibold text-sm px-4 py-2 rounded-md bg-white transition-colors">
+            ✎ Editar perfil
+          </a>
+        
+          <button
+            type="button"
+            class="w-10 h-10 inline-flex items-center justify-center border border-red-500 text-red-500 hover:bg-red-100 rounded-lg transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <text x="12" y="17" text-anchor="middle" font-size="20" font-weight="bold" fill="currentColor">!</text>
+              <circle cx="12" cy="4" r="1.5" fill="currentColor"/>
+            </svg>
+          </button>
+        
+        </div>
       </section>
 
       <section class="mb-5">
