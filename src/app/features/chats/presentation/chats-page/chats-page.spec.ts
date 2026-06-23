@@ -18,6 +18,7 @@ describe('ChatsPage', () => {
     getMessagesForConversation: ReturnType<typeof vi.fn>;
     readMessage: ReturnType<typeof vi.fn>;
     sendMessage: ReturnType<typeof vi.fn>;
+    sendImage: ReturnType<typeof vi.fn>;
   };
   let authServiceMock: {
     getCurrentUserId: ReturnType<typeof vi.fn>;
@@ -47,6 +48,7 @@ describe('ChatsPage', () => {
       })),
       readMessage: vi.fn(),
       sendMessage: vi.fn(),
+      sendImage: vi.fn().mockReturnValue(of({})),
     };
 
     authServiceMock = {
@@ -338,6 +340,191 @@ describe('ChatsPage', () => {
       component.openFilePicker();
 
       expect(clickSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('onFileSelected', () => {
+    it('should set selectedImageFile and use FileReader to read the image preview', async () => {
+      fixture.detectChanges();
+      const mockFile = new File(['dummy content'], 'test.png', { type: 'image/png' });
+      const mockEvent = {
+        target: {
+          files: [mockFile],
+          value: 'test.png'
+        }
+      } as unknown as Event;
+
+      const mockFileReader = {
+        result: 'data:image/png;base64,dummy',
+        readAsDataURL: vi.fn(function(this: { onload?: (() => void) | null }) {
+          if (this.onload) {
+            this.onload();
+          }
+        }),
+      };
+      const originalFileReader = window.FileReader;
+      window.FileReader = vi.fn(function(this: unknown) {
+        return mockFileReader;
+      }) as unknown as typeof FileReader;
+
+      component.onFileSelected(mockEvent);
+
+      expect(component.selectedImageFile()).toBe(mockFile);
+      expect(mockFileReader.readAsDataURL).toHaveBeenCalledWith(mockFile);
+      expect(component.selectedImagePreview()).toBe('data:image/png;base64,dummy');
+      expect((mockEvent.target as HTMLInputElement).value).toBe('');
+
+      window.FileReader = originalFileReader;
+    });
+
+    it('should do nothing if no file is selected', () => {
+      fixture.detectChanges();
+      const mockEvent = {
+        target: {
+          files: []
+        }
+      } as unknown as Event;
+
+      component.onFileSelected(mockEvent);
+
+      expect(component.selectedImageFile()).toBeNull();
+      expect(component.selectedImagePreview()).toBeNull();
+    });
+  });
+
+  describe('clearSelectedImage', () => {
+    it('should clear selectedImageFile and selectedImagePreview', () => {
+      fixture.detectChanges();
+      component.selectedImageFile.set(new File([], 'test.png'));
+      component.selectedImagePreview.set('preview-url');
+
+      component.clearSelectedImage();
+
+      expect(component.selectedImageFile()).toBeNull();
+      expect(component.selectedImagePreview()).toBeNull();
+    });
+  });
+
+  describe('openImage and closeImage', () => {
+    it('should open image and set activePreviewImageUrl', () => {
+      fixture.detectChanges();
+      component.openImage('http://test.com/image.png');
+      expect(component.activePreviewImageUrl()).toBe('http://test.com/image.png');
+    });
+
+    it('should not set activePreviewImageUrl if no url is provided', () => {
+      fixture.detectChanges();
+      component.activePreviewImageUrl.set(null);
+      component.openImage(undefined);
+      expect(component.activePreviewImageUrl()).toBeNull();
+    });
+
+    it('should close image and clear activePreviewImageUrl', () => {
+      fixture.detectChanges();
+      component.activePreviewImageUrl.set('http://test.com/image.png');
+      component.closeImage();
+      expect(component.activePreviewImageUrl()).toBeNull();
+    });
+  });
+
+  describe('getMessageImageUrl', () => {
+    it('should return URL of the first image if present', () => {
+      const message = {
+        images: [
+          { url: 'http://test.com/img1.png', publicId: '1' },
+          { url: 'http://test.com/img2.png', publicId: '2' }
+        ]
+      };
+      expect(component.getMessageImageUrl(message)).toBe('http://test.com/img1.png');
+    });
+
+    it('should return empty string if images array is empty or undefined', () => {
+      expect(component.getMessageImageUrl({})).toBe('');
+      expect(component.getMessageImageUrl({ images: [] })).toBe('');
+    });
+  });
+
+  describe('sendMessage (with image)', () => {
+    it('should send image via HTTP, do optimistic update, and update message details on success', async () => {
+      fixture.detectChanges();
+      const mockContact: ConversationSummaryOutput = {
+        publicId: 'c1',
+        otherUser: { publicId: 'u-other', username: 'user_other', photoUrl: null },
+        lastMessage: null,
+        createdAt: new Date(),
+      };
+      component.selectedContact.set(mockContact);
+      component.conversationId = 'c1';
+
+      const mockFile = new File(['content'], 'test.png', { type: 'image/png' });
+      component.selectedImageFile.set(mockFile);
+      component.selectedImagePreview.set('local-preview-url');
+      component.newMessage.set('image description');
+
+      const mockResponse: MessagePayload = {
+        publicId: 'real-id-123',
+        text: 'image description',
+        senderId: 'u-current',
+        receiverId: 'u-other',
+        isRead: false,
+        createdAt: new Date(),
+        imageUrl: 'http://cloudinary/test.png',
+        images: [{ publicId: 'img-1', url: 'http://cloudinary/test.png' }]
+      };
+      
+      const sendImageSubject = new Subject<MessagePayload>();
+      chatsServiceMock.sendImage.mockReturnValue(sendImageSubject.asObservable());
+
+      component.sendMessage();
+
+      expect(component.messages.length).toBe(1);
+      const tempMessage = component.messages[0];
+      expect(tempMessage.imageUrl).toBe('local-preview-url');
+      expect(tempMessage.text).toBe('image description');
+      expect(component.newMessage()).toBe('');
+      expect(component.selectedImageFile()).toBeNull();
+      expect(component.selectedImagePreview()).toBeNull();
+
+      expect(chatsServiceMock.sendImage).toHaveBeenCalledWith('c1', mockFile, 'image description');
+
+      sendImageSubject.next(mockResponse);
+      sendImageSubject.complete();
+
+      expect(component.messages.length).toBe(1);
+      expect(component.messages[0].publicId).toBe('real-id-123');
+      expect(component.messages[0].imageUrl).toBe('http://cloudinary/test.png');
+      expect(component.messages[0].images).toEqual([{ publicId: 'img-1', url: 'http://cloudinary/test.png' }]);
+    });
+
+    it('should revert optimistic update and log error if sendImage fails', () => {
+      fixture.detectChanges();
+      const mockContact: ConversationSummaryOutput = {
+        publicId: 'c1',
+        otherUser: { publicId: 'u-other', username: 'user_other', photoUrl: null },
+        lastMessage: null,
+        createdAt: new Date(),
+      };
+      component.selectedContact.set(mockContact);
+      component.conversationId = 'c1';
+
+      const mockFile = new File(['content'], 'test.png', { type: 'image/png' });
+      component.selectedImageFile.set(mockFile);
+      component.selectedImagePreview.set('local-preview-url');
+
+      const sendImageSubject = new Subject<MessagePayload>();
+      chatsServiceMock.sendImage.mockReturnValue(sendImageSubject.asObservable());
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
+
+      component.sendMessage();
+
+      expect(component.messages.length).toBe(1);
+
+      sendImageSubject.error(new Error('Upload failed'));
+
+      expect(component.messages.length).toBe(0);
+      expect(consoleSpy).toHaveBeenCalledWith('Error al enviar la imagen:', expect.any(Error));
+
+      consoleSpy.mockRestore();
     });
   });
 });

@@ -46,6 +46,8 @@ interface MessageOutput {
     senderId: string;
     isRead: boolean;
     createdAt: Date;
+    imageUrl?: string;
+    images?: { publicId: string; url: string }[];
 }
 
 export interface ConversationOutput {
