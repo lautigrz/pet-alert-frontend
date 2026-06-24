@@ -37,6 +37,12 @@ export class ReportCardComponent {
     const r = this.data();
     if (!r) return '';
 
+    const nombre = (r.type === 'LOST'
+      ? (r.details as LostDetails).name
+      : (r.details as SightingDetails).petName
+    )?.trim();
+    if (nombre) return nombre;
+
     const especie = this.especie((r.details as LostDetails | SightingDetails).animalType);
 
     if (r.type === 'LOST') return `${especie} perdido`;

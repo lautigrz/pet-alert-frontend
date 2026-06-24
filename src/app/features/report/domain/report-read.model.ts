@@ -13,6 +13,7 @@ export interface ReporteUbicacion {
 }
 
 export interface SightingDetails {
+  petName: string;
   animalType: string;
   hasIdCollar: boolean;
   isInTransit: boolean;
