@@ -82,22 +82,29 @@
       </div>
     </div>
 
-    <!-- Botón Denunciar (mobile: ícono flotante) -->
-    <button type="button" (click)="abrirModalDenuncia()" aria-label="Denunciar"
-      class="lg:hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
-      </svg>
-    </button>
+    <div
+      class="absolute right-3 top-1/2 -translate-y-1/2 lg:relative lg:right-auto lg:top-auto lg:translate-y-0">
+      <button type="button" (click)="toggleMenuOpciones($event)" aria-label="Opciones"
+        class="p-1.5 -m-1.5 rounded-lg text-slate-400 hover:text-[#12355B] hover:bg-slate-100 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" />
+        </svg>
+      </button>
 
-    <!-- Botón Denunciar (desktop: con texto) -->
-    <button type="button" (click)="abrirModalDenuncia()"
-      class="hidden lg:inline-flex items-center gap-1.5 text-sm font-semibold text-slate-400 transition hover:text-red-500 shrink-0">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
-      </svg>
-      Denunciar
-    </button>
+      @if (menuOpcionesAbierto()) {
+      <div (click)="$event.stopPropagation()"
+        class="absolute right-0 top-[calc(100%+8px)] z-[1100] min-w-[170px] bg-white border border-slate-200 rounded-xl shadow-xl p-1.5">
+        <button type="button" (click)="denunciarDesdeMenu()"
+          class="w-full inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-red-500 hover:bg-red-50 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+          </svg>
+          Denunciar
+        </button>
+      </div>
+      }
+    </div>
 
   </header>
 
