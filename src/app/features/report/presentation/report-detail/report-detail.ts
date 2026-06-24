@@ -11,6 +11,7 @@ import { ReportContactComponent } from '../components/report-contact/report-cont
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ProfileService } from '../../../profile/application/profile.service';
 import { ReportTimelineComponent } from '../components/report-timeline/report-timeline';
+import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
 
 @Component({
   selector: 'app-report-detail',
@@ -22,7 +23,8 @@ import { ReportTimelineComponent } from '../components/report-timeline/report-ti
     ReportInfoComponent,
     ReportLocationComponent,
     ReportContactComponent,
-    ReportTimelineComponent
+    ReportTimelineComponent,
+    ReportModalComponent
   ],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './report-detail.html',
@@ -44,7 +46,6 @@ export class ReportDetailPage implements OnInit {
   confirmandoResolucion = signal(false);
   usuarioId = signal<string | null>(null);
   mostrandoModalDenuncia = signal(false);
-  denunciaEnviada = signal(false);
 
   esPropio = computed(() => {
     const r = this.report();
@@ -80,23 +81,10 @@ export class ReportDetailPage implements OnInit {
 
   abrirModalDenuncia() {
     this.mostrandoModalDenuncia.set(true);
-    this.denunciaEnviada.set(false);
-  }
-
-  enviarDenuncia() {
-    // Aqui iria la logica para enviar la denuncia
-    // Por ahora solo mostramos el mensaje de exito
-    this.denunciaEnviada.set(true);
-
-    //Cerrar automaticamente despues de 3 segundos
-    setTimeout(() => {
-      this.cerrarModalDenuncia();
-    }, 3000);
   }
 
   cerrarModalDenuncia() {
     this.mostrandoModalDenuncia.set(false);
-    this.denunciaEnviada.set(false);
   }
 
   async resolverReporte(): Promise<void> {

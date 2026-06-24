@@ -5,14 +5,26 @@
     } @else if (error()) {
     <p class="text-[#b04632] py-12 text-center">{{ error() }}</p>
     } @else if (report(); as r) {
-    <nav class="flex items-center gap-1.5 text-sm text-slate-400 mb-5">
-      <a routerLink="/home" class="hover:text-[#1D6FA3]">Inicio</a>
-      <span>›</span>
-      <a routerLink="/reports" class="hover:text-[#1D6FA3]">{{ esPropio() ? 'Mis reportes' : 'Reportes' }}</a>
-      <span>›</span>
-      <span class="text-[#12355B] font-semibold">{{ r.details.name || (r.type === 'LOST' ? 'Mascota perdida' :
-        'Avistamiento') }}</span>
-    </nav>
+    <div class="flex items-center justify-between gap-3 mb-5">
+      <nav class="flex items-center gap-1.5 text-sm text-slate-400 min-w-0">
+        <a routerLink="/home" class="hover:text-[#1D6FA3] shrink-0">Inicio</a>
+        <span class="shrink-0">›</span>
+        <a routerLink="/reports" class="hover:text-[#1D6FA3] shrink-0">{{ esPropio() ? 'Mis reportes' : 'Reportes' }}</a>
+        <span class="shrink-0">›</span>
+        <span class="text-[#12355B] font-semibold truncate">{{ r.details.name || (r.type === 'LOST' ? 'Mascota perdida' :
+          'Avistamiento') }}</span>
+      </nav>
+
+      @if (!esPropio()) {
+      <button type="button" (click)="abrirModalDenuncia()"
+        class="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-slate-400 transition hover:text-red-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+        </svg>
+        Denunciar
+      </button>
+      }
+    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
       <div class="flex flex-col gap-5 min-w-0">
@@ -83,13 +95,6 @@
         </section>
         }
 
-        @if (!esPropio()) {
-        <button type="button" (click)="abrirModalDenuncia()"
-          class="w-full inline-flex items-center justify-center gap-1.5 border border-red-500 text-red-500 hover:bg-red-100 text-sm font-semibold py-2.5 rounded-lg transition">
-          Denunciar
-        </button>
-        }
-
         <app-report-contact [report]="r" [esPropio]="esPropio()">
           @if (esPropio() && r.status === 'ACTIVE') {
           <div class="mt-2.5">
@@ -126,110 +131,6 @@
   </div>
   <!-- Modal Denuncia -->
   @if (mostrandoModalDenuncia()) {
-  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-lg shadow-lg max-w-md w-full animate-in fade-in zoom-in-95">
-
-      <!-- Formulario de Denuncia -->
-      @if (!denunciaEnviada()) {
-      <div class="p-6 border-b border-slate-200">
-        <h2 class="text-lg font-semibold text-slate-900">Denunciar reporte</h2>
-      </div>
-
-      <div class="p-6 space-y-4">
-        <p class="text-sm text-slate-600">
-          Cuéntanos por qué denuncias este reporte. Tu denuncia nos ayuda a mantener la comunidad segura.
-        </p>
-
-        <div class="space-y-2">
-          <label
-            class="flex items-start gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-            <input type="radio" name="motivo" class="mt-1" checked>
-            <div>
-              <p class="font-medium text-sm text-slate-900">Información falsa</p>
-              <p class="text-xs text-slate-500 mt-0.5">El reporte contiene información incorrecta</p>
-            </div>
-          </label>
-
-          <label
-            class="flex items-start gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-            <input type="radio" name="motivo" class="mt-1">
-            <div>
-              <p class="font-medium text-sm text-slate-900">Contenido inapropiado</p>
-              <p class="text-xs text-slate-500 mt-0.5">Imágenes o texto ofensivo</p>
-            </div>
-          </label>
-
-          <label
-            class="flex items-start gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-            <input type="radio" name="motivo" class="mt-1">
-            <div>
-              <p class="font-medium text-sm text-slate-900">Spam</p>
-              <p class="text-xs text-slate-500 mt-0.5">Reporte repetido o publicitario</p>
-            </div>
-          </label>
-
-          <label
-            class="flex items-start gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-            <input type="radio" name="motivo" class="mt-1">
-            <div>
-              <p class="font-medium text-sm text-slate-900">Datos personales expuestos</p>
-              <p class="text-xs text-slate-500 mt-0.5">Contiene información privada</p>
-            </div>
-          </label>
-
-          <label
-            class="flex items-start gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-            <input type="radio" name="motivo" class="mt-1">
-            <div>
-              <p class="font-medium text-sm text-slate-900">Otro</p>
-              <p class="text-xs text-slate-500 mt-0.5">Cuéntanos más en los detalles</p>
-            </div>
-          </label>
-        </div>
-
-        <textarea placeholder="Detalles adicionales (opcional)"
-          class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1D6FA3] focus:border-transparent resize-none"
-          rows="3"></textarea>
-      </div>
-
-      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 rounded-b-lg flex gap-2">
-        <button type="button" (click)="cerrarModalDenuncia()"
-          class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-100 transition">
-          Cancelar
-        </button>
-        <button type="button" (click)="enviarDenuncia()"
-          class="flex-1 px-4 py-2.5 bg-[#b04632] text-white text-sm font-semibold rounded-lg hover:bg-[#9a3a28] transition">
-          Enviar denuncia
-        </button>
-      </div>
-      }
-
-      <!-- Mensaje de Éxito -->
-      @if (denunciaEnviada()) {
-      <div class="p-6 text-center space-y-4 animate-in fade-in">
-        <div class="flex justify-center">
-          <div class="rounded-full bg-green-100 p-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-600" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-          </div>
-        </div>
-
-        <div>
-          <h2 class="text-lg font-semibold text-slate-900">¡Gracias por tu denuncia!</h2>
-          <p class="text-sm text-slate-600 mt-2">
-            Tu reporte ha sido enviado a nuestro equipo de moderación. Revisaremos el contenido lo antes posible.
-          </p>
-        </div>
-
-        <button type="button" (click)="cerrarModalDenuncia()"
-          class="w-full px-4 py-2.5 bg-[#1D6FA3] text-white text-sm font-semibold rounded-lg hover:bg-[#1a4f7a] transition">
-          Entendido
-        </button>
-      </div>
-      }
-    </div>
-  </div>
+    <app-report-modal tipo="reporte" (cerrar)="cerrarModalDenuncia()" />
   }
 </div>

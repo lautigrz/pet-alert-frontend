@@ -1,0 +1,78 @@
+<div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
+  <div class="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+
+    @if (!enviada()) {
+      <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
+        <h2 class="text-lg font-extrabold text-[#12355B]">{{ config().titulo }}</h2>
+        <button type="button" (click)="cerrarModal()" aria-label="Cerrar"
+          class="text-slate-400 transition hover:text-[#12355B]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+        <p class="text-[13px] text-slate-500">{{ config().intro }}</p>
+
+        <div class="space-y-2">
+          @for (m of config().motivos; track m.label; let i = $index) {
+            <button type="button" (click)="motivoSeleccionado.set(i)"
+              class="flex w-full items-start gap-3 rounded-xl border p-3 text-left transition"
+              [class]="motivoSeleccionado() === i
+                ? 'border-[#E8842E] bg-[#E8842E]/5'
+                : 'border-slate-200 hover:border-slate-300'">
+              <span class="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border-2"
+                [class]="motivoSeleccionado() === i ? 'border-[#E8842E]' : 'border-slate-300'">
+                @if (motivoSeleccionado() === i) {
+                  <span class="h-2 w-2 rounded-full bg-[#E8842E]"></span>
+                }
+              </span>
+              <span class="min-w-0">
+                <span class="block text-sm font-bold text-[#12355B]">{{ m.label }}</span>
+                <span class="mt-0.5 block text-xs text-slate-500">{{ m.descripcion }}</span>
+              </span>
+            </button>
+          }
+        </div>
+
+        <textarea rows="3" [value]="detalle()" (input)="detalle.set($any($event.target).value)"
+          placeholder="Contanos más (opcional)"
+          class="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm text-[#12355B] placeholder:text-slate-400 focus:border-[#E8842E] focus:outline-none focus:ring-1 focus:ring-[#E8842E]"></textarea>
+      </div>
+
+      <div class="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 bg-white px-6 py-4 sm:flex-row">
+        <button type="button" (click)="cerrarModal()"
+          class="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-[#12355B]">
+          Cancelar
+        </button>
+        <button type="button" (click)="enviar()"
+          class="flex-1 rounded-lg bg-[#E8842E] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#d6761f]">
+          Enviar denuncia
+        </button>
+      </div>
+    } @else {
+      <div class="space-y-4 px-6 py-8 text-center">
+        <div class="flex justify-center">
+          <div class="grid h-12 w-12 place-items-center rounded-full bg-[#E8842E]/10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#E8842E]" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <h2 class="text-lg font-extrabold text-[#12355B]">¡Gracias por tu denuncia!</h2>
+          <p class="mt-2 text-[13px] text-slate-500">
+            La enviamos a nuestro equipo de moderación. La vamos a revisar lo antes posible.
+          </p>
+        </div>
+        <button type="button" (click)="cerrarModal()"
+          class="w-full rounded-lg bg-[#E8842E] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#d6761f]">
+          Entendido
+        </button>
+      </div>
+    }
+  </div>
+</div>
