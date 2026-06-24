@@ -7,7 +7,7 @@ import { Match, ReportMatches } from '../domain/match.model';
 import { NotificationsHttp } from '../../notifications/infrastructure/notifications.http';
 import { MatchNotification } from '../../notifications/domain/match-notification';
 
-const MIN_MATCH_SCORE = 0.5;
+const MIN_MATCH_SCORE = 0.7;
 
 interface Candidate {
   publicId: string;
