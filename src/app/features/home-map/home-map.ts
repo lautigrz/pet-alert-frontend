@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit, NgZone, computed, inject, signal } from '@angular/core';
+import { Component, AfterViewInit, HostListener, OnInit, NgZone, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReportListService } from '../report/application/report-list.service';
 import { AnimalType, Reporte, SightingDetails } from '../report/domain/report-read.model';
@@ -86,6 +86,11 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   readonly centrosCargando = signal(false);
   readonly centrosError = signal<string | null>(null);
+  private readonly tooltipCentrosHover = signal(false);
+  private readonly tooltipCentrosClick = signal(false);
+  readonly tooltipCentrosAbierto = computed(
+    () => this.tooltipCentrosHover() || this.tooltipCentrosClick(),
+  );
 
   private readonly lugaresCache = new Map<string, Lugar[]>();
   private centrosRequestId = 0;
@@ -717,6 +722,24 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   seleccionarCentros(valor: string): void {
     this.centrosFiltro.set(valor);
     this.aplicarFiltroCentros();
+  }
+
+  toggleTooltipCentros(event: Event): void {
+    event.stopPropagation();
+    this.tooltipCentrosClick.update((abierto) => !abierto);
+  }
+
+  onTooltipPointerEnter(event: PointerEvent): void {
+    if (event.pointerType === 'mouse') this.tooltipCentrosHover.set(true);
+  }
+
+  onTooltipPointerLeave(event: PointerEvent): void {
+    if (event.pointerType === 'mouse') this.tooltipCentrosHover.set(false);
+  }
+
+  @HostListener('document:click')
+  cerrarTooltipCentros(): void {
+    this.tooltipCentrosClick.set(false);
   }
 
   private markSearchResult(lat: number, lng: number): void {
