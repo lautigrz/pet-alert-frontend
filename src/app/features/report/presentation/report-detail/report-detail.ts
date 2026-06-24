@@ -46,6 +46,9 @@ export class ReportDetailPage implements OnInit {
   confirmandoResolucion = signal(false);
   usuarioId = signal<string | null>(null);
   mostrandoModalDenuncia = signal(false);
+  siguiendoHistoria = signal(false);
+  cargandoSeguimiento = signal(false);
+  actualizandoSeguimiento = signal(false);
 
   esPropio = computed(() => {
     const r = this.report();
@@ -53,14 +56,18 @@ export class ReportDetailPage implements OnInit {
     return !!r && !!id && r.user.publicId === id;
   });
 
+  puedeSeguirHistoria = computed(() => {
+    const r = this.report();
+    return !!r && !this.esPropio() && r.status === 'ACTIVE';
+  });
+
   async ngOnInit() {
     const publicId = this.route.snapshot.paramMap.get('publicId')!;
+
     try {
       this.report.set(await this.reportService.getReportByPublicId(publicId));
     } catch {
       this.error.set('No se pudo cargar el reporte');
-    } finally {
-      this.loading.set(false);
     }
 
     try {
@@ -68,6 +75,12 @@ export class ReportDetailPage implements OnInit {
       this.usuarioId.set(perfil.id);
     } catch {
       this.usuarioId.set(null);
+    }
+
+    try {
+      await this.cargarEstadoSeguimiento();
+    } finally {
+      this.loading.set(false);
     }
   }
 
@@ -127,5 +140,56 @@ export class ReportDetailPage implements OnInit {
   irAEditarUbicacion(): void {
     const r = this.report();
     if (r) this.router.navigate(['/reports', r.publicId, 'edit', 'ubicacion']);
+  }
+
+  private async cargarEstadoSeguimiento(): Promise<void> {
+    const r = this.report();
+
+    if (!r || this.esPropio() || r.status !== 'ACTIVE') {
+      this.siguiendoHistoria.set(false);
+      return;
+    }
+
+    this.cargandoSeguimiento.set(true);
+
+    try {
+      const result = await this.reportService.isFollowingReport(r.publicId);
+      this.siguiendoHistoria.set(result.isFollowing);
+    } catch {
+      this.siguiendoHistoria.set(false);
+    } finally {
+      this.cargandoSeguimiento.set(false);
+    }
+  }
+
+  async toggleSeguirHistoria(): Promise<void> {
+    const r = this.report();
+
+    if (!r || this.esPropio() || r.status !== 'ACTIVE') {
+      return;
+    }
+
+    this.actualizandoSeguimiento.set(true);
+
+    try {
+      if (this.siguiendoHistoria()) {
+        await this.reportService.unfollowReport(r.publicId);
+        this.siguiendoHistoria.set(false);
+        this.toastService.success('Dejaste de seguir esta historia');
+      } else {
+        await this.reportService.followReport(r.publicId);
+        this.siguiendoHistoria.set(true);
+        this.toastService.success('Ahora seguís esta historia');
+      }
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'No se pudo actualizar el seguimiento';
+
+      this.toastService.error(msg);
+    } finally {
+      this.actualizandoSeguimiento.set(false);
+    }
   }
 }

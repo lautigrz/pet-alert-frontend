@@ -9,17 +9,21 @@
       <nav class="flex items-center gap-1.5 text-sm text-slate-400 min-w-0">
         <a routerLink="/home" class="hover:text-[#1D6FA3] shrink-0">Inicio</a>
         <span class="shrink-0">›</span>
-        <a routerLink="/reports" class="hover:text-[#1D6FA3] shrink-0">{{ esPropio() ? 'Mis reportes' : 'Reportes' }}</a>
+        <a routerLink="/reports" class="hover:text-[#1D6FA3] shrink-0">{{ esPropio() ? 'Mis reportes' : 'Reportes'
+          }}</a>
         <span class="shrink-0">›</span>
-        <span class="text-[#12355B] font-semibold truncate">{{ r.details.name || (r.type === 'LOST' ? 'Mascota perdida' :
+        <span class="text-[#12355B] font-semibold truncate">{{ r.details.name || (r.type === 'LOST' ? 'Mascota perdida'
+          :
           'Avistamiento') }}</span>
       </nav>
 
       @if (!esPropio()) {
       <button type="button" (click)="abrirModalDenuncia()"
         class="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-slate-400 transition hover:text-red-500">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+          <line x1="4" y1="22" x2="4" y2="15" />
         </svg>
         Denunciar
       </button>
@@ -49,6 +53,46 @@
 
       <div class="flex flex-col gap-5 lg:sticky lg:top-16 self-start">
         <app-report-location [report]="r" [esPropio]="esPropio()" (editar)="irAEditarUbicacion()" />
+
+        @if (puedeSeguirHistoria()) {
+        <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+          <div class="flex items-start gap-3">
+            <div
+              class="w-10 h-10 rounded-full bg-[#E8842E]/10 text-[#E8842E] flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-bold text-[#12355B]">
+                Seguir historia
+              </p>
+
+              <p class="text-sm text-slate-500 mt-1">
+                Recibí una notificación cuando este caso sea marcado como resuelto o cerrado.
+              </p>
+
+              <button type="button"
+                class="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border text-sm font-semibold py-2.5 transition disabled:opacity-50"
+                [ngClass]="siguiendoHistoria()
+          ? 'bg-[#1D6FA3] text-white border-[#1D6FA3]'
+          : 'bg-white text-[#1D6FA3] border-[#1D6FA3] hover:bg-[#1D6FA3]/5'"
+                [disabled]="cargandoSeguimiento() || actualizandoSeguimiento()" (click)="toggleSeguirHistoria()">
+                @if (cargandoSeguimiento() || actualizandoSeguimiento()) {
+                Procesando...
+                } @else if (siguiendoHistoria()) {
+                Siguiendo historia
+                } @else {
+                Seguir historia
+                }
+              </button>
+            </div>
+          </div>
+        </section>
+        }
 
         @if (!esPropio()) {
         <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
@@ -131,6 +175,6 @@
   </div>
   <!-- Modal Denuncia -->
   @if (mostrandoModalDenuncia()) {
-    <app-report-modal tipo="reporte" (cerrar)="cerrarModalDenuncia()" />
+  <app-report-modal tipo="reporte" (cerrar)="cerrarModalDenuncia()" />
   }
 </div>
