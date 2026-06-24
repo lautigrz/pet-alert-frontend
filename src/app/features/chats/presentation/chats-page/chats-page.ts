@@ -6,11 +6,12 @@ import { ChatsService, MessagePayload } from '../../application/chats.service';
 import { ConversationOutput, ConversationSummaryOutput } from '../../domain/chat.models';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../auth/application/auth.service';
+import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
 
 @Component({
   selector: 'app-chats-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReportModalComponent],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden bg-[#f4f4f4]' },
   templateUrl: './chats-page.html',
   styleUrl: './chats-page.css',
@@ -35,27 +36,13 @@ export class ChatsPage implements OnInit, OnDestroy {
   selectedImagePreview = signal<string | null>(null);
   activePreviewImageUrl = signal<string | null>(null);
   mostrandoModalDenuncia = signal(false);
-  denunciaEnviada = signal(false);
-
 
   abrirModalDenuncia() {
     this.mostrandoModalDenuncia.set(true);
-    this.denunciaEnviada.set(false);
-  }
-
-  enviarDenuncia() {
-
-    this.denunciaEnviada.set(true);
-
-
-    setTimeout(() => {
-      this.cerrarModalDenuncia();
-    }, 3000);
   }
 
   cerrarModalDenuncia() {
     this.mostrandoModalDenuncia.set(false);
-    this.denunciaEnviada.set(false);
   }
 
   ngOnInit(): void {
