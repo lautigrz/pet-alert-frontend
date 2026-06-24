@@ -23,30 +23,30 @@
         <button
       type="button"
       (click)="seleccionarTipo('todos')"
-      class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
       [class]="tipoFiltro() === 'todos'
-        ? 'bg-[#E8842E] text-white'
-        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
       Todos
     </button>
 
     <button
       type="button"
       (click)="seleccionarTipo('perdidos')"
-      class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
       [class]="tipoFiltro() === 'perdidos'
-        ? 'bg-[#E8842E] text-white'
-        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
       Perdidos
     </button>
 
     <button
       type="button"
       (click)="seleccionarTipo('avistados')"
-      class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
       [class]="tipoFiltro() === 'avistados'
-        ? 'bg-[#E8842E] text-white'
-        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
       Avistados
     </button>
       </div>
@@ -58,40 +58,40 @@
         <button
   type="button"
   (click)="seleccionarCercania('todos')"
-  class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
   [class]="cercaniaFiltro() === 'todos'
-    ? 'bg-[#E8842E] text-white'
-    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
   Todos
 </button>
 
 <button
   type="button"
   (click)="seleccionarCercania('5km')"
-  class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
   [class]="cercaniaFiltro() === '5km'
-    ? 'bg-[#E8842E] text-white'
-    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
   5km
 </button>
 
 <button
   type="button"
   (click)="seleccionarCercania('10km')"
-  class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
   [class]="cercaniaFiltro() === '10km'
-    ? 'bg-[#E8842E] text-white'
-    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
   10km
 </button>
 
 <button
   type="button"
   (click)="seleccionarCercania('20km')"
-  class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
   [class]="cercaniaFiltro() === '20km'
-    ? 'bg-[#E8842E] text-white'
-    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
   20km
 </button>
       </div>
@@ -103,30 +103,30 @@
         <button
   type="button"
   (click)="seleccionarMascota('todos')"
-  class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
   [class]="mascotaFiltro() === 'todos'
-    ? 'bg-[#E8842E] text-white'
-    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
   Todos
 </button>
 
 <button
   type="button"
   (click)="seleccionarMascota('perro')"
-  class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
   [class]="mascotaFiltro() === 'perro'
-    ? 'bg-[#E8842E] text-white'
-    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
   Perro
 </button>
 
 <button
   type="button"
   (click)="seleccionarMascota('gato')"
-  class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+  class="px-3 py-1 rounded-md text-xs font-semibold border transition"
   [class]="mascotaFiltro() === 'gato'
-    ? 'bg-[#E8842E] text-white'
-    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
   Gato
 </button>
       </div>
@@ -138,30 +138,30 @@
          <button
       type="button"
       (click)="seleccionarCentros('todos')"
-      class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
       [class]="centrosFiltro() === 'todos'
-        ? 'bg-[#E8842E] text-white'
-        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
       Todos
     </button>
 
     <button
       type="button"
       (click)="seleccionarCentros('comisarias')"
-      class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
       [class]="centrosFiltro() === 'comisarias'
-        ? 'bg-[#E8842E] text-white'
-        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
       Comisarías
     </button>
 
     <button
       type="button"
       (click)="seleccionarCentros('veterinarias')"
-      class="px-4 py-1.5 rounded-full text-xs font-semibold transition"
+      class="px-3 py-1 rounded-md text-xs font-semibold border transition"
       [class]="centrosFiltro() === 'veterinarias'
-        ? 'bg-[#E8842E] text-white'
-        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
       Veterinarias
     </button>
 
