@@ -1,4 +1,4 @@
-import { Component,  OnInit, computed, signal, inject  } from '@angular/core';
+import { Component, OnInit, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReportService } from '../../application/report.service';
@@ -28,12 +28,14 @@ import { ReportTimelineComponent } from '../components/report-timeline/report-ti
   templateUrl: './report-detail.html',
 })
 
-export class ReportDetailPage implements OnInit{
+export class ReportDetailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly reportService = inject(ReportService);
   private readonly reportesService = inject(ReportListService);
   private readonly toastService = inject(ToastService);
   private readonly profileService = inject(ProfileService);
+  private readonly USUARIO_BAJA_VALORACION_PUBLIC_ID = '70867c26-8c5c-40d2-b3df-08036823ff16';
+
 
   report = signal<ReportDetail | null>(null);
   loading = signal(true);
@@ -43,7 +45,7 @@ export class ReportDetailPage implements OnInit{
   usuarioId = signal<string | null>(null);
   mostrandoModalDenuncia = signal(false);
   denunciaEnviada = signal(false);
-  
+
   esPropio = computed(() => {
     const r = this.report();
     const id = this.usuarioId();
@@ -88,7 +90,7 @@ export class ReportDetailPage implements OnInit{
 
     //Cerrar automaticamente despues de 3 segundos
     setTimeout(() => {
-    this.cerrarModalDenuncia();
+      this.cerrarModalDenuncia();
     }, 3000);
   }
 
@@ -116,6 +118,16 @@ export class ReportDetailPage implements OnInit{
     } finally {
       this.actualizando.set(false);
     }
+  }
+
+  esUsuarioBajaValoracion(report: ReportDetail): boolean {
+    return report.user.publicId === this.USUARIO_BAJA_VALORACION_PUBLIC_ID;
+    //ACA IRIA LA LOGICA REAL
+  }
+
+  valoracionUsuario(report: ReportDetail): string {
+    return this.esUsuarioBajaValoracion(report) ? '2.0' : '5.0';
+    //ACA IRIA LA LOGICA REAL
   }
 
   private readonly router = inject(Router);
