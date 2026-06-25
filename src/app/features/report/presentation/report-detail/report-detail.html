@@ -5,30 +5,14 @@
     } @else if (error()) {
     <p class="text-[#b04632] py-12 text-center">{{ error() }}</p>
     } @else if (report(); as r) {
-    <div class="flex items-center justify-between gap-3 mb-5">
-      <nav class="flex items-center gap-1.5 text-sm text-slate-400 min-w-0">
-        <a routerLink="/home" class="hover:text-[#1D6FA3] shrink-0">Inicio</a>
-        <span class="shrink-0">›</span>
-        <a routerLink="/reports" class="hover:text-[#1D6FA3] shrink-0">{{ esPropio() ? 'Mis reportes' : 'Reportes'
-          }}</a>
-        <span class="shrink-0">›</span>
-        <span class="text-[#12355B] font-semibold truncate">{{ r.details.name || (r.type === 'LOST' ? 'Mascota perdida'
-          :
-          'Avistamiento') }}</span>
-      </nav>
-
-      @if (!esPropio()) {
-      <button type="button" (click)="abrirModalDenuncia()"
-        class="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-slate-400 transition hover:text-red-500">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-          <line x1="4" y1="22" x2="4" y2="15" />
-        </svg>
-        Denunciar
-      </button>
-      }
-    </div>
+    <nav class="flex items-center gap-1.5 text-sm text-slate-400 mb-5">
+      <a routerLink="/home" class="hover:text-[#1D6FA3]">Inicio</a>
+      <span>›</span>
+      <a routerLink="/reports" class="hover:text-[#1D6FA3]">{{ esPropio() ? 'Mis reportes' : 'Reportes' }}</a>
+      <span>›</span>
+      <span class="text-[#12355B] font-semibold">{{ r.details.name || (r.type === 'LOST' ? 'Mascota perdida' :
+        'Avistamiento') }}</span>
+    </nav>
 
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
       <div class="flex flex-col gap-5 min-w-0">
@@ -165,6 +149,16 @@
             </div>
             }
           </div>
+          }
+
+          @if (!esPropio()) {
+          <button type="button" (click)="abrirModalDenuncia()"
+            class="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 border border-red-300 text-red-500 hover:bg-red-50 text-sm font-semibold py-2.5 rounded-lg transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+            </svg>
+            Denunciar
+          </button>
           }
         </app-report-contact>
 

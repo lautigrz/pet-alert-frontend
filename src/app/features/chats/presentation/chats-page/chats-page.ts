@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -36,9 +36,25 @@ export class ChatsPage implements OnInit, OnDestroy {
   selectedImagePreview = signal<string | null>(null);
   activePreviewImageUrl = signal<string | null>(null);
   mostrandoModalDenuncia = signal(false);
+  menuOpcionesAbierto = signal(false);
+
+  toggleMenuOpciones(event: Event) {
+    event.stopPropagation();
+    this.menuOpcionesAbierto.update((abierto) => !abierto);
+  }
+
+  @HostListener('document:click')
+  cerrarMenuOpciones() {
+    this.menuOpcionesAbierto.set(false);
+  }
 
   abrirModalDenuncia() {
     this.mostrandoModalDenuncia.set(true);
+  }
+
+  denunciarDesdeMenu() {
+    this.cerrarMenuOpciones();
+    this.abrirModalDenuncia();
   }
 
   cerrarModalDenuncia() {
