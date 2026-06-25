@@ -69,47 +69,6 @@
     </div>
   </div>
 
-  <div class="mb-4">
-    <div class="flex items-center justify-between mb-2">
-      <p class="text-xs font-semibold text-slate-500">Ubicación</p>
-
-      @if (busquedaLocalidad()) {
-      <button type="button" (click)="limpiarBusquedaLocalidad()"
-        class="text-xs font-semibold text-[#E8842E] hover:underline">
-        Limpiar
-      </button>
-      }
-    </div>
-
-    <div class="relative max-w-[264px]">
-      <svg xmlns="http://www.w3.org/2000/svg"
-        class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.3-4.3" />
-      </svg>
-
-      <input type="text"
-        class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg text-xs text-[#12355B] bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]"
-        placeholder="Buscar localidad" autocomplete="off" [value]="busquedaLocalidad()"
-        (input)="onLocationSearchInput($any($event.target).value)" (keyup.enter)="searchLocation()" />
-
-      @if (locationSuggestions().length) {
-      <ul
-        class="absolute left-0 right-0 mt-1 z-[1000] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden max-h-72 overflow-y-auto">
-        @for (suggestion of locationSuggestions(); track suggestion.displayName) {
-        <li>
-          <button type="button" (click)="selectLocationSuggestion(suggestion)"
-            class="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-slate-100 border-b border-slate-100 last:border-0">
-            {{ suggestion.displayName }}
-          </button>
-        </li>
-        }
-      </ul>
-      }
-    </div>
-  </div>
-
   <div class="pb-4 border-b border-slate-200">
     <div class="flex items-center justify-between mb-2">
       <p class="text-xs font-semibold text-slate-500">Fecha</p>
@@ -180,9 +139,9 @@
           <path d="m21 21-4.3-4.3" />
         </svg>
 
-        <input type="search"
+        <input type="text"
           class="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg text-sm text-[#12355B] bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]"
-          placeholder="Buscar algo distintivo de la mascota" autocomplete="off" [value]="busquedaDescripcion()"
+          placeholder="Buscar por nombre, raza, color, ubicación…" autocomplete="off" [value]="busquedaDescripcion()"
           (input)="onDescriptionSearchInput($any($event.target).value)" />
 
         @if (busquedaDescripcion()) {
@@ -229,7 +188,7 @@
       </div>
       } @else {
       <div class="grid grid-cols-1 xl:grid-cols-2 items-start gap-4">
-        @for (reporte of reportesVisibles(); track reporte.publicId) {
+        @for (reporte of reportes(); track reporte.publicId) {
         <app-report-card [reporte]="reporte" />
         }
       </div>
