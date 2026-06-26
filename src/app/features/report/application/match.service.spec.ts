@@ -29,6 +29,8 @@ function makeMatchResult(overrides: Partial<MatchResult> = {}): MatchResult {
     publicId: 'match-1',
     sourceReportPublicId: 'src',
     score: 0.9,
+    imageScore: 0.8,
+    descriptionScore: 0.6,
     details: { publicId: 'cand-1', images: ['fallback.jpg'], animalType: 'cat' },
     ...overrides,
   };
@@ -92,7 +94,7 @@ describe('MatchService', () => {
     });
 
     matchHttp.getByReport.mockResolvedValue([
-      makeMatchResult({ publicId: 'm1', score: 0.87, details: { publicId: 'cand-1', images: ['fallback.jpg'], animalType: 'cat' } }),
+      makeMatchResult({ publicId: 'm1', score: 0.87, imageScore: 0.91, descriptionScore: 0.65, details: { publicId: 'cand-1', images: ['fallback.jpg'], animalType: 'cat' } }),
     ]);
     stubReports({ src: source, 'cand-1': candidate });
 
@@ -106,6 +108,8 @@ describe('MatchService', () => {
       image: 'detail.jpg',
       username: 'ana',
       score: 0.87,
+      imageScore: 0.91,
+      descriptionScore: 0.65,
     });
     expect(matches[0].distanceKm).toBe(111.2);
   });
@@ -245,6 +249,23 @@ describe('MatchService', () => {
     const { matches } = await service.getReportMatches('src');
 
     expect(matches.map((m) => m.reportPublicId)).toEqual(['cand-high']);
+  });
+
+  it('deja los sub-scores en null cuando la coincidencia viene solo de notificaciones', async () => {
+    const lost = makeReportDetail({ publicId: 'lost', type: 'LOST', user: { publicId: 'franco', username: 'fran', photoUrl: null } });
+    const r1 = makeReportDetail({ publicId: 'r1', user: { publicId: 'nicki', username: 'nicki', photoUrl: null } });
+
+    matchHttp.getByReport.mockResolvedValue([]);
+    notificationsHttp.getMine.mockResolvedValue([
+      makeNotification({ lostReportPublicId: 'lost', matchedReportPublicId: 'r1', score: 0.78 }),
+    ]);
+    stubReports({ lost, r1 });
+
+    const { matches } = await service.getReportMatches('lost');
+
+    expect(matches).toHaveLength(1);
+    expect(matches[0].imageScore).toBeNull();
+    expect(matches[0].descriptionScore).toBeNull();
   });
 
   it('retorna lista vacía cuando no hay coincidencias', async () => {
