@@ -104,7 +104,7 @@ describe('MatchService', () => {
     expect(matches[0]).toMatchObject({
       reportPublicId: 'cand-1',
       userPublicId: 'other',
-      name: 'Gato avistado',
+      name: 'Michi',
       image: 'detail.jpg',
       username: 'ana',
       score: 0.87,
@@ -114,7 +114,7 @@ describe('MatchService', () => {
     expect(matches[0].distanceKm).toBe(111.2);
   });
 
-  it('arma el título según el tipo de reporte y el animal', async () => {
+  it('usa la especie y el estado como título cuando no hay nombre', async () => {
     const source = makeReportDetail({ publicId: 'src', user: { publicId: 'me', username: 'yo', photoUrl: null } });
     const perdido = makeReportDetail({
       publicId: 'c1',
@@ -140,6 +140,24 @@ describe('MatchService', () => {
     const titulos = new Map(matches.map((m) => [m.reportPublicId, m.name]));
     expect(titulos.get('c1')).toBe('Perro perdido');
     expect(titulos.get('c2')).toBe('Gato en tránsito');
+  });
+
+  it('usa el nombre del reporte como título cuando lo tiene', async () => {
+    const source = makeReportDetail({ publicId: 'src', user: { publicId: 'me', username: 'yo', photoUrl: null } });
+    const conNombre = makeReportDetail({
+      publicId: 'c1',
+      user: { publicId: 'o1', username: 'a', photoUrl: null },
+      details: { name: 'Rocky', animalType: 'DOG', color: '', hasIdCollar: false, images: [] },
+    });
+
+    matchHttp.getByReport.mockResolvedValue([
+      makeMatchResult({ publicId: 'm1', score: 0.9, details: { publicId: 'c1', images: [], animalType: 'dog' } }),
+    ]);
+    stubReports({ src: source, c1: conNombre });
+
+    const { matches } = await service.getReportMatches('src');
+
+    expect(matches[0].name).toBe('Rocky');
   });
 
   it('combina el lado source con las notificaciones bidireccionales y ordena por score', async () => {
@@ -266,6 +284,22 @@ describe('MatchService', () => {
     expect(matches).toHaveLength(1);
     expect(matches[0].imageScore).toBeNull();
     expect(matches[0].descriptionScore).toBeNull();
+  });
+
+  it('excluye coincidencias de reportes que no están activos (cerrados)', async () => {
+    const source = makeReportDetail({ publicId: 'src', user: { publicId: 'me', username: 'yo', photoUrl: null } });
+    const activo = makeReportDetail({ publicId: 'cand-activo', status: 'ACTIVE', user: { publicId: 'other', username: 'ana', photoUrl: null } });
+    const cerrado = makeReportDetail({ publicId: 'cand-cerrado', status: 'CLOSED', user: { publicId: 'other2', username: 'eva', photoUrl: null } });
+
+    matchHttp.getByReport.mockResolvedValue([
+      makeMatchResult({ publicId: 'm1', score: 0.9, details: { publicId: 'cand-activo', images: [], animalType: 'dog' } }),
+      makeMatchResult({ publicId: 'm2', score: 0.85, details: { publicId: 'cand-cerrado', images: [], animalType: 'dog' } }),
+    ]);
+    stubReports({ src: source, 'cand-activo': activo, 'cand-cerrado': cerrado });
+
+    const { matches } = await service.getReportMatches('src');
+
+    expect(matches.map((m) => m.reportPublicId)).toEqual(['cand-activo']);
   });
 
   it('retorna lista vacía cuando no hay coincidencias', async () => {
