@@ -37,13 +37,15 @@ export class MatchService {
     return {
       report,
       matches: candidates
-        .map((candidate, i) => this.toMatch(candidate, details[i], report))
+        .map((candidate, i) => ({ match: this.toMatch(candidate, details[i], report), detail: details[i] }))
         .filter(
-          (match) =>
+          ({ match, detail }) =>
+            (!detail || detail.status === 'ACTIVE') &&
             match.score >= MIN_MATCH_SCORE &&
             match.reportPublicId !== report.publicId &&
             match.userPublicId !== report.user.publicId,
         )
+        .map(({ match }) => match)
         .sort((a, b) => b.score - a.score),
     };
   }
@@ -120,6 +122,9 @@ export class MatchService {
   }
 
   private buildTitle(detail: ReportDetail): string {
+    if (detail.details.name) return detail.details.name;
+    if (detail.details.petName) return detail.details.petName;
+
     const animal = detail.details.animalType === 'CAT' ? 'Gato' : 'Perro';
     const estado =
       detail.type === 'LOST'

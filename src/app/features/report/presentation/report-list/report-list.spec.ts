@@ -123,6 +123,7 @@ describe('ReportListPage', () => {
   let reportListService: {
     getGenerales: ReturnType<typeof vi.fn>;
     getMisReportes: ReturnType<typeof vi.fn>;
+    getMisReportesPaginado: ReturnType<typeof vi.fn>;
   };
 
   let fixture: ComponentFixture<ReportListPage>;
@@ -132,6 +133,7 @@ describe('ReportListPage', () => {
     reportListService = {
       getGenerales: vi.fn(),
       getMisReportes: vi.fn(),
+      getMisReportesPaginado: vi.fn(),
     };
 
     reportListService.getGenerales.mockResolvedValue([
@@ -142,6 +144,11 @@ describe('ReportListPage', () => {
     reportListService.getMisReportes.mockResolvedValue([
       reporteFacundo,
     ]);
+
+    reportListService.getMisReportesPaginado.mockResolvedValue({
+      data: [reporteFacundo],
+      pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+    });
 
     TestBed.configureTestingModule({
       imports: [ReportListPage],
@@ -369,9 +376,11 @@ describe('ReportListPage', () => {
       await component.seleccionarTab('mis-reportes');
 
       // Then
-      expect(reportListService.getMisReportes).toHaveBeenCalledWith({
-        q: 'mancha blanca',
-      });
+      expect(reportListService.getMisReportesPaginado).toHaveBeenCalledWith(
+        { q: 'mancha blanca' },
+        1,
+        10,
+      );
 
       expect(reportListService.getGenerales).not.toHaveBeenCalled();
 
@@ -380,13 +389,14 @@ describe('ReportListPage', () => {
       ]);
     });
 
-    it('shows only active reports, hiding resolved and closed ones', async () => {
+    it('shows all the user reports including resolved and closed ones', async () => {
       // Given
-      reportListService.getMisReportes.mockResolvedValue([
-        reporteFacundo,
-        { ...reporteFacundo, publicId: 'mio-resuelto', status: 'RESOLVED' },
-        { ...reporteFacundo, publicId: 'mio-cerrado', status: 'CLOSED' },
-      ]);
+      const resuelto = { ...reporteFacundo, publicId: 'mio-resuelto', status: 'RESOLVED' as const };
+      const cerrado = { ...reporteFacundo, publicId: 'mio-cerrado', status: 'CLOSED' as const };
+      reportListService.getMisReportesPaginado.mockResolvedValue({
+        data: [reporteFacundo, resuelto, cerrado],
+        pagination: { page: 1, limit: 10, total: 3, totalPages: 1 },
+      });
 
       // When
       await component.seleccionarTab('mis-reportes');
@@ -394,7 +404,74 @@ describe('ReportListPage', () => {
       // Then
       expect(component.reportes()).toEqual([
         reporteFacundo,
+        resuelto,
+        cerrado,
       ]);
+    });
+  });
+
+  describe('pagination in my reports', () => {
+    beforeEach(() => {
+      reportListService.getMisReportesPaginado.mockResolvedValue({
+        data: [reporteFacundo],
+        pagination: { page: 1, limit: 10, total: 25, totalPages: 3 },
+      });
+    });
+
+    it('keeps the applied filters when changing page', async () => {
+      // Given
+      component.busquedaDescripcion.set('mancha');
+      await component.seleccionarTab('mis-reportes');
+
+      // When
+      await component.goToPage(2);
+
+      // Then
+      expect(reportListService.getMisReportesPaginado).toHaveBeenLastCalledWith(
+        { q: 'mancha' },
+        2,
+        10,
+      );
+      expect(component.page()).toBe(2);
+    });
+
+    it('goes back to page 1 when a filter changes', async () => {
+      // Given
+      await component.seleccionarTab('mis-reportes');
+      await component.goToPage(3);
+      expect(component.page()).toBe(3);
+
+      // When
+      await component.setFiltroTipo('LOST');
+
+      // Then
+      expect(component.page()).toBe(1);
+    });
+  });
+
+  describe('general reports pagination', () => {
+    it('paginates the general reports on the client and caches the page', async () => {
+      // Given
+      const muchos = Array.from({ length: 25 }, (_, i) => ({
+        ...reporteFacundo,
+        publicId: `g-${i}`,
+      }));
+      reportListService.getGenerales.mockResolvedValue(muchos);
+
+      // When
+      await component.ngOnInit();
+
+      // Then
+      expect(component.totalPages()).toBe(3);
+      expect(component.reportes().length).toBe(10);
+      expect(component.reportes()[0].publicId).toBe('g-0');
+
+      // When
+      await component.goToPage(2);
+
+      // Then
+      expect(component.reportes()[0].publicId).toBe('g-10');
+      expect(reportListService.getGenerales).toHaveBeenCalledTimes(1);
     });
   });
 

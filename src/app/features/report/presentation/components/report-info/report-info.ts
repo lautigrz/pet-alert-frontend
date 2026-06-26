@@ -31,7 +31,7 @@ export class ReportInfoComponent {
     return (
       report.details.name ||
       report.details.petName ||
-      (this.esPerdida() ? 'Mascota perdida' : 'Avistamiento')
+      (this.esPerdida() ? 'Mascota perdida' : (report.details.isInTransit ? 'En tránsito' : 'Avistamiento'))
     );
   });
 
@@ -46,7 +46,12 @@ export class ReportInfoComponent {
     'status-badge--resolved': this.report().status === 'RESOLVED',
   }));
 
-  estado = computed(() => (this.esPerdida() ? 'Mascota perdida' : 'Mascota avistada'));
+  estado = computed(() => {
+    if (this.esPerdida()) return 'Mascota perdida';
+    return this.report().details.isInTransit ? 'En tránsito' : 'Mascota avistada';
+  });
+
+  enTransito = computed(() => !this.esPerdida() && !!this.report().details.isInTransit);
 
   datos = computed(() => {
     const details = this.report().details;

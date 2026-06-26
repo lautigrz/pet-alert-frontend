@@ -11,7 +11,7 @@
       <a routerLink="/reports" class="hover:text-[#1D6FA3]">{{ esPropio() ? 'Mis reportes' : 'Reportes' }}</a>
       <span>›</span>
       <span class="text-[#12355B] font-semibold">{{ r.details.name || (r.type === 'LOST' ? 'Mascota perdida' :
-        'Avistamiento') }}</span>
+        (r.details.isInTransit ? 'En tránsito' : 'Avistamiento')) }}</span>
     </nav>
 
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
