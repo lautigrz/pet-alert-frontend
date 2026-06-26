@@ -3,11 +3,7 @@
     class="group flex h-full w-full flex-col bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden transition-all duration-200 hover:border-[#E8842E] hover:shadow-[0_6px_20px_-6px_rgba(18,53,91,0.18)]"
     [ngClass]="{ 'ring-2 ring-[#E8842E]': nueva() }"
   >
-    <a
-      [routerLink]="['/reports', m.reportPublicId]"
-      (click)="open.emit(m)"
-      class="flex flex-1 flex-col no-underline text-inherit"
-    >
+    <div class="flex flex-1 flex-col">
       <div class="relative h-44 shrink-0 bg-slate-100">
         @if (m.image) {
           <img [src]="m.image" [alt]="m.name" class="w-full h-full object-cover" />
@@ -47,15 +43,15 @@
           }
         </p>
       </div>
-    </a>
+    </div>
 
     <div class="px-4 pb-4 pt-3">
       <button
         type="button"
-        (click)="onContact()"
+        (click)="onDetail()"
         class="w-full inline-flex items-center justify-center bg-[#E8842E] hover:bg-[#d6741f] text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
       >
-        Contactar
+        Ver detalle
       </button>
     </div>
   </div>
