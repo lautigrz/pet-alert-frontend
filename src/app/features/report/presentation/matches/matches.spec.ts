@@ -53,7 +53,11 @@ describe('MatchesPage', () => {
   let chatsService: { getOrCreateConversation: ReturnType<typeof vi.fn> };
   let toastService: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
-  let seenMatchesStore: { isNew: ReturnType<typeof vi.fn>; markSeen: ReturnType<typeof vi.fn> };
+  let seenMatchesStore: {
+    isNew: ReturnType<typeof vi.fn>;
+    markSeen: ReturnType<typeof vi.fn>;
+    ensureLoaded: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     matchService = { getReportMatches: vi.fn() };
@@ -61,7 +65,11 @@ describe('MatchesPage', () => {
     chatsService = { getOrCreateConversation: vi.fn() };
     toastService = { error: vi.fn(), success: vi.fn() };
     router = { navigate: vi.fn() };
-    seenMatchesStore = { isNew: vi.fn().mockReturnValue(false), markSeen: vi.fn() };
+    seenMatchesStore = {
+      isNew: vi.fn().mockReturnValue(false),
+      markSeen: vi.fn(),
+      ensureLoaded: vi.fn().mockResolvedValue(undefined),
+    };
 
     TestBed.configureTestingModule({
       imports: [MatchesPage],
@@ -97,18 +105,18 @@ describe('MatchesPage', () => {
 
   it('marca las nuevas al cargar y las desmarca al verlas', async () => {
     const report = makeReportDetail();
-    const matches = [makeMatch({ reportPublicId: 'r1' })];
+    const matches = [makeMatch({ matchPublicId: 'm1' })];
     matchService.getReportMatches.mockResolvedValue({ report, matches });
     seenMatchesStore.isNew.mockReturnValue(true);
 
     component.ngOnInit();
     await new Promise((resolve) => setTimeout(resolve));
-    expect(component.nuevos().has('r1')).toBe(true);
+    expect(component.nuevos().has('m1')).toBe(true);
 
-    component.marcarVista(makeMatch({ reportPublicId: 'r1' }));
+    component.marcarVista(makeMatch({ matchPublicId: 'm1' }));
 
-    expect(seenMatchesStore.markSeen).toHaveBeenCalledWith('src', 'r1');
-    expect(component.nuevos().has('r1')).toBe(false);
+    expect(seenMatchesStore.markSeen).toHaveBeenCalledWith('m1');
+    expect(component.nuevos().has('m1')).toBe(false);
   });
 
   it('setea error cuando falla la carga', async () => {
@@ -155,7 +163,7 @@ describe('MatchesPage', () => {
 
     await component.openDetail(makeMatch({ reportPublicId: 'r1' }));
 
-    expect(seenMatchesStore.markSeen).toHaveBeenCalledWith('src', 'r1');
+    expect(seenMatchesStore.markSeen).toHaveBeenCalledWith('m1');
     expect(reportService.getReportByPublicId).toHaveBeenCalledWith('r1');
     expect(component.selectedMatch()?.reportPublicId).toBe('r1');
     expect(component.selectedDetail()).toEqual(detalle);
