@@ -39,12 +39,11 @@ export class NotificationsBell implements OnInit {
     this.abierto.set(false);
   }
 
-  marcarVista(matchPublicId: string): void {
-    this.notificationsService.marcarVista(matchPublicId);
+  esNueva(notificacion: NotificacionCoincidencia): boolean {
+    return this.notificationsService.esNueva(notificacion.matchPublicId);
   }
 
   goToMatches(notificacion: NotificacionCoincidencia): void {
-    this.notificationsService.marcarVista(notificacion.matchPublicId);
     this.cerrar();
     const reportId =
       notificacion.rol === 'avistador'
