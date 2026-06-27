@@ -17,6 +17,4 @@ export interface MatchNotification {
   createdAt: string;
 }
 
-export interface NotificacionCoincidencia extends MatchNotification {
-  vista: boolean;
-}
+export type NotificacionCoincidencia = MatchNotification;
