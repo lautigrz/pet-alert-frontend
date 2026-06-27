@@ -57,17 +57,6 @@ const STATUS_BADGE_CLASSES: Record<ContentReportStatus, string> = {
 export class AdminDashboardComponent {
   private readonly service = inject(ContentReportAdminService);
 
-  readonly statusOptions: { value: ContentReportStatus; label: string }[] = [
-    { value: 'PENDING', label: 'Pendientes' },
-    { value: 'APPROVED', label: 'Aprobados' },
-    { value: 'SUSPENDED', label: 'Suspendidos' },
-    { value: 'DISMISSED', label: 'Descartados' },
-  ];
-
-  readonly editorStatusOptions: { value: ContentReportStatus; label: string }[] = (
-    ['PENDING', 'APPROVED', 'SUSPENDED', 'DISMISSED'] as ContentReportStatus[]
-  ).map((value) => ({ value, label: STATUS_LABELS[value] }));
-
   readonly section = signal<AdminSection>('posts');
   readonly status = signal<ContentReportStatus>('PENDING');
   readonly items = signal<ContentReportQueueItem[]>([]);
@@ -78,6 +67,23 @@ export class AdminDashboardComponent {
   readonly editing = signal<ContentReportQueueItem | null>(null);
   readonly suspending = signal<ContentReportQueueItem | null>(null);
   readonly suspensionReason = signal('');
+
+  readonly statusOptions = computed<{ value: ContentReportStatus; label: string }[]>(() => [
+    { value: 'PENDING', label: 'Pendientes' },
+    ...(this.section() === 'posts'
+      ? [{ value: 'APPROVED' as ContentReportStatus, label: 'Aprobados' }]
+      : []),
+    { value: 'SUSPENDED', label: 'Suspendidos' },
+    { value: 'DISMISSED', label: 'Descartados' },
+  ]);
+
+  readonly editorStatusOptions = computed<{ value: ContentReportStatus; label: string }[]>(() => {
+    const values: ContentReportStatus[] =
+      this.editing()?.targetType === 'POST'
+        ? ['PENDING', 'APPROVED', 'SUSPENDED', 'DISMISSED']
+        : ['PENDING', 'SUSPENDED', 'DISMISSED'];
+    return values.map((value) => ({ value, label: STATUS_LABELS[value] }));
+  });
 
   readonly posts = computed(() => this.items().filter((item) => item.targetType === 'POST'));
   readonly chats = computed(() => this.items().filter((item) => item.targetType === 'CHAT'));
@@ -114,6 +120,12 @@ export class AdminDashboardComponent {
 
   selectSection(section: AdminSection): void {
     this.section.set(section);
+    this.status.set('PENDING');
+    this.selected.set(null);
+  }
+
+  approve(item: ContentReportQueueItem): void {
+    this.applyStatus(item, 'APPROVED');
   }
 
   setStatus(status: ContentReportStatus): void {
@@ -140,10 +152,6 @@ export class AdminDashboardComponent {
   changeStatus(item: ContentReportQueueItem, status: ContentReportStatus): void {
     this.applyStatus(item, status);
     this.closeEditor();
-  }
-
-  approve(item: ContentReportQueueItem): void {
-    this.applyStatus(item, 'APPROVED');
   }
 
   openSuspension(item: ContentReportQueueItem): void {
