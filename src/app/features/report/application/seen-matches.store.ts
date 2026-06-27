@@ -1,49 +1,45 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 
-import { TokenStorage } from '../../auth/infrastructure/token.storage';
-
-const STORAGE_PREFIX = 'petfinder.seenMatches';
+import { MatchViewsHttp } from '../infrastructure/match-views.http';
 
 @Injectable({ providedIn: 'root' })
 export class SeenMatchesStore {
-  private readonly tokenStorage = inject(TokenStorage);
+  private readonly matchViewsHttp = inject(MatchViewsHttp);
 
-  isNew(reportPublicId: string, candidateId: string): boolean {
-    return !this.read().has(`${reportPublicId}|${candidateId}`);
-  }
+  private readonly seen = signal<Set<string>>(new Set());
+  private loaded = false;
 
-  markSeen(reportPublicId: string, candidateId: string): void {
-    const seen = this.read();
-    seen.add(`${reportPublicId}|${candidateId}`);
-    this.write(seen);
-  }
-
-  private read(): Set<string> {
+  async ensureLoaded(): Promise<void> {
+    if (this.loaded) return;
     try {
-      const raw = localStorage.getItem(this.storageKey());
-      return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+      const ids = await this.matchViewsHttp.getSeen();
+      this.seen.set(new Set(ids));
+      this.loaded = true;
     } catch {
-      return new Set();
+      this.loaded = false;
     }
   }
 
-  private write(seen: Set<string>): void {
-    localStorage.setItem(this.storageKey(), JSON.stringify([...seen]));
+  isNew(matchPublicId: string): boolean {
+    return !this.seen().has(matchPublicId);
   }
 
-  private storageKey(): string {
-    const userId = this.currentUserId();
-    return userId ? `${STORAGE_PREFIX}.${userId}` : STORAGE_PREFIX;
-  }
-
-  private currentUserId(): string | null {
-    const token = this.tokenStorage.read()?.accessToken;
-    if (!token) return null;
+  async markSeen(matchPublicId: string): Promise<void> {
+    if (this.seen().has(matchPublicId)) return;
+    this.seen.update((current) => new Set(current).add(matchPublicId));
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub ?? null;
+      await this.matchViewsHttp.markSeen(matchPublicId);
     } catch {
-      return null;
+      this.seen.update((current) => {
+        const next = new Set(current);
+        next.delete(matchPublicId);
+        return next;
+      });
     }
+  }
+
+  reset(): void {
+    this.seen.set(new Set());
+    this.loaded = false;
   }
 }

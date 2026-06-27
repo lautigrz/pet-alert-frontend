@@ -11,6 +11,7 @@ const MIN_MATCH_SCORE = 0.7;
 
 interface Candidate {
   publicId: string;
+  matchPublicId: string;
   score: number;
   imageScore: number | null;
   descriptionScore: number | null;
@@ -59,6 +60,7 @@ export class MatchService {
 
     const add = (
       publicId: string,
+      matchPublicId: string,
       score: number,
       imageScore: number | null,
       descriptionScore: number | null,
@@ -66,7 +68,7 @@ export class MatchService {
     ): void => {
       const current = byPublicId.get(publicId);
       if (!current) {
-        byPublicId.set(publicId, { publicId, score, imageScore, descriptionScore, fallbackImage: image });
+        byPublicId.set(publicId, { publicId, matchPublicId, score, imageScore, descriptionScore, fallbackImage: image });
         return;
       }
       current.imageScore = current.imageScore ?? imageScore;
@@ -75,16 +77,16 @@ export class MatchService {
     };
 
     for (const result of sourceResults) {
-      add(result.details.publicId, result.score, result.imageScore, result.descriptionScore, result.details.images[0] ?? null);
+      add(result.details.publicId, result.publicId, result.score, result.imageScore, result.descriptionScore, result.details.images[0] ?? null);
     }
 
     for (const notification of notifications) {
       const imageScore = notification.imageScore ?? null;
       const descriptionScore = notification.descriptionScore ?? null;
       if (notification.lostReportPublicId === reportPublicId) {
-        add(notification.matchedReportPublicId, notification.score, imageScore, descriptionScore, notification.matchedImage);
+        add(notification.matchedReportPublicId, notification.matchPublicId, notification.score, imageScore, descriptionScore, notification.matchedImage);
       } else if (notification.matchedReportPublicId === reportPublicId) {
-        add(notification.lostReportPublicId, notification.score, imageScore, descriptionScore, notification.matchedImage);
+        add(notification.lostReportPublicId, notification.matchPublicId, notification.score, imageScore, descriptionScore, notification.matchedImage);
       }
     }
 
@@ -107,7 +109,7 @@ export class MatchService {
     const distanceKm = detail ? this.distanceKm(source.location, detail.location) : null;
 
     return {
-      matchPublicId: candidate.publicId,
+      matchPublicId: candidate.matchPublicId,
       reportPublicId: candidate.publicId,
       userPublicId: detail?.user.publicId ?? '',
       name,

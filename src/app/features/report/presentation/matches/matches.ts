@@ -30,8 +30,6 @@ export class MatchesPage implements OnInit {
   private readonly seenMatchesStore = inject(SeenMatchesStore);
   private readonly destroyRef = inject(DestroyRef);
 
-  private viewedPublicId = '';
-
   report = signal<ReportDetail | null>(null);
   matches = signal<Match[]>([]);
   nuevos = signal<Set<string>>(new Set());
@@ -64,18 +62,18 @@ export class MatchesPage implements OnInit {
   }
 
   private async cargar(publicId: string): Promise<void> {
-    this.viewedPublicId = publicId;
     this.loading.set(true);
     this.error.set(null);
     try {
       const { report, matches } = await this.matchService.getReportMatches(publicId);
+      await this.seenMatchesStore.ensureLoaded();
       this.report.set(report);
       this.matches.set(matches);
       this.nuevos.set(
         new Set(
           matches
-            .filter((match) => this.seenMatchesStore.isNew(publicId, match.reportPublicId))
-            .map((match) => match.reportPublicId),
+            .filter((match) => this.seenMatchesStore.isNew(match.matchPublicId))
+            .map((match) => match.matchPublicId),
         ),
       );
     } catch {
@@ -104,10 +102,10 @@ export class MatchesPage implements OnInit {
   }
 
   marcarVista(match: Match): void {
-    this.seenMatchesStore.markSeen(this.viewedPublicId, match.reportPublicId);
+    void this.seenMatchesStore.markSeen(match.matchPublicId);
     this.nuevos.update((set) => {
       const next = new Set(set);
-      next.delete(match.reportPublicId);
+      next.delete(match.matchPublicId);
       return next;
     });
   }

@@ -57,7 +57,7 @@
       } @else {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-5">
           @for (m of matches(); track m.matchPublicId) {
-            <app-match-card [match]="m" [nueva]="nuevos().has(m.reportPublicId)" (detail)="openDetail(m)" />
+            <app-match-card [match]="m" [nueva]="nuevos().has(m.matchPublicId)" (detail)="openDetail(m)" />
           }
         </div>
       }
