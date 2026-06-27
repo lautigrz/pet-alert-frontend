@@ -13,6 +13,18 @@
         </button>
       </div>
 
+      @if (error()) {
+        <div class="shrink-0 px-6 pt-4">
+          <div class="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{{ error() }}</span>
+          </div>
+        </div>
+      }
+
       <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
         <p class="text-[13px] text-slate-500">{{ config().intro }}</p>
 
@@ -43,13 +55,13 @@
       </div>
 
       <div class="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 bg-white px-6 py-4 sm:flex-row">
-        <button type="button" (click)="cerrarModal()"
-          class="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-[#12355B]">
+        <button type="button" (click)="cerrarModal()" [disabled]="enviando()"
+          class="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-[#12355B] disabled:opacity-60">
           Cancelar
         </button>
-        <button type="button" (click)="enviar()"
-          class="flex-1 rounded-lg bg-[#E8842E] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#d6761f]">
-          Enviar denuncia
+        <button type="button" (click)="enviar()" [disabled]="enviando()"
+          class="flex-1 rounded-lg bg-[#E8842E] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#d6761f] disabled:opacity-60">
+          {{ enviando() ? 'Enviando…' : 'Enviar denuncia' }}
         </button>
       </div>
     } @else {
