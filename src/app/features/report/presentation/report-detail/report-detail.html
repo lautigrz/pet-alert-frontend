@@ -168,7 +168,7 @@
     }
   </div>
   <!-- Modal Denuncia -->
-  @if (mostrandoModalDenuncia()) {
-  <app-report-modal tipo="reporte" (cerrar)="cerrarModalDenuncia()" />
+  @if (mostrandoModalDenuncia() && report()) {
+  <app-report-modal tipo="reporte" [targetPublicId]="report()!.publicId" (cerrar)="cerrarModalDenuncia()" />
   }
 </div>
