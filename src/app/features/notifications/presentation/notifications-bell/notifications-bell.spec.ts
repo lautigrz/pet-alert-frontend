@@ -19,18 +19,15 @@ function noti(overrides: Partial<NotificacionCoincidencia> = {}): NotificacionCo
     matchedImage: 'sight.jpg',
     score: 0.8,
     createdAt: '2026-06-20T10:00:00.000Z',
-    vista: false,
     ...overrides,
   };
 }
 
 describe('NotificationsBell', () => {
   let component: NotificationsBell;
-  let marcarVista: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    marcarVista = vi.fn();
     navigate = vi.fn();
 
     TestBed.configureTestingModule({
@@ -43,7 +40,7 @@ describe('NotificationsBell', () => {
             noVistas: signal(0),
             escuchar: vi.fn(),
             cargar: vi.fn().mockResolvedValue(undefined),
-            marcarVista,
+            esNueva: vi.fn().mockReturnValue(true),
           },
         },
         { provide: Router, useValue: { navigate } },
@@ -61,7 +58,6 @@ describe('NotificationsBell', () => {
 
       component.goToMatches(n);
 
-      expect(marcarVista).toHaveBeenCalledWith('m1');
       expect(navigate).toHaveBeenCalledWith(['/reports', 'lost-1', 'matches']);
     });
   });
