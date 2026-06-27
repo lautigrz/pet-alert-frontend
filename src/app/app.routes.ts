@@ -86,6 +86,12 @@ export const routes: Routes = [
           .then(m => m.ChatsPage),
       },
       {
+        path: 'admin',
+        loadComponent: () =>
+          import('./features/admin/presentation/admin-dashboard/admin-dashboard')
+          .then((m) => m.AdminDashboardComponent),
+      },
+      {
         path: 'reports/:publicId',
         loadComponent: () =>
           import(
