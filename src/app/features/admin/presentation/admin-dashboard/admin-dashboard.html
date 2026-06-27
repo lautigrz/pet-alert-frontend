@@ -1,0 +1,329 @@
+<div class="flex flex-1 min-h-0 bg-[#f3f4f6]">
+  <aside class="hidden sm:flex w-60 shrink-0 bg-[#12355B] text-white flex-col">
+    <div class="px-5 py-5 border-b border-white/10">
+      <p class="text-lg font-extrabold leading-tight">PetFinder</p>
+      <p class="text-xs text-white/60">Panel de moderación</p>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-1">
+      <button type="button" (click)="selectSection('reports')"
+        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition"
+        [class]="section() === 'reports' ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10'">
+        <span>Publicaciones reportadas</span>
+        @if (pendingPublications() > 0) {
+          <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingPublications() }}</span>
+        }
+      </button>
+
+      <button type="button" (click)="selectSection('chats')"
+        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition"
+        [class]="section() === 'chats' ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10'">
+        <span>Chats reportados</span>
+        @if (pendingChats() > 0) {
+          <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingChats() }}</span>
+        }
+      </button>
+    </nav>
+
+    <div class="px-5 py-4 border-t border-white/10">
+      <p class="text-xs text-white/60">Sesión de administrador</p>
+    </div>
+  </aside>
+
+  <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+    <header class="bg-white border-b border-slate-200 px-5 sm:px-6 py-4">
+      <h1 class="text-xl font-extrabold text-[#12355B]">
+        {{ section() === 'reports' ? 'Publicaciones reportadas' : 'Chats reportados' }}
+      </h1>
+      <p class="text-sm text-slate-500">
+        {{ section() === 'reports'
+          ? 'Revisá las publicaciones denunciadas y moderá su estado.'
+          : 'Revisá los chats denunciados por comportamiento inapropiado.' }}
+      </p>
+    </header>
+
+    <main class="flex-1 overflow-y-auto px-5 sm:px-6 py-6">
+      <div class="max-w-[1100px] mx-auto">
+
+        <div class="sm:hidden flex gap-2 mb-5">
+          <button type="button" (click)="selectSection('reports')"
+            class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition"
+            [class]="section() === 'reports' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
+            Publicaciones
+            @if (pendingPublications() > 0) {
+              <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingPublications() }}</span>
+            }
+          </button>
+          <button type="button" (click)="selectSection('chats')"
+            class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition"
+            [class]="section() === 'chats' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
+            Chats
+            @if (pendingChats() > 0) {
+              <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingChats() }}</span>
+            }
+          </button>
+        </div>
+
+        @if (section() === 'reports') {
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+            <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <p class="text-2xl font-extrabold text-[#E8842E]">{{ pendingPublications() }}</p>
+              <p class="text-xs font-semibold text-slate-500">Pendientes</p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <p class="text-2xl font-extrabold text-[#12355B]">{{ publications().length }}</p>
+              <p class="text-xs font-semibold text-slate-500">Total denunciadas</p>
+            </div>
+          </div>
+
+          <div class="flex gap-2 mb-4">
+            <button type="button" (click)="setPublicationFilter('pending')"
+              class="px-3 py-1.5 rounded-md text-xs font-semibold border transition"
+              [class]="publicationFilter() === 'pending'
+                ? 'bg-[#12355B] text-white border-[#12355B]'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#12355B]'">
+              Pendientes
+            </button>
+            <button type="button" (click)="setPublicationFilter('resolved')"
+              class="px-3 py-1.5 rounded-md text-xs font-semibold border transition"
+              [class]="publicationFilter() === 'resolved'
+                ? 'bg-[#12355B] text-white border-[#12355B]'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#12355B]'">
+              Resueltas
+            </button>
+          </div>
+
+          @if (visiblePublications().length === 0) {
+            <p class="py-12 text-center text-slate-400 text-sm bg-white border border-dashed border-slate-200 rounded-2xl">
+              No hay publicaciones en esta vista.
+            </p>
+          } @else {
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              @for (p of visiblePublications(); track p.id) {
+                <article class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-white"
+                          [class]="p.reportType === 'LOST' ? 'bg-[#E8842E]' : 'bg-[#12355B]'">
+                          {{ typeLabel(p.reportType) }}
+                        </span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold" [class]="statusBadgeClass(p.status)">
+                          {{ statusLabel(p.status) }}
+                        </span>
+                      </div>
+                      <h3 class="font-extrabold text-[#12355B] truncate">{{ p.title }}</h3>
+                      <p class="text-xs text-slate-500">por {{ p.author }} · {{ p.reportedAt }}</p>
+                    </div>
+                    <button type="button" (click)="openPublication(p)"
+                      class="shrink-0 text-[#1D6FA3] text-sm font-semibold hover:underline">
+                      Ver detalle
+                    </button>
+                  </div>
+
+                  <div class="rounded-lg bg-[#b04632]/5 border border-[#b04632]/15 px-3 py-2">
+                    <p class="text-[11px] font-bold uppercase tracking-wide text-[#b04632]">Motivo de la denuncia</p>
+                    <p class="text-sm text-[#12355B]">{{ p.reason }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Reportado por {{ p.reportedBy }}</p>
+                  </div>
+
+                  @if (p.status === 'pending') {
+                    <div class="flex flex-wrap gap-2">
+                      <button type="button" (click)="approve(p)"
+                        class="flex-1 min-w-24 rounded-lg bg-[#1D6FA3] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#17597f]">
+                        Aprobar
+                      </button>
+                      <button type="button" (click)="askSuspend(p)"
+                        class="flex-1 min-w-24 rounded-lg border border-[#E8842E] px-3 py-2 text-sm font-bold text-[#E8842E] transition hover:bg-[#E8842E]/5">
+                        Suspender
+                      </button>
+                      <button type="button" (click)="askDelete(p)"
+                        class="flex-1 min-w-24 rounded-lg bg-[#b04632] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#9a3b2b]">
+                        Eliminar
+                      </button>
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+          }
+        } @else {
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+            <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <p class="text-2xl font-extrabold text-[#E8842E]">{{ pendingChats() }}</p>
+              <p class="text-xs font-semibold text-slate-500">Pendientes</p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              <p class="text-2xl font-extrabold text-[#12355B]">{{ chats().length }}</p>
+              <p class="text-xs font-semibold text-slate-500">Total denunciados</p>
+            </div>
+          </div>
+
+          <div class="flex gap-2 mb-4">
+            <button type="button" (click)="setChatFilter('pending')"
+              class="px-3 py-1.5 rounded-md text-xs font-semibold border transition"
+              [class]="chatFilter() === 'pending'
+                ? 'bg-[#12355B] text-white border-[#12355B]'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#12355B]'">
+              Pendientes
+            </button>
+            <button type="button" (click)="setChatFilter('resolved')"
+              class="px-3 py-1.5 rounded-md text-xs font-semibold border transition"
+              [class]="chatFilter() === 'resolved'
+                ? 'bg-[#12355B] text-white border-[#12355B]'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#12355B]'">
+              Resueltos
+            </button>
+          </div>
+
+          @if (visibleChats().length === 0) {
+            <p class="py-12 text-center text-slate-400 text-sm bg-white border border-dashed border-slate-200 rounded-2xl">
+              No hay chats en esta vista.
+            </p>
+          } @else {
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              @for (c of visibleChats(); track c.id) {
+                <article class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold" [class]="statusBadgeClass(c.status)">
+                          {{ statusLabel(c.status) }}
+                        </span>
+                      </div>
+                      <h3 class="font-extrabold text-[#12355B] truncate">Perfil: {{ c.reportedUser }}</h3>
+                      <p class="text-xs text-slate-500">Reportado por {{ c.reporter }} · {{ c.reportedAt }}</p>
+                    </div>
+                    <button type="button" (click)="openChat(c)"
+                      class="shrink-0 text-[#1D6FA3] text-sm font-semibold hover:underline">
+                      Ver detalle
+                    </button>
+                  </div>
+
+                  <div class="rounded-lg bg-[#b04632]/5 border border-[#b04632]/15 px-3 py-2">
+                    <p class="text-[11px] font-bold uppercase tracking-wide text-[#b04632]">Causa del reporte</p>
+                    <p class="text-sm text-[#12355B]">{{ c.reason }}</p>
+                  </div>
+
+                  <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+                    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Mensaje denunciado</p>
+                    <p class="text-sm text-slate-600 italic">"{{ c.excerpt }}"</p>
+                  </div>
+
+                  @if (c.status === 'pending') {
+                    <div class="flex flex-wrap gap-2">
+                      <button type="button" (click)="suspendUser(c)"
+                        class="flex-1 min-w-24 rounded-lg bg-[#b04632] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#9a3b2b]">
+                        Suspender perfil
+                      </button>
+                      <button type="button" (click)="dismissChat(c)"
+                        class="flex-1 min-w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
+                        Descartar
+                      </button>
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+          }
+        }
+      </div>
+    </main>
+  </div>
+
+  @if (detailPublication(); as p) {
+    <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
+      <div class="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h2 class="text-lg font-extrabold text-[#12355B]">Detalle de la publicación</h2>
+          <button type="button" (click)="closeDetail()" aria-label="Cerrar" class="text-slate-400 transition hover:text-[#12355B]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-white" [class]="p.reportType === 'LOST' ? 'bg-[#E8842E]' : 'bg-[#12355B]'">{{ typeLabel(p.reportType) }}</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold" [class]="statusBadgeClass(p.status)">{{ statusLabel(p.status) }}</span>
+          </div>
+          <div>
+            <h3 class="text-xl font-extrabold text-[#12355B]">{{ p.title }}</h3>
+            <p class="text-xs text-slate-500">por {{ p.author }} · {{ p.reportedAt }}</p>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-[#12355B] mb-1">Descripción</p>
+            <p class="text-sm text-slate-600">{{ p.description }}</p>
+          </div>
+          <div class="rounded-lg bg-[#b04632]/5 border border-[#b04632]/15 px-3 py-2">
+            <p class="text-[11px] font-bold uppercase tracking-wide text-[#b04632]">Motivo de la denuncia</p>
+            <p class="text-sm text-[#12355B]">{{ p.reason }}</p>
+            <p class="text-xs text-slate-400 mt-0.5">Reportado por {{ p.reportedBy }}</p>
+          </div>
+        </div>
+        @if (p.status === 'pending') {
+          <div class="flex shrink-0 flex-wrap gap-2 border-t border-slate-100 px-6 py-4">
+            <button type="button" (click)="approve(p)" class="flex-1 min-w-24 rounded-lg bg-[#1D6FA3] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#17597f]">Aprobar</button>
+            <button type="button" (click)="askSuspend(p)" class="flex-1 min-w-24 rounded-lg border border-[#E8842E] px-3 py-2 text-sm font-bold text-[#E8842E] transition hover:bg-[#E8842E]/5">Suspender</button>
+            <button type="button" (click)="askDelete(p)" class="flex-1 min-w-24 rounded-lg bg-[#b04632] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#9a3b2b]">Eliminar</button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (detailChat(); as c) {
+    <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
+      <div class="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h2 class="text-lg font-extrabold text-[#12355B]">Detalle del chat reportado</h2>
+          <button type="button" (click)="closeDetail()" aria-label="Cerrar" class="text-slate-400 transition hover:text-[#12355B]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          <div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold" [class]="statusBadgeClass(c.status)">{{ statusLabel(c.status) }}</span>
+            <h3 class="mt-2 text-xl font-extrabold text-[#12355B]">Perfil: {{ c.reportedUser }}</h3>
+            <p class="text-xs text-slate-500">Reportado por {{ c.reporter }} · {{ c.reportedAt }}</p>
+          </div>
+          <div class="rounded-lg bg-[#b04632]/5 border border-[#b04632]/15 px-3 py-2">
+            <p class="text-[11px] font-bold uppercase tracking-wide text-[#b04632]">Causa del reporte</p>
+            <p class="text-sm text-[#12355B]">{{ c.reason }}</p>
+          </div>
+          <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+            <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Mensaje denunciado</p>
+            <p class="text-sm text-slate-600 italic">"{{ c.excerpt }}"</p>
+          </div>
+        </div>
+        @if (c.status === 'pending') {
+          <div class="flex shrink-0 flex-wrap gap-2 border-t border-slate-100 px-6 py-4">
+            <button type="button" (click)="suspendUser(c)" class="flex-1 min-w-24 rounded-lg bg-[#b04632] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#9a3b2b]">Suspender perfil</button>
+            <button type="button" (click)="dismissChat(c)" class="flex-1 min-w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Descartar</button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (confirmation(); as conf) {
+    <div class="fixed inset-0 z-[2100] flex items-center justify-center bg-black/50 p-4">
+      <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl p-6 text-center">
+        <h2 class="text-lg font-extrabold text-[#12355B]">{{ conf.label }}</h2>
+        <p class="mt-2 text-sm text-slate-500">{{ conf.description }}</p>
+        <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
+          <button type="button" (click)="cancelConfirmation()"
+            class="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50">
+            Cancelar
+          </button>
+          <button type="button" (click)="confirmAction()"
+            class="flex-1 rounded-lg bg-[#b04632] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#9a3b2b]">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
