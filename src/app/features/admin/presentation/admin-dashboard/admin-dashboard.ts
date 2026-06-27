@@ -1,211 +1,185 @@
-import { Component, computed, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ContentReportAdminService } from '../../application/content-report-admin.service';
+import {
+  ContentReportQueueItem,
+  ContentReportStatus,
+} from '../../domain/content-report-queue.model';
+import {
+  ContentReportReason,
+  ContentReportTargetType,
+} from '../../../content-report/domain/content-report.models';
 
-type ModerationStatus = 'pending' | 'approved' | 'deleted' | 'suspended' | 'dismissed';
-type ModerationFilter = 'pending' | 'resolved';
-type AdminSection = 'reports' | 'chats';
+type AdminSection = 'posts' | 'chats';
 
-interface ReportedPublication {
-  id: string;
-  title: string;
-  reportType: 'LOST' | 'SIGHTING';
-  author: string;
-  description: string;
-  reason: string;
-  reportedBy: string;
-  reportedAt: string;
-  status: ModerationStatus;
-}
-
-interface ReportedChat {
-  id: string;
-  reportedUser: string;
-  reporter: string;
-  reason: string;
-  excerpt: string;
-  reportedAt: string;
-  status: ModerationStatus;
-}
-
-type PublicationAction = 'approve' | 'delete' | 'suspend';
+type ConfirmableAction = 'delete';
 
 interface PendingConfirmation {
-  kind: 'publication';
-  action: PublicationAction;
-  id: string;
+  action: ConfirmableAction;
+  item: ContentReportQueueItem;
   label: string;
   description: string;
 }
 
-const MOCK_PUBLICATIONS: ReportedPublication[] = [
-  {
-    id: 'p1',
-    title: 'Perro perdido en Palermo',
-    reportType: 'LOST',
-    author: 'martin_g',
-    description: 'Se perdió mi perro Rocky, raza labrador, color dorado, zona Palermo.',
-    reason: 'Información falsa o engañosa',
-    reportedBy: 'vecina_22',
-    reportedAt: 'Hace 2 hs',
-    status: 'pending',
-  },
-  {
-    id: 'p2',
-    title: 'Gato avistado',
-    reportType: 'SIGHTING',
-    author: 'lucas.p',
-    description: 'Vi un gato naranja cerca de la plaza, parece perdido.',
-    reason: 'Contenido inapropiado',
-    reportedBy: 'ana.m',
-    reportedAt: 'Hace 5 hs',
-    status: 'pending',
-  },
-  {
-    id: 'p3',
-    title: 'Perro en tránsito',
-    reportType: 'SIGHTING',
-    author: 'refugio_norte',
-    description: 'Tengo en tránsito a una perrita mestiza, busca su familia.',
-    reason: 'Spam o publicidad',
-    reportedBy: 'pedro_l',
-    reportedAt: 'Ayer',
-    status: 'pending',
-  },
-  {
-    id: 'p4',
-    title: 'Gato perdido en Caballito',
-    reportType: 'LOST',
-    author: 'flor_99',
-    description: 'Mi gato siamés se escapó por la ventana.',
-    reason: 'Reporte duplicado',
-    reportedBy: 'juan_c',
-    reportedAt: 'Hace 3 días',
-    status: 'approved',
-  },
-];
+const REASON_LABELS: Record<ContentReportReason, string> = {
+  SUSPICIOUS_BEHAVIOR: 'Comportamiento sospechoso',
+  FRAUD_OR_SCAM: 'Fraude o estafa',
+  IMPERSONATION: 'Suplantación de identidad',
+  INAPPROPRIATE_CONTENT: 'Contenido inapropiado',
+  PERSONAL_DATA_EXPOSED: 'Datos personales expuestos',
+  FALSE_INFORMATION: 'Información falsa o engañosa',
+  SPAM: 'Spam o publicidad',
+  DUPLICATE_REPORT: 'Reporte duplicado',
+  OTHER: 'Otro',
+};
 
-const MOCK_CHATS: ReportedChat[] = [
-  {
-    id: 'c1',
-    reportedUser: 'usuario_anon',
-    reporter: 'martin_g',
-    reason: 'Fraude o estafa',
-    excerpt: 'Pasame los datos de tu tarjeta y te devuelvo la mascota...',
-    reportedAt: 'Hace 1 h',
-    status: 'pending',
-  },
-  {
-    id: 'c2',
-    reportedUser: 'fake_profile',
-    reporter: 'ana.m',
-    reason: 'Suplantación de identidad',
-    excerpt: 'Soy del refugio oficial, transferí la seña primero.',
-    reportedAt: 'Hace 6 hs',
-    status: 'pending',
-  },
-  {
-    id: 'c3',
-    reportedUser: 'troll_123',
-    reporter: 'lucas.p',
-    reason: 'Comportamiento sospechoso',
-    excerpt: 'Mensajes ofensivos repetidos hacia el dueño.',
-    reportedAt: 'Hace 2 días',
-    status: 'suspended',
-  },
-];
+const STATUS_LABELS: Record<ContentReportStatus, string> = {
+  PENDING: 'Pendiente',
+  APPROVED: 'Aprobada',
+  SUSPENDED: 'Suspendida',
+  DISMISSED: 'Descartada',
+};
+
+const STATUS_BADGE_CLASSES: Record<ContentReportStatus, string> = {
+  PENDING: 'bg-[#E8842E]/10 text-[#E8842E]',
+  APPROVED: 'bg-[#1D6FA3]/10 text-[#1D6FA3]',
+  SUSPENDED: 'bg-[#12355B]/10 text-[#12355B]',
+  DISMISSED: 'bg-slate-100 text-slate-500',
+};
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
+  imports: [DatePipe],
   host: { class: 'flex flex-1 min-h-0' },
   templateUrl: './admin-dashboard.html',
 })
 export class AdminDashboardComponent {
-  readonly section = signal<AdminSection>('reports');
-  readonly publicationFilter = signal<ModerationFilter>('pending');
-  readonly chatFilter = signal<ModerationFilter>('pending');
+  private readonly service = inject(ContentReportAdminService);
 
-  readonly publications = signal<ReportedPublication[]>(MOCK_PUBLICATIONS);
-  readonly chats = signal<ReportedChat[]>(MOCK_CHATS);
+  readonly statusOptions: { value: ContentReportStatus; label: string }[] = [
+    { value: 'PENDING', label: 'Pendientes' },
+    { value: 'APPROVED', label: 'Aprobados' },
+    { value: 'SUSPENDED', label: 'Suspendidos' },
+    { value: 'DISMISSED', label: 'Descartados' },
+  ];
 
-  readonly detailPublication = signal<ReportedPublication | null>(null);
-  readonly detailChat = signal<ReportedChat | null>(null);
+  readonly editorStatusOptions: { value: ContentReportStatus; label: string }[] = (
+    ['PENDING', 'APPROVED', 'SUSPENDED', 'DISMISSED'] as ContentReportStatus[]
+  ).map((value) => ({ value, label: STATUS_LABELS[value] }));
+
+  readonly section = signal<AdminSection>('posts');
+  readonly status = signal<ContentReportStatus>('PENDING');
+  readonly items = signal<ContentReportQueueItem[]>([]);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly selected = signal<ContentReportQueueItem | null>(null);
   readonly confirmation = signal<PendingConfirmation | null>(null);
+  readonly editing = signal<ContentReportQueueItem | null>(null);
+  readonly suspending = signal<ContentReportQueueItem | null>(null);
+  readonly suspensionReason = signal('');
 
-  readonly pendingPublications = computed(
-    () => this.publications().filter((p) => p.status === 'pending').length,
+  readonly posts = computed(() => this.items().filter((item) => item.targetType === 'POST'));
+  readonly chats = computed(() => this.items().filter((item) => item.targetType === 'CHAT'));
+
+  readonly pendingPosts = computed(
+    () => this.posts().filter((item) => item.status === 'PENDING').length,
   );
   readonly pendingChats = computed(
-    () => this.chats().filter((c) => c.status === 'pending').length,
+    () => this.chats().filter((item) => item.status === 'PENDING').length,
   );
 
-  readonly visiblePublications = computed(() => {
-    const onlyPending = this.publicationFilter() === 'pending';
-    return this.publications().filter((p) =>
-      onlyPending ? p.status === 'pending' : p.status !== 'pending',
+  readonly visibleItems = computed(() => {
+    const target: ContentReportTargetType = this.section() === 'posts' ? 'POST' : 'CHAT';
+    return this.items().filter(
+      (item) => item.targetType === target && item.status === this.status(),
     );
   });
 
-  readonly visibleChats = computed(() => {
-    const onlyPending = this.chatFilter() === 'pending';
-    return this.chats().filter((c) =>
-      onlyPending ? c.status === 'pending' : c.status !== 'pending',
-    );
-  });
+  constructor() {
+    void this.load();
+  }
+
+  async load(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      this.items.set(await this.service.getQueue());
+    } catch {
+      this.error.set('No pudimos cargar las denuncias. Reintentá en unos segundos.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
 
   selectSection(section: AdminSection): void {
     this.section.set(section);
   }
 
-  setPublicationFilter(filter: ModerationFilter): void {
-    this.publicationFilter.set(filter);
+  setStatus(status: ContentReportStatus): void {
+    this.status.set(status);
+    this.selected.set(null);
   }
 
-  setChatFilter(filter: ModerationFilter): void {
-    this.chatFilter.set(filter);
-  }
-
-  openPublication(publication: ReportedPublication): void {
-    this.detailPublication.set(publication);
-  }
-
-  openChat(chat: ReportedChat): void {
-    this.detailChat.set(chat);
+  openDetail(item: ContentReportQueueItem): void {
+    this.selected.set(item);
   }
 
   closeDetail(): void {
-    this.detailPublication.set(null);
-    this.detailChat.set(null);
+    this.selected.set(null);
   }
 
-  approve(publication: ReportedPublication): void {
-    this.applyPublicationStatus(publication.id, 'approved');
+  openEditor(item: ContentReportQueueItem): void {
+    this.editing.set(item);
   }
 
-  askDelete(publication: ReportedPublication): void {
+  closeEditor(): void {
+    this.editing.set(null);
+  }
+
+  changeStatus(item: ContentReportQueueItem, status: ContentReportStatus): void {
+    this.applyStatus(item, status);
+    this.closeEditor();
+  }
+
+  approve(item: ContentReportQueueItem): void {
+    this.applyStatus(item, 'APPROVED');
+  }
+
+  openSuspension(item: ContentReportQueueItem): void {
+    this.suspensionReason.set('');
+    this.suspending.set(item);
+  }
+
+  cancelSuspension(): void {
+    this.suspending.set(null);
+    this.suspensionReason.set('');
+  }
+
+  confirmSuspension(): void {
+    const item = this.suspending();
+    const reason = this.suspensionReason().trim();
+    if (!item || !reason) return;
+    this.applyStatus(item, 'SUSPENDED', { suspensionReason: reason });
+    this.cancelSuspension();
+  }
+
+  askDelete(item: ContentReportQueueItem): void {
+    const isPost = item.targetType === 'POST';
     this.confirmation.set({
-      kind: 'publication',
       action: 'delete',
-      id: publication.id,
-      label: 'Eliminar publicación',
-      description: `Vas a eliminar "${publication.title}". Esta acción no se puede deshacer.`,
-    });
-  }
-
-  askSuspend(publication: ReportedPublication): void {
-    this.confirmation.set({
-      kind: 'publication',
-      action: 'suspend',
-      id: publication.id,
-      label: 'Suspender publicación',
-      description: `Vas a suspender "${publication.title}" hasta su revisión.`,
+      item,
+      label: isPost ? 'Eliminar publicación' : 'Eliminar chat',
+      description: isPost
+        ? 'Vas a eliminar la publicación denunciada. Esta acción no se puede deshacer.'
+        : 'Vas a eliminar el chat denunciado. Esta acción no se puede deshacer.',
     });
   }
 
   confirmAction(): void {
     const pending = this.confirmation();
     if (!pending) return;
-    if (pending.action === 'delete') this.applyPublicationStatus(pending.id, 'deleted');
-    if (pending.action === 'suspend') this.applyPublicationStatus(pending.id, 'suspended');
+    this.removeItem(pending.item);
     this.cancelConfirmation();
   }
 
@@ -213,51 +187,40 @@ export class AdminDashboardComponent {
     this.confirmation.set(null);
   }
 
-  suspendUser(chat: ReportedChat): void {
-    this.applyChatStatus(chat.id, 'suspended');
+  reasonLabel(reason: ContentReportReason): string {
+    return REASON_LABELS[reason] ?? reason;
   }
 
-  dismissChat(chat: ReportedChat): void {
-    this.applyChatStatus(chat.id, 'dismissed');
+  statusLabel(status: ContentReportStatus): string {
+    return STATUS_LABELS[status] ?? status;
   }
 
-  statusLabel(status: ModerationStatus): string {
-    const labels: Record<ModerationStatus, string> = {
-      pending: 'Pendiente',
-      approved: 'Aprobada',
-      deleted: 'Eliminada',
-      suspended: 'Suspendida',
-      dismissed: 'Descartado',
-    };
-    return labels[status];
+  statusBadgeClass(status: ContentReportStatus): string {
+    return STATUS_BADGE_CLASSES[status] ?? STATUS_BADGE_CLASSES.PENDING;
   }
 
-  typeLabel(type: 'LOST' | 'SIGHTING'): string {
-    return type === 'LOST' ? 'Perdido' : 'Avistamiento';
+  targetTypeLabel(targetType: ContentReportTargetType): string {
+    return targetType === 'POST' ? 'Publicación' : 'Chat';
   }
 
-  statusBadgeClass(status: ModerationStatus): string {
-    const map: Record<ModerationStatus, string> = {
-      pending: 'bg-[#E8842E]/10 text-[#E8842E]',
-      approved: 'bg-[#1D6FA3]/10 text-[#1D6FA3]',
-      deleted: 'bg-[#b04632]/10 text-[#b04632]',
-      suspended: 'bg-[#12355B]/10 text-[#12355B]',
-      dismissed: 'bg-slate-100 text-slate-500',
-    };
-    return map[status];
-  }
-
-  private applyPublicationStatus(id: string, status: ModerationStatus): void {
-    this.publications.update((items) =>
-      items.map((item) => (item.id === id ? { ...item, status } : item)),
+  private applyStatus(
+    item: ContentReportQueueItem,
+    status: ContentReportStatus,
+    patch: Partial<ContentReportQueueItem> = {},
+  ): void {
+    this.items.update((items) =>
+      items.map((current) =>
+        current.publicId === item.publicId ? { ...current, status, ...patch } : current,
+      ),
     );
-    this.closeDetail();
+    const selected = this.selected();
+    if (selected?.publicId === item.publicId) {
+      this.selected.set({ ...selected, status, ...patch });
+    }
   }
 
-  private applyChatStatus(id: string, status: ModerationStatus): void {
-    this.chats.update((items) =>
-      items.map((item) => (item.id === id ? { ...item, status } : item)),
-    );
-    this.closeDetail();
+  private removeItem(item: ContentReportQueueItem): void {
+    this.items.update((items) => items.filter((current) => current.publicId !== item.publicId));
+    if (this.selected()?.publicId === item.publicId) this.closeDetail();
   }
 }
