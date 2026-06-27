@@ -335,8 +335,8 @@
         <p class="mt-1 text-sm text-slate-500">
           Indicá el motivo de la suspensión y por qué se llegó a esta decisión.
         </p>
-        <label class="mt-4 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Motivo de la suspensión</label>
-        <textarea rows="4" maxlength="500" [value]="suspensionReason()"
+        <label for="suspension-reason" class="mt-4 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Motivo de la suspensión</label>
+        <textarea id="suspension-reason" rows="4" maxlength="500" [value]="suspensionReason()"
           (input)="suspensionReason.set($any($event.target).value)"
           placeholder="Ej: Se confirmó un intento de estafa en la conversación. Se decide suspender para proteger a la comunidad."
           class="mt-1 w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-[#12355B] outline-none transition focus:border-[#12355B]"></textarea>
