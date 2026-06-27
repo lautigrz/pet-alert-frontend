@@ -197,8 +197,8 @@
   }
 
   <!-- Modal Denuncia -->
-  @if (mostrandoModalDenuncia()) {
-    <app-report-modal tipo="chat" (cerrar)="cerrarModalDenuncia()" />
+  @if (mostrandoModalDenuncia() && conversationId) {
+    <app-report-modal tipo="chat" [targetPublicId]="conversationId" (cerrar)="cerrarModalDenuncia()" />
   }
 </section>
 
