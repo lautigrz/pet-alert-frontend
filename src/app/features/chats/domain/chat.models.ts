@@ -19,6 +19,7 @@ export interface ChatMessage {
 }
 
 export interface ConversationSummaryOutput {
+    unreadCount?: number;
     publicId: string;
     otherUser: {
         publicId: string;

@@ -94,6 +94,7 @@ export class AuthService {
   async logout(): Promise<void> {
     const stored = this.tokenStorage.read();
     if (stored) await this.tryRevokeRefreshToken(stored.refreshToken);
+    this.socketService.disconnect();
     this.tokenStorage.clear();
     this.notificationsService.clear();
   }
