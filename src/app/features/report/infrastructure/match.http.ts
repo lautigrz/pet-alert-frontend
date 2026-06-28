@@ -8,6 +8,8 @@ export interface MatchResult {
   publicId: string;
   sourceReportPublicId: string;
   score: number;
+  imageScore: number;
+  descriptionScore: number;
   details: {
     publicId: string;
     images: string[];

@@ -10,6 +10,8 @@ export interface Match {
   foundAt: string | null;
   distanceKm: number | null;
   score: number;
+  imageScore: number | null;
+  descriptionScore: number | null;
 }
 
 export interface ReportMatches {

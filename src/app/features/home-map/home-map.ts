@@ -9,7 +9,7 @@ import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
 import { PetIconComponent } from '../../shared/component/pet-icon/pet-icon.component';
 
-
+import { InfoTooltipComponent } from '../../shared/component/info-tooltip/info-tooltip.component';
 interface LocationSuggestion {
   displayName: string;
   lat: number;
@@ -44,7 +44,7 @@ interface OverpassElement {
 @Component({
   selector: 'app-home-map',
   standalone: true,
-  imports: [HomeReportCardComponent, RouterLink, NotificationPrompt, PetIconComponent],
+  imports: [HomeReportCardComponent, RouterLink, NotificationPrompt, PetIconComponent, InfoTooltipComponent],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
   styleUrl: './home-map.css'

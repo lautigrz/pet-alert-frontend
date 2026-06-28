@@ -16,6 +16,8 @@ function makeMatch(overrides: Partial<Match> = {}): Match {
     foundAt: '2024-01-01T10:00:00.000Z',
     distanceKm: 3.4,
     score: 0.82,
+    imageScore: 0.8,
+    descriptionScore: 0.6,
     ...overrides,
   };
 }
@@ -48,14 +50,14 @@ describe('MatchCardComponent', () => {
     expect(component.nueva()).toBe(false);
   });
 
-  it('emite el match al contactar', () => {
+  it('emite el match al ver detalle', () => {
     const match = makeMatch();
     fixture.componentRef.setInput('match', match);
     fixture.detectChanges();
 
     const spy = vi.fn();
-    component.contact.subscribe(spy);
-    component.onContact();
+    component.detail.subscribe(spy);
+    component.onDetail();
 
     expect(spy).toHaveBeenCalledWith(match);
   });

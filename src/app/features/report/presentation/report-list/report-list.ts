@@ -20,6 +20,8 @@ interface Coordenadas {
   lng: number;
 }
 
+const REPORTS_PER_PAGE = 10;
+
 @Component({
   selector: 'app-report-list',
   standalone: true,
@@ -35,6 +37,15 @@ export class ReportListPage implements OnInit {
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
   readonly reportes = signal<Reporte[]>([]);
+
+  readonly page = signal(1);
+  readonly totalPages = signal(1);
+  readonly showPagination = computed(() => this.totalPages() > 1);
+  readonly pages = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, i) => i + 1),
+  );
+
+  private generalReportsCache: Reporte[] | null = null;
 
   readonly filtroTipo = signal<FiltroTipo>('TODOS');
   readonly filtroCercania = signal<FiltroCercania>('TODOS');
@@ -59,13 +70,13 @@ export class ReportListPage implements OnInit {
     if (tab === 'todos' || tab === 'recientes' || tab === 'cercanos' || tab === 'mis-reportes') {
       this.tab.set(tab);
     }
-    await this.cargar();
+    await this.reload();
   }
 
   async seleccionarTab(tab: Tab): Promise<void> {
     if (this.tab() === tab) return;
     this.tab.set(tab);
-    await this.cargar();
+    await this.reload();
   }
 
   onDescriptionSearchInput(value: string): void {
@@ -76,7 +87,7 @@ export class ReportListPage implements OnInit {
     }
     this.descriptionSearchDebounce = setTimeout(() => {
       this.descriptionSearchDebounce = undefined;
-      void this.cargar();
+      void this.reload();
     }, 350);
   }
 
@@ -88,7 +99,7 @@ export class ReportListPage implements OnInit {
       this.descriptionSearchDebounce = undefined;
     }
 
-    await this.cargar();
+    await this.reload();
   }
   private pedirUbicacion(): Promise<Coordenadas | null> {
     const actual = this.ubicacion();
@@ -117,33 +128,33 @@ export class ReportListPage implements OnInit {
 
   async setFiltroTipo(valor: FiltroTipo): Promise<void> {
     this.filtroTipo.set(valor);
-    await this.cargar();
+    await this.reload();
   }
 
   async setFiltroCercania(valor: FiltroCercania): Promise<void> {
     this.filtroCercania.set(valor);
-    await this.cargar();
+    await this.reload();
   }
 
   async setFiltroMascota(valor: FiltroMascota): Promise<void> {
     this.filtroMascota.set(valor);
-    await this.cargar();
+    await this.reload();
   }
 
   async setFechaDesde(valor: string): Promise<void> {
     this.fechaDesde.set(valor);
-    await this.cargar();
+    await this.reload();
   }
 
   async setFechaHasta(valor: string): Promise<void> {
     this.fechaHasta.set(valor);
-    await this.cargar();
+    await this.reload();
   }
 
   async limpiarFechas(): Promise<void> {
     this.fechaDesde.set('');
     this.fechaHasta.set('');
-    await this.cargar();
+    await this.reload();
   }
 
   abrirFiltros(): void {
@@ -160,7 +171,7 @@ export class ReportListPage implements OnInit {
     this.filtroMascota.set('TODOS');
     this.fechaDesde.set('');
     this.fechaHasta.set('');
-    await this.cargar();
+    await this.reload();
   }
 
   private async cargar(): Promise<void> {
@@ -179,6 +190,18 @@ export class ReportListPage implements OnInit {
     }
   }
 
+  private async reload(): Promise<void> {
+    this.generalReportsCache = null;
+    this.page.set(1);
+    await this.cargar();
+  }
+
+  async goToPage(page: number): Promise<void> {
+    if (page < 1 || page > this.totalPages() || page === this.page()) return;
+    this.page.set(page);
+    await this.cargar();
+  }
+
   private async obtenerReportes(): Promise<Reporte[]> {
     const filtros = this.construirFiltros();
 
@@ -190,7 +213,10 @@ export class ReportListPage implements OnInit {
 
     if (this.tab() === 'cercanos' || conRadio) {
       const origen = await this.pedirUbicacion();
-      if (!origen) return [];
+      if (!origen) {
+        this.totalPages.set(1);
+        return [];
+      }
       filtros.lat = origen.lat;
       filtros.lng = origen.lng;
       if (conRadio) {
@@ -199,12 +225,22 @@ export class ReportListPage implements OnInit {
     }
 
     if (this.tab() === 'mis-reportes') {
-      const misReportes = await this.reportesService.getMisReportes(filtros);
-      return misReportes.filter((r) => r.status === 'ACTIVE');
+      const { data, pagination } = await this.reportesService.getMisReportesPaginado(
+        filtros,
+        this.page(),
+        REPORTS_PER_PAGE,
+      );
+      this.totalPages.set(pagination.totalPages);
+      return data;
     }
 
     filtros.status = 'ACTIVE';
-    return this.reportesService.getGenerales(filtros);
+    if (this.generalReportsCache === null) {
+      this.generalReportsCache = await this.reportesService.getGenerales(filtros);
+    }
+    this.totalPages.set(Math.max(1, Math.ceil(this.generalReportsCache.length / REPORTS_PER_PAGE)));
+    const start = (this.page() - 1) * REPORTS_PER_PAGE;
+    return this.generalReportsCache.slice(start, start + REPORTS_PER_PAGE);
   }
 
   private construirFiltros(): ReporteFiltros {

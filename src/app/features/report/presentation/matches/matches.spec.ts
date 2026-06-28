@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 
 import { MatchesPage } from './matches';
 import { MatchService } from '../../application/match.service';
+import { ReportService } from '../../application/report.service';
 import { ChatsService } from '../../../chats/application/chats.service';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { SeenMatchesStore } from '../../application/seen-matches.store';
@@ -38,6 +39,8 @@ function makeMatch(overrides: Partial<Match> = {}): Match {
     foundAt: '2024-01-01T10:00:00.000Z',
     distanceKm: 2.1,
     score: 0.9,
+    imageScore: 0.85,
+    descriptionScore: 0.7,
     ...overrides,
   };
 }
@@ -46,22 +49,33 @@ describe('MatchesPage', () => {
   let fixture: ComponentFixture<MatchesPage>;
   let component: MatchesPage;
   let matchService: { getReportMatches: ReturnType<typeof vi.fn> };
+  let reportService: { getReportByPublicId: ReturnType<typeof vi.fn> };
   let chatsService: { getOrCreateConversation: ReturnType<typeof vi.fn> };
   let toastService: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
-  let seenMatchesStore: { isNew: ReturnType<typeof vi.fn>; markSeen: ReturnType<typeof vi.fn> };
+  let seenMatchesStore: {
+    isNew: ReturnType<typeof vi.fn>;
+    markSeen: ReturnType<typeof vi.fn>;
+    ensureLoaded: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     matchService = { getReportMatches: vi.fn() };
+    reportService = { getReportByPublicId: vi.fn() };
     chatsService = { getOrCreateConversation: vi.fn() };
     toastService = { error: vi.fn(), success: vi.fn() };
     router = { navigate: vi.fn() };
-    seenMatchesStore = { isNew: vi.fn().mockReturnValue(false), markSeen: vi.fn() };
+    seenMatchesStore = {
+      isNew: vi.fn().mockReturnValue(false),
+      markSeen: vi.fn(),
+      ensureLoaded: vi.fn().mockResolvedValue(undefined),
+    };
 
     TestBed.configureTestingModule({
       imports: [MatchesPage],
       providers: [
         { provide: MatchService, useValue: matchService },
+        { provide: ReportService, useValue: reportService },
         { provide: ChatsService, useValue: chatsService },
         { provide: ToastService, useValue: toastService },
         { provide: Router, useValue: router },
@@ -91,18 +105,18 @@ describe('MatchesPage', () => {
 
   it('marca las nuevas al cargar y las desmarca al verlas', async () => {
     const report = makeReportDetail();
-    const matches = [makeMatch({ reportPublicId: 'r1' })];
+    const matches = [makeMatch({ matchPublicId: 'm1' })];
     matchService.getReportMatches.mockResolvedValue({ report, matches });
     seenMatchesStore.isNew.mockReturnValue(true);
 
     component.ngOnInit();
     await new Promise((resolve) => setTimeout(resolve));
-    expect(component.nuevos().has('r1')).toBe(true);
+    expect(component.nuevos().has('m1')).toBe(true);
 
-    component.marcarVista(makeMatch({ reportPublicId: 'r1' }));
+    component.marcarVista(makeMatch({ matchPublicId: 'm1' }));
 
-    expect(seenMatchesStore.markSeen).toHaveBeenCalledWith('src', 'r1');
-    expect(component.nuevos().has('r1')).toBe(false);
+    expect(seenMatchesStore.markSeen).toHaveBeenCalledWith('m1');
+    expect(component.nuevos().has('m1')).toBe(false);
   });
 
   it('setea error cuando falla la carga', async () => {
@@ -137,5 +151,31 @@ describe('MatchesPage', () => {
     await component.openChat(makeMatch({ userPublicId: 'owner-1' }));
 
     expect(toastService.error).toHaveBeenCalledWith('No se pudo abrir el chat');
+  });
+
+  it('abre el detalle marcando la vista y cargando el reporte de la coincidencia', async () => {
+    matchService.getReportMatches.mockResolvedValue({ report: makeReportDetail(), matches: [] });
+    component.ngOnInit();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    const detalle = makeReportDetail({ publicId: 'r1' });
+    reportService.getReportByPublicId.mockResolvedValue(detalle);
+
+    await component.openDetail(makeMatch({ reportPublicId: 'r1' }));
+
+    expect(seenMatchesStore.markSeen).toHaveBeenCalledWith('m1');
+    expect(reportService.getReportByPublicId).toHaveBeenCalledWith('r1');
+    expect(component.selectedMatch()?.reportPublicId).toBe('r1');
+    expect(component.selectedDetail()).toEqual(detalle);
+    expect(component.detailLoading()).toBe(false);
+  });
+
+  it('navega al reporte y cierra el modal al ver reporte', () => {
+    component.selectedMatch.set(makeMatch({ reportPublicId: 'r1' }));
+
+    component.verReporte(makeMatch({ reportPublicId: 'r1' }));
+
+    expect(router.navigate).toHaveBeenCalledWith(['/reports', 'r1']);
+    expect(component.selectedMatch()).toBeNull();
   });
 });

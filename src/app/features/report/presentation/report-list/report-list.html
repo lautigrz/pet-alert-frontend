@@ -192,6 +192,27 @@
         <app-report-card [reporte]="reporte" />
         }
       </div>
+
+      @if (showPagination()) {
+      <nav class="flex flex-wrap items-center justify-center gap-1.5 mt-6">
+        <button type="button" (click)="goToPage(page() - 1)" [disabled]="page() === 1"
+          class="px-3 py-1.5 rounded-md text-sm font-semibold border border-neutral-300 text-slate-600 transition hover:border-[#E8842E] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-neutral-300">
+          Anterior
+        </button>
+        @for (p of pages(); track p) {
+        <button type="button" (click)="goToPage(p)"
+          class="min-w-9 px-3 py-1.5 rounded-md text-sm font-semibold border transition" [class]="p === page()
+            ? 'bg-[#E8842E] text-white border-[#E8842E]'
+            : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+          {{ p }}
+        </button>
+        }
+        <button type="button" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()"
+          class="px-3 py-1.5 rounded-md text-sm font-semibold border border-neutral-300 text-slate-600 transition hover:border-[#E8842E] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-neutral-300">
+          Siguiente
+        </button>
+      </nav>
+      }
       }
     </div>
   </div>

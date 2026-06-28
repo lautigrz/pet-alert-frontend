@@ -11,7 +11,10 @@ const MIN_MATCH_SCORE = 0.7;
 
 interface Candidate {
   publicId: string;
+  matchPublicId: string;
   score: number;
+  imageScore: number | null;
+  descriptionScore: number | null;
   fallbackImage: string | null;
 }
 
@@ -35,13 +38,15 @@ export class MatchService {
     return {
       report,
       matches: candidates
-        .map((candidate, i) => this.toMatch(candidate, details[i], report))
+        .map((candidate, i) => ({ match: this.toMatch(candidate, details[i], report), detail: details[i] }))
         .filter(
-          (match) =>
+          ({ match, detail }) =>
+            (!detail || detail.status === 'ACTIVE') &&
             match.score >= MIN_MATCH_SCORE &&
             match.reportPublicId !== report.publicId &&
             match.userPublicId !== report.user.publicId,
         )
+        .map(({ match }) => match)
         .sort((a, b) => b.score - a.score),
     };
   }
@@ -53,24 +58,35 @@ export class MatchService {
   ): Candidate[] {
     const byPublicId = new Map<string, Candidate>();
 
-    const add = (publicId: string, score: number, image: string | null): void => {
+    const add = (
+      publicId: string,
+      matchPublicId: string,
+      score: number,
+      imageScore: number | null,
+      descriptionScore: number | null,
+      image: string | null,
+    ): void => {
       const current = byPublicId.get(publicId);
       if (!current) {
-        byPublicId.set(publicId, { publicId, score, fallbackImage: image });
+        byPublicId.set(publicId, { publicId, matchPublicId, score, imageScore, descriptionScore, fallbackImage: image });
         return;
       }
+      current.imageScore = current.imageScore ?? imageScore;
+      current.descriptionScore = current.descriptionScore ?? descriptionScore;
       current.fallbackImage = current.fallbackImage ?? image;
     };
 
     for (const result of sourceResults) {
-      add(result.details.publicId, result.score, result.details.images[0] ?? null);
+      add(result.details.publicId, result.publicId, result.score, result.imageScore, result.descriptionScore, result.details.images[0] ?? null);
     }
 
     for (const notification of notifications) {
+      const imageScore = notification.imageScore ?? null;
+      const descriptionScore = notification.descriptionScore ?? null;
       if (notification.lostReportPublicId === reportPublicId) {
-        add(notification.matchedReportPublicId, notification.score, notification.matchedImage);
+        add(notification.matchedReportPublicId, notification.matchPublicId, notification.score, imageScore, descriptionScore, notification.matchedImage);
       } else if (notification.matchedReportPublicId === reportPublicId) {
-        add(notification.lostReportPublicId, notification.score, notification.matchedImage);
+        add(notification.lostReportPublicId, notification.matchPublicId, notification.score, imageScore, descriptionScore, notification.matchedImage);
       }
     }
 
@@ -93,7 +109,7 @@ export class MatchService {
     const distanceKm = detail ? this.distanceKm(source.location, detail.location) : null;
 
     return {
-      matchPublicId: candidate.publicId,
+      matchPublicId: candidate.matchPublicId,
       reportPublicId: candidate.publicId,
       userPublicId: detail?.user.publicId ?? '',
       name,
@@ -102,10 +118,15 @@ export class MatchService {
       foundAt: detail?.occurredAt ?? null,
       distanceKm,
       score: candidate.score,
+      imageScore: candidate.imageScore,
+      descriptionScore: candidate.descriptionScore,
     };
   }
 
   private buildTitle(detail: ReportDetail): string {
+    if (detail.details.name) return detail.details.name;
+    if (detail.details.petName) return detail.details.petName;
+
     const animal = detail.details.animalType === 'CAT' ? 'Gato' : 'Perro';
     const estado =
       detail.type === 'LOST'

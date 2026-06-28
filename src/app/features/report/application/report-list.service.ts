@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ReportListHttp } from '../infrastructure/report-list.http';
-import { Reporte, ReporteFiltros } from '../domain/report-read.model';
+import { Reporte, ReporteFiltros, ReportesPaginados } from '../domain/report-read.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReportListService {
@@ -22,6 +22,15 @@ export class ReportListService {
     try {
       const { data } = await this.reportesHttp.getMisReportesPaginado(filtros);
       return data;
+    } catch (error) {
+      throw this.mapError(error);
+    }
+  }
+
+
+  async getMisReportesPaginado(filtros: ReporteFiltros = {}, page = 1, limit = 10): Promise<ReportesPaginados> {
+    try {
+      return await this.reportesHttp.getMisReportesPaginado(filtros, page, limit);
     } catch (error) {
       throw this.mapError(error);
     }

@@ -1,41 +1,59 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { SeenMatchesStore } from './seen-matches.store';
-import { TokenStorage } from '../../auth/infrastructure/token.storage';
+import { MatchViewsHttp } from '../infrastructure/match-views.http';
 
 describe('SeenMatchesStore', () => {
   let store: SeenMatchesStore;
+  let http: { getSeen: ReturnType<typeof vi.fn>; markSeen: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    localStorage.clear();
+    http = {
+      getSeen: vi.fn().mockResolvedValue([]),
+      markSeen: vi.fn().mockResolvedValue(undefined),
+    };
     TestBed.configureTestingModule({
-      providers: [
-        SeenMatchesStore,
-        { provide: TokenStorage, useValue: { read: () => null } },
-      ],
+      providers: [SeenMatchesStore, { provide: MatchViewsHttp, useValue: http }],
     });
     store = TestBed.inject(SeenMatchesStore);
   });
 
-  it('una coincidencia es nueva hasta que se marca vista', () => {
-    expect(store.isNew('r1', 'a')).toBe(true);
+  it('una coincidencia es nueva hasta que se marca vista', async () => {
+    await store.ensureLoaded();
+    expect(store.isNew('m1')).toBe(true);
 
-    store.markSeen('r1', 'a');
+    await store.markSeen('m1');
 
-    expect(store.isNew('r1', 'a')).toBe(false);
+    expect(store.isNew('m1')).toBe(false);
+    expect(http.markSeen).toHaveBeenCalledWith('m1');
   });
 
-  it('separa las vistas por reporte', () => {
-    store.markSeen('r1', 'a');
+  it('carga las vistas existentes del server', async () => {
+    http.getSeen.mockResolvedValue(['m1', 'm2']);
 
-    expect(store.isNew('r1', 'a')).toBe(false);
-    expect(store.isNew('r2', 'a')).toBe(true);
+    await store.ensureLoaded();
+
+    expect(store.isNew('m1')).toBe(false);
+    expect(store.isNew('m2')).toBe(false);
+    expect(store.isNew('m3')).toBe(true);
   });
 
-  it('no afecta a otras coincidencias del mismo reporte', () => {
-    store.markSeen('r1', 'a');
+  it('no vuelve a postear si ya estaba vista', async () => {
+    http.getSeen.mockResolvedValue(['m1']);
+    await store.ensureLoaded();
 
-    expect(store.isNew('r1', 'b')).toBe(true);
+    await store.markSeen('m1');
+
+    expect(http.markSeen).not.toHaveBeenCalled();
+  });
+
+  it('revierte la marca optimista si el server falla', async () => {
+    http.markSeen.mockRejectedValue(new Error('boom'));
+    await store.ensureLoaded();
+
+    await store.markSeen('m1');
+
+    expect(store.isNew('m1')).toBe(true);
   });
 });

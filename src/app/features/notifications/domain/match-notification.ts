@@ -12,9 +12,9 @@ export interface MatchNotification {
   matchedReportPublicId: string;
   matchedImage: string | null;
   score: number;
+  imageScore?: number | null;
+  descriptionScore?: number | null;
   createdAt: string;
 }
 
-export interface NotificacionCoincidencia extends MatchNotification {
-  vista: boolean;
-}
+export type NotificacionCoincidencia = MatchNotification;
