@@ -52,12 +52,17 @@ export class SocketService implements OnDestroy {
   }
 
   on<T>(event: string): Observable<T> {
-    return new Observable(observer => {
-      this.socket?.on(event, (data: T) => observer.next(data));
+  return new Observable(observer => {
 
-      return () => this.socket?.off(event);
-    });
-  }
+    const listener = (data: T) => observer.next(data);
+
+    this.socket?.on(event, listener);
+
+    return () => {
+      this.socket?.off(event);
+    };
+  });
+}
 
   get isConnected(): boolean {
     return this.socket?.connected ?? false;

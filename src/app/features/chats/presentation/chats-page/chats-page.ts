@@ -61,87 +61,111 @@ export class ChatsPage implements OnInit, OnDestroy {
     this.mostrandoModalDenuncia.set(false);
   }
 
-  ngOnInit(): void {
-    this.chatsService.getConversations()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(contacts => {
-        this.contacts = contacts;
-        const conversationId = this.route.snapshot.queryParamMap.get('conversation');
-        if (conversationId) this.abrirConversacion(conversationId);
-      });
+ ngOnInit(): void {
 
-    this.chatsService.onMessageReceived()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(msg => {
-        this.messages = [...this.messages, msg];
-        setTimeout(() => this.scrollToBottom(), 100);
-      });
+  this.chatsService.getConversations()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(contacts => {
+      this.contacts = contacts;
 
-    this.chatsService.onMessageRead()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(msg => {
-        console.log('Mensajes leídos en conversación:', msg.conversationId);
-      });
+      const conversationId =
+        this.route.snapshot.queryParamMap.get('conversation');
 
-    this.chatsService.onError()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(err => console.error(err.message));
-  }
+      if (conversationId) {
+        this.abrirConversacion(conversationId);
+      }
+    });
 
-  get allMessages() {
-    const historical = this.conversationOutput()?.messages ?? [];
-    return [...historical, ...this.messages];
-  }
+  this.chatsService.onMessageReceived()
+.pipe(takeUntil(this.destroy$))
+.subscribe(msg => {
 
-  selectContact(contact: ConversationSummaryOutput): void {
-    setTimeout(() => this.scrollToBottom(), 100);
-
-    this.selectedContact.set(contact);
-    this.conversationId = contact.publicId;
-    this.messages = [];
-
-    this.chatsService.getMessagesForConversation(this.conversationId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(conv => {
-        this.conversationOutput.set(conv)
-        if (this.messagesNotRead()) {
-          this.chatsService.readMessage(this.conversationId);
-        }
-      });
-
-
-
-  }
-
-  abrirConversacion(conversationId: string): void {
-    const contacto = this.contacts.find((c) => c.publicId === conversationId);
-    if (contacto) {
-      this.selectContact(contacto);
-      return;
+    if (this.conversationId && msg.conversationId && msg.conversationId !== this.conversationId) {
+        return;
     }
 
-    this.conversationId = conversationId;
-    this.messages = [];
-    this.chatsService.getMessagesForConversation(conversationId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(conv => {
-        this.conversationOutput.set(conv);
-        this.selectedContact.set({
-          publicId: conv.publicId,
-          otherUser: {
-            publicId: conv.otherUser.publicId,
-            username: conv.otherUser.username,
-            photoUrl: conv.otherUser.photoUrl ?? null,
-          },
-          lastMessage: null,
-          createdAt: conv.createdAt,
-        });
-        if (this.messagesNotRead()) {
-          this.chatsService.readMessage(conversationId);
-        }
-        setTimeout(() => this.scrollToBottom(), 100);
-      });
+    this.messages = [...this.messages, msg];
+
+    if (this.conversationId) {
+      this.chatsService.readMessage(this.conversationId);
+    }
+
+    setTimeout(() => this.scrollToBottom(),100);
+});
+
+  this.chatsService.onMessageRead()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(({ conversationId }) => {
+      console.log('Mensajes leídos en conversación:', conversationId);
+    });
+
+  this.chatsService.onError()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(err => console.error(err.message));
+}
+
+selectContact(contact: ConversationSummaryOutput): void {
+
+  this.selectedContact.set(contact);
+  this.conversationId = contact.publicId;
+  this.messages = [];
+
+  this.chatsService.getMessagesForConversation(this.conversationId)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(conv => {
+
+      this.conversationOutput.set(conv);
+
+     if (this.messagesNotRead()) {
+
+    this.chatsService.readMessage(this.conversationId);
+
+    setTimeout(() => {
+        this.chatsService.refreshUnreadChats?.();
+    }, 200);
+}
+    });
+}
+
+abrirConversacion(conversationId: string): void {
+
+  const contacto = this.contacts.find(c => c.publicId === conversationId);
+
+  if (contacto) {
+    this.selectContact(contacto);
+    return;
   }
+
+  this.conversationId = conversationId;
+  this.messages = [];
+
+  this.chatsService.getMessagesForConversation(conversationId)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(conv => {
+
+      this.conversationOutput.set(conv);
+
+      this.selectedContact.set({
+        publicId: conv.publicId,
+        otherUser: {
+          publicId: conv.otherUser.publicId,
+          username: conv.otherUser.username,
+          photoUrl: conv.otherUser.photoUrl ?? null,
+        },
+        lastMessage: null,
+        createdAt: conv.createdAt,
+      });
+
+      if (this.messagesNotRead()) {
+
+    this.chatsService.readMessage(this.conversationId);
+
+    setTimeout(() => {
+        this.chatsService.refreshUnreadChats?.();
+    }, 200);
+}
+    });
+}
 
   sendMessage(): void {
     const text = this.newMessage().trim();
@@ -155,6 +179,7 @@ export class ChatsPage implements OnInit, OnDestroy {
       const tempPublicId = crypto.randomUUID();
       const localMessage: MessagePayload = {
         publicId: tempPublicId,
+        conversationId: this.conversationId,
         text,
         senderId: this.currentUserId(),
         receiverId: this.selectedContact()!.otherUser.publicId,
@@ -195,6 +220,7 @@ export class ChatsPage implements OnInit, OnDestroy {
 
       this.messages = [...this.messages, {
         publicId: crypto.randomUUID(),
+         conversationId: this.conversationId,
         text,
         senderId: this.currentUserId(),
         receiverId: this.selectedContact()!.otherUser.publicId,
@@ -265,9 +291,15 @@ export class ChatsPage implements OnInit, OnDestroy {
     }
   }
 
+private messagesNotRead(): boolean {
+  return this.allMessages.some((m: MessagePayload | { isRead: boolean; senderId: string }) =>
+    m.isRead === false &&
+    m.senderId !== this.currentUserId()
+  );
+}
 
-  private messagesNotRead() {
-
-    return this.allMessages.some(m => !m.isRead && m.senderId !== this.currentUserId());
-  }
+get allMessages() {
+  const historical = this.conversationOutput()?.messages ?? [];
+  return [...historical, ...this.messages];
+}
 }

@@ -7,6 +7,8 @@ import { NotificationPrompt } from '../notifications/presentation/notification-p
 import { NotificationService } from '../notifications/application/notification.service';
 import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
+import { PetIconComponent } from '../../shared/component/pet-icon/pet-icon.component';
+
 
 interface LocationSuggestion {
   displayName: string;
@@ -42,9 +44,10 @@ interface OverpassElement {
 @Component({
   selector: 'app-home-map',
   standalone: true,
-  imports: [HomeReportCardComponent, RouterLink, NotificationPrompt],
+  imports: [HomeReportCardComponent, RouterLink, NotificationPrompt, PetIconComponent],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
+  styleUrl: './home-map.css'
 })
 export class HomeMapComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
@@ -103,6 +106,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
 
   private userMarker?: L.Marker;
+  private radarCircle?: L.Circle;
+
+  readonly radioRadar = signal(5);
   private userLatLng?: L.LatLng;
   private searchMarker?: L.Marker;
   private searchDebounce?: ReturnType<typeof setTimeout>;
@@ -325,6 +331,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   async ngOnInit(): Promise<void> {
+    
     const reportId = this.route.snapshot.queryParamMap.get('reporte');
     if (reportId) this.successReportId.set(reportId);
 
@@ -430,6 +437,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       (position) => {
         this.userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
         this.placeUserMarker();
+        this.dibujarRadar();
         this.map.setView(this.userLatLng, 15);
         setTimeout(() => this.map.invalidateSize(), 100);
       },
@@ -637,6 +645,39 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     }).addTo(this.map);
   }
 
+  private dibujarRadar(): void {
+
+  if (!this.userLatLng) return;
+
+  const radioMetros =
+    this.radioRadar() * 1000;
+
+  if (this.radarCircle) {
+
+    this.radarCircle.setRadius(
+      radioMetros
+    );
+
+    this.radarCircle.setLatLng(
+      this.userLatLng
+    );
+
+    return;
+  }
+
+  this.radarCircle = L.circle(
+    this.userLatLng,
+    {
+      radius: radioMetros,
+      color: '#E8842E',
+      weight: 2,
+      fillColor: '#E8842E',
+      fillOpacity: 0.15
+    }
+  ).addTo(this.map);
+
+}
+
   private centerOnUser(): void {
     if (this.userLatLng) {
       this.map.setView(this.userLatLng, 16);
@@ -675,6 +716,85 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     }
   }
 
+  private filtrarPorRadar(): void {
+
+  if (!this.userLatLng) return;
+
+  let filtrados = [...this.reportes()];
+
+  // FILTRO TIPO
+
+  if (this.tipoFiltro() === 'perdidos') {
+
+    filtrados = filtrados.filter(
+      reporte => reporte.type === 'LOST'
+    );
+
+  }
+
+  if (this.tipoFiltro() === 'avistados') {
+
+    filtrados = filtrados.filter(
+      reporte => reporte.type === 'SIGHTING'
+    );
+
+  }
+
+  // FILTRO MASCOTA
+
+  if (this.mascotaFiltro() === 'perro') {
+
+    filtrados = filtrados.filter(reporte => {
+      const animalType =
+        (reporte.details as { animalType?: AnimalType }).animalType;
+
+      return animalType === 'DOG';
+    });
+
+  }
+
+  if (this.mascotaFiltro() === 'gato') {
+
+    filtrados = filtrados.filter(reporte => {
+      const animalType =
+        (reporte.details as { animalType?: AnimalType }).animalType;
+
+      return animalType === 'CAT';
+    });
+
+  }
+
+  // FILTRO RADAR
+
+  const distanciaMaxima =
+    this.radioRadar();
+
+  filtrados = filtrados.filter(
+    reporte => {
+
+      const distancia =
+        this.calcularDistancia(
+          this.userLatLng!.lat,
+          this.userLatLng!.lng,
+          reporte.location.latitude,
+          reporte.location.longitude
+        );
+
+      return distancia <= distanciaMaxima;
+
+    }
+  );
+
+  this.reportesFiltrados.set(
+    filtrados
+  );
+
+  this.dibujarMarcadores(
+    filtrados
+  );
+
+}
+
   selectSuggestion(suggestion: LocationSuggestion): void {
     this.searchTerm.set(suggestion.displayName);
     this.suggestions.set([]);
@@ -706,7 +826,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   seleccionarTipo(valor: string): void {
     this.tipoFiltro.set(valor);
-    this.aplicarFiltros();
+      this.filtrarPorRadar();
+
   }
 
   seleccionarCercania(valor: string): void {
@@ -716,13 +837,28 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   seleccionarMascota(valor: string): void {
     this.mascotaFiltro.set(valor);
-    this.aplicarFiltros();
+    this.filtrarPorRadar();
   }
 
   seleccionarCentros(valor: string): void {
     this.centrosFiltro.set(valor);
     this.aplicarFiltroCentros();
   }
+
+  cambiarRadar(event: Event): void {
+
+  const valor =
+    Number(
+      (event.target as HTMLInputElement)
+      .value
+    );
+
+  this.radioRadar.set(valor);
+
+  this.dibujarRadar();
+
+  this.filtrarPorRadar();
+}
 
   toggleTooltipCentros(event: Event): void {
     event.stopPropagation();

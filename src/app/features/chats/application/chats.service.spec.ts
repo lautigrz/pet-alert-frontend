@@ -165,6 +165,7 @@ describe('ChatsService', () => {
       const mockConversations: ConversationSummaryOutput[] = [
         {
           publicId: 'c1',
+          unreadCount: 0,
           otherUser: { publicId: 'u2', username: 'john_doe', photoUrl: null },
           lastMessage: { text: 'hey', isRead: true, createdAt: new Date() },
           createdAt: new Date(),

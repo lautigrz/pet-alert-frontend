@@ -31,51 +31,48 @@
         </button>
 
         <button type="button" (click)="seleccionarTipo('perdidos')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'perdidos'
-        ? 'bg-[#E8842E] text-white border-[#E8842E]'
-        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          Perdidos
-        </button>
+  class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" 
+  [class]="tipoFiltro() === 'perdidos'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+  
+  <img src="Icono-mascota-perdida-negro.png" alt="Perdido" class="w-4 h-4 shrink-0">
+  <span>Perdidos</span>
 
-        <button type="button" (click)="seleccionarTipo('avistados')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'avistados'
-        ? 'bg-[#E8842E] text-white border-[#E8842E]'
-        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          Avistados
-        </button>
+</button>
+
+<button type="button" (click)="seleccionarTipo('avistados')"
+  class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" 
+  [class]="tipoFiltro() === 'avistados'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+  
+  <img src="avistamiento-negro.png" alt="Avistamiento" class="w-4 h-4 shrink-0">
+  <span>Avistados</span>
+
+</button>
       </div>
     </div>
 
     <div class="mb-4">
-      <p class="text-xs font-semibold text-slate-500 mb-2">Cercanía</p>
+      <p class="text-xs font-semibold text-slate-500 mb-2">Cercanía </p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="seleccionarCercania('todos')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="cercaniaFiltro() === 'todos'
-    ? 'bg-[#E8842E] text-white border-[#E8842E]'
-    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          Todos
-        </button>
+        <div class="flex justify-between text-xs text-slate-500">
+    <span></span>
+    <span>{{ radioRadar() }} km</span>
+    <span></span>
+  </div>
 
-        <button type="button" (click)="seleccionarCercania('5km')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="cercaniaFiltro() === '5km'
-    ? 'bg-[#E8842E] text-white border-[#E8842E]'
-    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          5km
-        </button>
-
-        <button type="button" (click)="seleccionarCercania('10km')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="cercaniaFiltro() === '10km'
-    ? 'bg-[#E8842E] text-white border-[#E8842E]'
-    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          10km
-        </button>
-
-        <button type="button" (click)="seleccionarCercania('20km')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="cercaniaFiltro() === '20km'
-    ? 'bg-[#E8842E] text-white border-[#E8842E]'
-    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          20km
-        </button>
+<input
+  type="range"
+  min="1"
+  max="20"
+  step="1"
+  [value]="radioRadar()"
+  (input)="cambiarRadar($event)"
+  class="w-full slider-orange"
+  [style.background]="'linear-gradient(to right, #E8842E 0%, #E8842E ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb 100%)'"
+/>
       </div>
     </div>
 
@@ -89,19 +86,39 @@
           Todos
         </button>
 
-        <button type="button" (click)="seleccionarMascota('perro')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="mascotaFiltro() === 'perro'
+       <button
+  type="button"
+  (click)="seleccionarMascota('perro')"
+  class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="mascotaFiltro() === 'perro'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          Perro
-        </button>
 
-        <button type="button" (click)="seleccionarMascota('gato')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="mascotaFiltro() === 'gato'
+  <app-pet-icon
+    name="perro"
+    class="w-4 h-4">
+  </app-pet-icon>
+
+  <span>Perro</span>
+
+</button>
+
+       <button
+  type="button"
+  (click)="seleccionarMascota('gato')"
+  class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="mascotaFiltro() === 'gato'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          Gato
-        </button>
+
+  <app-pet-icon
+    name="gato"
+    class="w-4 h-4">
+  </app-pet-icon>
+
+  <span>Gato</span>
+
+</button>
       </div>
     </div>
 
@@ -109,7 +126,7 @@
       <div class="relative mb-2 w-fit" (pointerenter)="onTooltipPointerEnter($event)"
         (pointerleave)="onTooltipPointerLeave($event)">
         <p class="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
-          Centros
+          Centros 
           <button type="button" (click)="toggleTooltipCentros($event)" aria-label="¿Qué son los centros?"
             class="w-4 h-4 inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-400 text-[10px] font-bold leading-none hover:border-[#E8842E] hover:text-[#E8842E] transition">
             ?
@@ -141,19 +158,39 @@
           Ninguno
         </button>
 
-        <button type="button" (click)="seleccionarCentros('comisarias')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="centrosFiltro() === 'comisarias'
-        ? 'bg-[#E8842E] text-white border-[#E8842E]'
-        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          Comisarías
-        </button>
+      <button
+  type="button"
+  (click)="seleccionarCentros('comisarias')"
+  class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="centrosFiltro() === 'comisarias'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
-        <button type="button" (click)="seleccionarCentros('veterinarias')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="centrosFiltro() === 'veterinarias'
-        ? 'bg-[#E8842E] text-white border-[#E8842E]'
-        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          Veterinarias
-        </button>
+  <img
+    src="comisaria.svg"
+    alt="Comisaría"
+    class="w-4 h-4 shrink-0">
+
+  <span>Comisarías</span>
+
+</button>
+
+<button
+  type="button"
+  (click)="seleccionarCentros('veterinarias')"
+  class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+  [class]="centrosFiltro() === 'veterinarias'
+    ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+
+  <img
+    src="veterinaria.svg"
+    alt="Veterinaria"
+    class="w-4 h-4 shrink-0">
+
+  <span>Veterinarias</span>
+
+</button>
 
       </div>
 

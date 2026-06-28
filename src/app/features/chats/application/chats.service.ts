@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-
+import { BehaviorSubject } from 'rxjs';
 import { SocketService } from '../../../core/services/socket.service';
 import { firstValueFrom, Observable } from 'rxjs';
 import { ConversationOutput, ConversationSummaryOutput } from '../domain/chat.models';
@@ -15,6 +15,7 @@ export interface MessagePayload {
   createdAt:  Date;
   imageUrl?:  string;
   images?:    { publicId: string; url: string }[];
+   conversationId: string;
 }
 
 export interface CreateConversationResponse {
@@ -26,11 +27,18 @@ export interface CreateConversationResponse {
 @Injectable({
   providedIn: 'root',
 })
+
+
 export class ChatsService {
 
   private readonly socketService = inject(SocketService);
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
+  private unreadChatsSubject = new BehaviorSubject<number>(0);
+    
+  
+
+  unreadChats$ = this.unreadChatsSubject.asObservable();
   sendMessage(conversationId: string, text: string): void {
     this.socketService.emit('message:send', { conversationId, text });
   }
@@ -91,4 +99,52 @@ export class ChatsService {
     }
   }
 
+private listenersInitialized = false;
+
+initializeSocketListeners(): void {
+
+  if (this.listenersInitialized) {
+    return;
+  }
+
+  this.listenersInitialized = true;
+
+  this.onMessageReceived().subscribe(() => {
+    this.refreshUnreadChats();
+  });
+
+  this.onMessageRead().subscribe(() => {
+    this.refreshUnreadChats();
+  });
+}
+
+  setUnreadChats(count: number): void {
+  this.unreadChatsSubject.next(count);
+}
+
+
+
+getUnreadChats(): number {
+  return this.unreadChatsSubject.value;
+}
+
+refreshUnreadChats(): void {
+  this.getConversations().subscribe({
+    next: (conversations) => {
+
+      console.log("CONVERSACIONES:", conversations);
+
+      const unread = conversations.filter(
+        c => (c.unreadCount ?? 0) > 0
+      ).length;
+
+      console.log("UNREAD:", unread);
+
+      this.setUnreadChats(unread);
+    },
+    error: (err) => {
+      console.error("ERROR getConversations:", err);
+    }
+  });
+}
 }
