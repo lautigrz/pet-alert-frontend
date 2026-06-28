@@ -1,13 +1,14 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 
 @Injectable({ providedIn: 'root' })
 export class SocketService implements OnDestroy {
 
   private socket: Socket | null = null;
-  private string = 'http://localhost:3000';
+  private string = environment.apiUrl.replace(/\/api\/?$/, '');
 
   connect(token: string, onAuthenticationError?: () => Promise<string>): void {
     if (this.socket?.connected) return;
