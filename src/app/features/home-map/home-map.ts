@@ -7,6 +7,7 @@ import { NotificationPrompt } from '../notifications/presentation/notification-p
 import { NotificationService } from '../notifications/application/notification.service';
 import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
+import { InfoTooltipComponent } from '../../shared/component/info-tooltip/info-tooltip.component';
 
 interface LocationSuggestion {
   displayName: string;
@@ -42,7 +43,7 @@ interface OverpassElement {
 @Component({
   selector: 'app-home-map',
   standalone: true,
-  imports: [HomeReportCardComponent, RouterLink, NotificationPrompt],
+  imports: [HomeReportCardComponent, RouterLink, NotificationPrompt, InfoTooltipComponent],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
 })

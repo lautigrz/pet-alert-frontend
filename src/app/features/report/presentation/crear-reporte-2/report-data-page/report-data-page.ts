@@ -6,11 +6,12 @@ import { ReportWizardService } from '../../../application/report-wizard.service'
 import { Pet, SightingDetails } from '../../../domain/report.model';
 import { DOG_BREEDS, PET_COLORS } from '../../../domain/pet-options';
 import { CatalogService } from '../../../application/catalog.service';
+import { InfoTooltipComponent } from '../../../../../shared/component/info-tooltip/info-tooltip.component';
 
 @Component({
   selector: 'app-report-data-page',
   standalone: true,
-  imports: [RouterLink, WizardStepperComponent, PetIconComponent],
+  imports: [RouterLink, WizardStepperComponent, PetIconComponent, InfoTooltipComponent],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './report-data-page.html',
 })

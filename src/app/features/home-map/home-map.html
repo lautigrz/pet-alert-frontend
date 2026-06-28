@@ -106,32 +106,32 @@
     </div>
 
     <div>
-      <div class="relative mb-2 w-fit" (pointerenter)="onTooltipPointerEnter($event)"
-        (pointerleave)="onTooltipPointerLeave($event)">
-        <p class="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
-          Centros
-          <button type="button" (click)="toggleTooltipCentros($event)" aria-label="¿Qué son los centros?"
-            class="w-4 h-4 inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-400 text-[10px] font-bold leading-none hover:border-[#E8842E] hover:text-[#E8842E] transition">
-            ?
-          </button>
-        </p>
+  <div class="mb-2 flex items-center gap-1.5">
+    <p class="text-xs font-semibold text-slate-500">
+      Centros
+    </p>
 
-        @if (tooltipCentrosAbierto()) {
-        <div
-          class="absolute left-0 bottom-[calc(100%+6px)] lg:bottom-auto lg:top-[calc(100%+6px)] z-[1200] w-64 max-w-[calc(100vw-2.5rem)] bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-left">
-          <p class="text-xs font-bold text-[#12355B] mb-1.5">¿Para qué sirven?</p>
-          <p class="text-xs text-slate-500 leading-relaxed">
-            Muestran en el mapa los <span class="font-semibold text-[#12355B]">puntos de ayuda</span> cercanos a la zona
-            que estás viendo.
-          </p>
-          <p class="text-xs text-slate-500 leading-relaxed mt-2">
-            También podés coordinarlos como <span class="font-semibold text-[#12355B]">punto de encuentro seguro</span>
-            con otros usuarios para entregar o recuperar una mascota.
-          </p>
-          <p class="text-[11px] text-slate-400 mt-2">Tocá "Ninguno" para ocultarlos del mapa.</p>
-        </div>
-        }
-      </div>
+    <app-info-tooltip
+      tooltipTitle ="¿Para qué sirven?"
+      [ariaLabel]="'¿Qué son los centros?'"
+    >
+      <p class="text-xs text-slate-500 leading-relaxed">
+        Muestran en el mapa los
+        <span class="font-semibold text-[#12355B]">puntos de ayuda</span>
+        cercanos a la zona que estás viendo.
+      </p>
+
+      <p class="text-xs text-slate-500 leading-relaxed mt-2">
+        También podés coordinarlos como
+        <span class="font-semibold text-[#12355B]">punto de encuentro seguro</span>
+        con otros usuarios para entregar o recuperar una mascota.
+      </p>
+
+      <p class="text-[11px] text-slate-400 mt-2">
+        Tocá "Ninguno" para ocultarlos del mapa.
+      </p>
+    </app-info-tooltip>
+  </div>
 
       <div class="flex flex-wrap gap-2">
         <button type="button" (click)="seleccionarCentros('todos')"

@@ -1,0 +1,26 @@
+<div
+  class="relative inline-flex items-center"
+  (pointerenter)="openTooltip()"
+  (pointerleave)="closeTooltip()"
+>
+  <button
+    type="button"
+    (click)="toggleTooltip($event)"
+    [attr.aria-label]="ariaLabel()"
+    class="w-4 h-4 inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-400 text-[10px] font-bold leading-none hover:border-[#E8842E] hover:text-[#E8842E] transition"
+  >
+    ?
+  </button>
+
+  @if (isOpen()) {
+    <div
+      class="absolute left-0 top-[calc(100%+6px)] z-[1200] w-72 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-left"
+    >
+      <p class="text-xs font-bold text-[#12355B] mb-1.5">
+        {{ tooltipTitle () }}
+      </p>
+
+      <ng-content></ng-content>
+    </div>
+  }
+</div>

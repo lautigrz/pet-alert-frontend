@@ -23,7 +23,29 @@
       <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col gap-3">
         <div class="flex flex-col sm:flex-row sm:items-start gap-4">
           <div class="flex-1 min-w-0">
-            <span class="block text-sm font-semibold text-[#12355B]">Foto de la mascota</span>
+            
+            <div class="flex items-center gap-1.5">
+  <span class="text-sm font-semibold text-[#12355B]">
+    Foto de la mascota
+  </span>
+
+  <app-info-tooltip
+    tooltipTitle ="¿Cómo funciona la comparación?"
+    [ariaLabel]="'Información sobre la foto de la mascota'"
+  >
+    <p class="text-xs text-slate-500 leading-relaxed">
+      La búsqueda utiliza principalmente la
+      <span class="font-semibold text-[#12355B]">foto de la mascota</span>
+      para encontrar coincidencias.
+    </p>
+
+    <p class="text-xs text-slate-500 leading-relaxed mt-2">
+      Una imagen clara, donde se vea bien el animal, mejora significativamente
+      los resultados.
+    </p>
+  </app-info-tooltip>
+</div>
+            
             <p class="text-xs text-slate-400 mt-0.5 mb-2">Proporcioná una foto clara de la mascota</p>
             <button
               type="button"
@@ -182,10 +204,39 @@
         </div>
 
         <div>
-          <label for="description" class="block text-sm font-semibold text-[#12355B] mb-1.5">Descripción adicional</label>
-          <textarea id="description" #descRef [value]="petDescription()" (input)="petDescription.set(descRef.value)"
-            placeholder="Ingresá información que creas relevante para el caso. Ej: manchas, cicatrices o rasgos distintivos del pelaje" rows="3"
-            class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400 resize-none"></textarea>
+          <div class="flex items-center gap-1.5 mb-1.5">
+  <label
+    for="description"
+    class="text-sm font-semibold text-[#12355B]"
+  >
+    Descripción adicional
+  </label>
+
+  <app-info-tooltip
+    tooltipTitle ="¿Por qué agregar una descripción?"
+    [ariaLabel]="'Información sobre la descripción'"
+  >
+    <p class="text-xs text-slate-500 leading-relaxed">
+      La comparación se ayuda de la descripción para identificar o descartar coincidencias.
+    </p>
+
+    <p class="text-xs text-slate-500 leading-relaxed mt-2">
+      Agregar detalles como manchas, cicatrices, color de ojos, tipo de pelaje,
+      accesorios o cualquier característica distintiva ayuda a mejorar la precisión
+      de las coincidencias.
+    </p>
+  </app-info-tooltip>
+</div>
+
+<textarea
+  id="description"
+  #descRef
+  [value]="petDescription()"
+  (input)="petDescription.set(descRef.value)"
+  placeholder="Ingresá información que creas relevante para el caso. Ej: manchas, cicatrices o rasgos distintivos del pelaje"
+  rows="3"
+  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400 resize-none"
+></textarea>
         </div>
       </div>
 
