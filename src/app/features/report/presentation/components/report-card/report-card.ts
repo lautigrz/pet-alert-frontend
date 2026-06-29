@@ -52,8 +52,22 @@ export class ReportCardComponent {
 
   readonly direccion = computed(() => {
     const address = this.data()?.location.address ?? '';
-    if (!address) return 'Sin ubicación';
-    return address.split(',').slice(0, 2).map((p) => p.trim()).join(', ');
+    const parts = address.split(',').map((p) => p.trim()).filter(Boolean);
+    if (parts.length === 0) return 'Sin ubicación';
+    const [calle, ...resto] =
+      parts.length >= 2 && /^\d+$/.test(parts[0])
+        ? [`${parts[1]} ${parts[0]}`, ...parts.slice(2)]
+        : parts;
+    const zonas: string[] = [];
+    for (const zona of resto) {
+      const previa = zonas[zonas.length - 1];
+      if (previa && this.mismaZona(previa, zona)) {
+        if (zona.length < previa.length) zonas[zonas.length - 1] = zona;
+        continue;
+      }
+      zonas.push(zona);
+    }
+    return [calle, ...zonas].slice(0, 3).join(', ');
   });
 
   readonly estadoLabel = computed(() => {
@@ -85,6 +99,12 @@ export class ReportCardComponent {
     if (!r) return '';
     return this.haceCuanto(r.createdAt);
   });
+
+  private mismaZona(a: string, b: string): boolean {
+    const x = a.toLowerCase();
+    const y = b.toLowerCase();
+    return x.includes(y) || y.includes(x);
+  }
 
   private especie(tipo: string): string {
     const map: Record<string, string> = { DOG: 'Perro', CAT: 'Gato' };

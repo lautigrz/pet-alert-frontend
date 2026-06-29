@@ -18,7 +18,7 @@ function makeReportDetail(overrides: Partial<ReportDetail> = {}): ReportDetail {
     updatedAt: null,
     location: { address: 'Calle 1', latitude: 0, longitude: 0 },
     details: { animalType: 'DOG', color: 'negro', hasIdCollar: false, isInTransit: false, images: [] },
-    user: { publicId: 'owner-1', username: 'ana', photoUrl: null },
+    user: { publicId: 'owner-1', username: 'ana', photoUrl: null, createdAt: '2024-01-01T00:00:00.000Z' },
     ...overrides,
   };
 }
@@ -49,7 +49,7 @@ describe('ReportContactComponent', () => {
   });
 
   it('abre el chat con el dueño del reporte al enviar mensaje', async () => {
-    fixture.componentRef.setInput('report', makeReportDetail({ user: { publicId: 'owner-1', username: 'ana', photoUrl: null } }));
+    fixture.componentRef.setInput('report', makeReportDetail({ user: { publicId: 'owner-1', username: 'ana', photoUrl: null, createdAt: '2024-01-01T00:00:00.000Z' } }));
     chatsService.getOrCreateConversation.mockResolvedValue('conv-7');
 
     await component.enviarMensaje();
@@ -73,5 +73,16 @@ describe('ReportContactComponent', () => {
     component.goToMatches();
 
     expect(router.navigate).toHaveBeenCalledWith(['/reports', 'report-9', 'matches']);
+  });
+
+  it('muestra desde cuándo el usuario es miembro de la plataforma', () => {
+    fixture.componentRef.setInput(
+      'report',
+      makeReportDetail({
+        user: { publicId: 'owner-1', username: 'ana', photoUrl: null, createdAt: '2024-03-15T12:00:00.000Z' },
+      }),
+    );
+
+    expect(component.miembroDesde()).toBe('Miembro desde marzo 2024');
   });
 });

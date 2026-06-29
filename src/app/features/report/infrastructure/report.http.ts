@@ -77,6 +77,7 @@ export interface ReportDetail {
     publicId: string;
     username: string;
     photoUrl: string | null;
+    createdAt: string | null;
   };
 }
 
