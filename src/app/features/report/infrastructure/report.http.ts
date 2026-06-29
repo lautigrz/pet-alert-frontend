@@ -54,6 +54,7 @@ export interface ReportDetail {
   description: string;
   createdAt: string;
   occurredAt: string;
+  updatedAt: string | null;
   location: {
     address: string;
     latitude: number;
@@ -199,6 +200,26 @@ export class ReportHttp {
   getReportByPublicId(publicId: string): Promise<ReportDetail> {
     return firstValueFrom(
       this.http.get<ReportDetail>(`${this.baseUrl}/reports/${publicId}`),
+    );
+  }
+
+  followReport(publicId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.baseUrl}/reports/${publicId}/follow`, {}),
+    );
+  }
+
+  unfollowReport(publicId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(`${this.baseUrl}/reports/${publicId}/follow`),
+    );
+  }
+
+  isFollowingReport(publicId: string): Promise<{ isFollowing: boolean }> {
+    return firstValueFrom(
+      this.http.get<{ isFollowing: boolean }>(
+        `${this.baseUrl}/reports/${publicId}/follow`,
+      ),
     );
   }
 }

@@ -1,4 +1,4 @@
-import { Component,  OnInit, computed, signal, inject  } from '@angular/core';
+import { Component, OnInit, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReportService } from '../../application/report.service';
@@ -10,6 +10,8 @@ import { ReportLocationComponent } from '../components/report-location/report-lo
 import { ReportContactComponent } from '../components/report-contact/report-contact';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ProfileService } from '../../../profile/application/profile.service';
+import { ReportTimelineComponent } from '../components/report-timeline/report-timeline';
+import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
 
 @Component({
   selector: 'app-report-detail',
@@ -21,17 +23,21 @@ import { ProfileService } from '../../../profile/application/profile.service';
     ReportInfoComponent,
     ReportLocationComponent,
     ReportContactComponent,
+    ReportTimelineComponent,
+    ReportModalComponent
   ],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './report-detail.html',
 })
 
-export class ReportDetailPage implements OnInit{
+export class ReportDetailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly reportService = inject(ReportService);
   private readonly reportesService = inject(ReportListService);
   private readonly toastService = inject(ToastService);
   private readonly profileService = inject(ProfileService);
+  private readonly USUARIO_BAJA_VALORACION_PUBLIC_ID = '70867c26-8c5c-40d2-b3df-08036823ff16';
+
 
   report = signal<ReportDetail | null>(null);
   loading = signal(true);
@@ -39,6 +45,10 @@ export class ReportDetailPage implements OnInit{
   actualizando = signal(false);
   confirmandoResolucion = signal(false);
   usuarioId = signal<string | null>(null);
+  mostrandoModalDenuncia = signal(false);
+  siguiendoHistoria = signal(false);
+  cargandoSeguimiento = signal(false);
+  actualizandoSeguimiento = signal(false);
 
   esPropio = computed(() => {
     const r = this.report();
@@ -46,14 +56,18 @@ export class ReportDetailPage implements OnInit{
     return !!r && !!id && r.user.publicId === id;
   });
 
+  puedeSeguirHistoria = computed(() => {
+    const r = this.report();
+    return !!r && !this.esPropio() && r.status === 'ACTIVE';
+  });
+
   async ngOnInit() {
     const publicId = this.route.snapshot.paramMap.get('publicId')!;
+
     try {
       this.report.set(await this.reportService.getReportByPublicId(publicId));
     } catch {
       this.error.set('No se pudo cargar el reporte');
-    } finally {
-      this.loading.set(false);
     }
 
     try {
@@ -61,6 +75,12 @@ export class ReportDetailPage implements OnInit{
       this.usuarioId.set(perfil.id);
     } catch {
       this.usuarioId.set(null);
+    }
+
+    try {
+      await this.cargarEstadoSeguimiento();
+    } finally {
+      this.loading.set(false);
     }
   }
 
@@ -70,6 +90,14 @@ export class ReportDetailPage implements OnInit{
 
   cancelarConfirmacion(): void {
     this.confirmandoResolucion.set(false);
+  }
+
+  abrirModalDenuncia() {
+    this.mostrandoModalDenuncia.set(true);
+  }
+
+  cerrarModalDenuncia() {
+    this.mostrandoModalDenuncia.set(false);
   }
 
   async resolverReporte(): Promise<void> {
@@ -93,6 +121,16 @@ export class ReportDetailPage implements OnInit{
     }
   }
 
+  esUsuarioBajaValoracion(report: ReportDetail): boolean {
+    return report.user.publicId === this.USUARIO_BAJA_VALORACION_PUBLIC_ID;
+    //ACA IRIA LA LOGICA REAL
+  }
+
+  valoracionUsuario(report: ReportDetail): string {
+    return this.esUsuarioBajaValoracion(report) ? '2.0' : '5.0';
+    //ACA IRIA LA LOGICA REAL
+  }
+
   private readonly router = inject(Router);
   irAEditarDatos(): void {
     const r = this.report();
@@ -102,5 +140,56 @@ export class ReportDetailPage implements OnInit{
   irAEditarUbicacion(): void {
     const r = this.report();
     if (r) this.router.navigate(['/reports', r.publicId, 'edit', 'ubicacion']);
+  }
+
+  private async cargarEstadoSeguimiento(): Promise<void> {
+    const r = this.report();
+
+    if (!r || this.esPropio() || r.status !== 'ACTIVE') {
+      this.siguiendoHistoria.set(false);
+      return;
+    }
+
+    this.cargandoSeguimiento.set(true);
+
+    try {
+      const result = await this.reportService.isFollowingReport(r.publicId);
+      this.siguiendoHistoria.set(result.isFollowing);
+    } catch {
+      this.siguiendoHistoria.set(false);
+    } finally {
+      this.cargandoSeguimiento.set(false);
+    }
+  }
+
+  async toggleSeguirHistoria(): Promise<void> {
+    const r = this.report();
+
+    if (!r || this.esPropio() || r.status !== 'ACTIVE') {
+      return;
+    }
+
+    this.actualizandoSeguimiento.set(true);
+
+    try {
+      if (this.siguiendoHistoria()) {
+        await this.reportService.unfollowReport(r.publicId);
+        this.siguiendoHistoria.set(false);
+        this.toastService.success('Dejaste de seguir esta historia');
+      } else {
+        await this.reportService.followReport(r.publicId);
+        this.siguiendoHistoria.set(true);
+        this.toastService.success('Ahora seguís esta historia');
+      }
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'No se pudo actualizar el seguimiento';
+
+      this.toastService.error(msg);
+    } finally {
+      this.actualizandoSeguimiento.set(false);
+    }
   }
 }

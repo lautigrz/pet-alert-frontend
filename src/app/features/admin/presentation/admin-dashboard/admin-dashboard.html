@@ -1,0 +1,356 @@
+<div class="flex flex-1 min-h-0 bg-[#f3f4f6]">
+  <aside class="hidden sm:flex w-60 shrink-0 bg-[#12355B] text-white flex-col">
+    <div class="px-5 py-5 border-b border-white/10">
+      <p class="text-lg font-extrabold leading-tight">PetFinder</p>
+      <p class="text-xs text-white/60">Panel de moderación</p>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-1">
+      <button type="button" (click)="selectSection('posts')"
+        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition"
+        [class]="section() === 'posts' ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10'">
+        <span>Publicaciones reportadas</span>
+        @if (pendingPosts() > 0) {
+          <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingPosts() }}</span>
+        }
+      </button>
+
+      <button type="button" (click)="selectSection('chats')"
+        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition"
+        [class]="section() === 'chats' ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10'">
+        <span>Chats reportados</span>
+        @if (pendingChats() > 0) {
+          <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingChats() }}</span>
+        }
+      </button>
+    </nav>
+
+    <div class="px-5 py-4 border-t border-white/10">
+      <p class="text-xs text-white/60">Sesión de administrador</p>
+    </div>
+  </aside>
+
+  <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+    <header class="bg-white border-b border-slate-200 px-5 sm:px-6 py-4">
+      <h1 class="text-xl font-extrabold text-[#12355B]">
+        {{ section() === 'posts' ? 'Publicaciones reportadas' : 'Chats reportados' }}
+      </h1>
+      <p class="text-sm text-slate-500">
+        {{ section() === 'posts'
+          ? 'Revisá las publicaciones denunciadas por la comunidad.'
+          : 'Revisá los chats denunciados por comportamiento inapropiado.' }}
+      </p>
+    </header>
+
+    <main class="flex-1 overflow-y-auto px-5 sm:px-6 py-6 [scrollbar-gutter:stable]">
+      <div class="max-w-[1100px] mx-auto">
+
+        <div class="sm:hidden flex gap-2 mb-5">
+          <button type="button" (click)="selectSection('posts')"
+            class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition"
+            [class]="section() === 'posts' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
+            Publicaciones
+            @if (pendingPosts() > 0) {
+              <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingPosts() }}</span>
+            }
+          </button>
+          <button type="button" (click)="selectSection('chats')"
+            class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition"
+            [class]="section() === 'chats' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
+            Chats
+            @if (pendingChats() > 0) {
+              <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingChats() }}</span>
+            }
+          </button>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-4">
+          @for (option of statusOptions(); track option.value) {
+            <button type="button" (click)="setStatus(option.value)"
+              class="px-3 py-1.5 rounded-md text-xs font-semibold border transition"
+              [class]="status() === option.value
+                ? 'bg-[#12355B] text-white border-[#12355B]'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#12355B]'">
+              {{ option.label }}
+            </button>
+          }
+        </div>
+
+        @if (loading()) {
+          <p class="py-12 text-center text-slate-400 text-sm">Cargando denuncias…</p>
+        } @else if (error()) {
+          <p class="py-12 px-6 text-center rounded-2xl bg-[#E8842E]/10 text-[#E8842E] text-sm">{{ error() }}</p>
+        } @else if (visibleItems().length === 0) {
+          <p class="py-12 text-center text-slate-400 text-sm bg-white border border-dashed border-slate-200 rounded-2xl">
+            No hay denuncias en esta vista.
+          </p>
+        } @else {
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            @for (item of visibleItems(); track item.publicId) {
+              <article class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 transition hover:border-[#12355B]">
+                <div class="flex items-start gap-3">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 mb-2 flex-wrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-white"
+                        [class]="item.targetType === 'POST' ? 'bg-[#12355B]' : 'bg-[#1D6FA3]'">
+                        {{ targetTypeLabel(item.targetType) }}
+                      </span>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold" [class]="statusBadgeClass(item.status)">
+                        {{ statusLabel(item.status) }}
+                      </span>
+                      @if (item.reportCount > 1) {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#E8842E]/10 text-[#E8842E]">
+                          {{ item.reportCount }} denuncias
+                        </span>
+                      }
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div class="min-w-0">
+                        <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Usuario reportado</p>
+                        @if (item.reportedUser; as reportedUser) {
+                          <p class="text-sm font-semibold text-[#12355B] truncate">{{ reportedUser.username }}</p>
+                          <p class="text-xs text-slate-500 truncate">{{ reportedUser.email ?? '—' }}</p>
+                        } @else {
+                          <p class="text-sm text-slate-400 italic">Pendiente del back</p>
+                        }
+                      </div>
+                      <div class="min-w-0">
+                        <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Reportado por</p>
+                        <p class="text-sm font-semibold text-[#12355B] truncate">{{ item.reporter.username }}</p>
+                        <p class="text-xs text-slate-500 truncate">{{ item.reporter.email ?? '—' }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="button" (click)="$event.stopPropagation(); openDetail(item)"
+                    class="shrink-0 text-[#12355B] text-sm font-semibold hover:underline">
+                    Ver detalle
+                  </button>
+                </div>
+
+                <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+                  <p class="text-[11px] font-bold uppercase tracking-wide text-[#E8842E]">Motivo de la denuncia</p>
+                  <p class="text-sm text-[#12355B]">{{ reasonLabel(item.reason) }}</p>
+                </div>
+
+                @if (item.status === 'PENDING') {
+                  <div class="flex flex-wrap gap-2">
+                    @if (item.targetType === 'POST') {
+                      <button type="button" (click)="$event.stopPropagation(); approve(item)"
+                        class="flex-1 min-w-24 rounded-lg bg-[#1D6FA3] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#17597f]">
+                        Aprobar
+                      </button>
+                      <button type="button" (click)="$event.stopPropagation(); openSuspension(item)"
+                        class="flex-1 min-w-24 rounded-lg bg-[#1D6FA3] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#17597f]">
+                        Suspender
+                      </button>
+                      <button type="button" (click)="$event.stopPropagation(); askDelete(item)"
+                        class="flex-1 min-w-24 rounded-lg bg-[#E8842E] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#cf7325]">
+                        Eliminar
+                      </button>
+                    } @else {
+                      <button type="button" (click)="$event.stopPropagation(); openSuspension(item)"
+                        class="flex-1 min-w-24 rounded-lg bg-[#1D6FA3] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#17597f]">
+                        Suspender chat
+                      </button>
+                      <button type="button" (click)="$event.stopPropagation(); askDelete(item)"
+                        class="flex-1 min-w-24 rounded-lg bg-[#E8842E] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#cf7325]">
+                        Eliminar
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  <button type="button" (click)="$event.stopPropagation(); openEditor(item)"
+                    class="min-w-24 self-center rounded-lg bg-[#12355B] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#0d2742]">
+                    Editar estado
+                  </button>
+                }
+              </article>
+            }
+          </div>
+        }
+      </div>
+    </main>
+  </div>
+
+  @if (selected(); as item) {
+    <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
+      <div class="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h2 class="text-lg font-extrabold text-[#12355B]">
+            Detalle de la denuncia · {{ targetTypeLabel(item.targetType) }}
+          </h2>
+          <button type="button" (click)="closeDetail()" aria-label="Cerrar" class="text-slate-400 transition hover:text-[#12355B]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold" [class]="statusBadgeClass(item.status)">{{ statusLabel(item.status) }}</span>
+            <span class="text-xs text-slate-500">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }} hs</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+              <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Usuario reportado</p>
+              @if (item.reportedUser; as reportedUser) {
+                <p class="text-sm font-semibold text-[#12355B]">{{ reportedUser.username }}</p>
+                <p class="text-xs text-slate-500 break-all">{{ reportedUser.email ?? '—' }}</p>
+              } @else {
+                <p class="text-sm text-slate-400 italic">Pendiente del back</p>
+              }
+            </div>
+            <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+              <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Reportado por</p>
+              <p class="text-sm font-semibold text-[#12355B]">{{ item.reporter.username }}</p>
+              <p class="text-xs text-slate-500 break-all">{{ item.reporter.email ?? '—' }}</p>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+            <p class="text-[11px] font-bold uppercase tracking-wide text-[#E8842E]">Motivo de la denuncia</p>
+            <p class="text-sm text-[#12355B]">{{ reasonLabel(item.reason) }}</p>
+          </div>
+
+          <div>
+            <p class="text-sm font-bold text-[#12355B] mb-1">Descripción</p>
+            @if (item.description) {
+              <p class="text-sm text-slate-600">{{ item.description }}</p>
+            } @else {
+              <p class="text-sm text-slate-400 italic">Sin descripción</p>
+            }
+          </div>
+
+          @if (item.status === 'SUSPENDED' && item.suspensionReason) {
+            <div class="rounded-lg bg-[#12355B]/5 border border-[#12355B]/15 px-3 py-2">
+              <p class="text-[11px] font-bold uppercase tracking-wide text-[#12355B]">Motivo de la suspensión</p>
+              <p class="text-sm text-[#12355B]">{{ item.suspensionReason }}</p>
+            </div>
+          }
+
+          <div class="flex items-center gap-2 rounded-lg bg-[#E8842E]/10 border border-[#E8842E]/20 px-3 py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-[#E8842E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" />
+            </svg>
+            <p class="text-sm font-semibold text-[#12355B]">
+              Este {{ item.targetType === 'POST' ? 'reporte' : 'chat' }} acumula {{ item.reportCount }} {{ item.reportCount === 1 ? 'denuncia' : 'denuncias' }}.
+            </p>
+          </div>
+        </div>
+
+        @if (item.status === 'PENDING') {
+          <div class="flex shrink-0 flex-wrap gap-2 border-t border-slate-100 px-6 py-4">
+            @if (item.targetType === 'POST') {
+              <button type="button" (click)="approve(item)"
+                class="flex-1 min-w-24 rounded-lg bg-[#1D6FA3] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#17597f]">
+                Aprobar
+              </button>
+              <button type="button" (click)="openSuspension(item)"
+                class="flex-1 min-w-24 rounded-lg bg-[#1D6FA3] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#17597f]">
+                Suspender
+              </button>
+              <button type="button" (click)="askDelete(item)"
+                class="flex-1 min-w-24 rounded-lg bg-[#E8842E] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#cf7325]">
+                Eliminar
+              </button>
+            } @else {
+              <button type="button" (click)="openSuspension(item)"
+                class="flex-1 min-w-24 rounded-lg bg-[#1D6FA3] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#17597f]">
+                Suspender chat
+              </button>
+              <button type="button" (click)="askDelete(item)"
+                class="flex-1 min-w-24 rounded-lg bg-[#E8842E] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#cf7325]">
+                Eliminar
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="flex shrink-0 justify-center border-t border-slate-100 px-6 py-4">
+            <button type="button" (click)="openEditor(item)"
+              class="min-w-24 rounded-lg bg-[#12355B] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#0d2742]">
+              Editar estado
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (confirmation(); as conf) {
+    <div class="fixed inset-0 z-[2100] flex items-center justify-center bg-black/50 p-4">
+      <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl p-6 text-center">
+        <h2 class="text-lg font-extrabold text-[#12355B]">{{ conf.label }}</h2>
+        <p class="mt-2 text-sm text-slate-500">{{ conf.description }}</p>
+        <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
+          <button type="button" (click)="cancelConfirmation()"
+            class="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50">
+            Cancelar
+          </button>
+          <button type="button" (click)="confirmAction()"
+            class="flex-1 rounded-lg bg-[#12355B] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#0d2742]">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (editing(); as item) {
+    <div class="fixed inset-0 z-[2100] flex items-center justify-center bg-black/50 p-4">
+      <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl p-6">
+        <h2 class="text-lg font-extrabold text-[#12355B] text-center">Editar estado</h2>
+        <p class="mt-1 text-sm text-slate-500 text-center">Cambiá el estado de la denuncia si es necesario.</p>
+        <div class="mt-4 space-y-2">
+          @for (option of editorStatusOptions(); track option.value) {
+            <button type="button" (click)="changeStatus(item, option.value)" [disabled]="item.status === option.value"
+              class="w-full flex items-center justify-between rounded-lg border px-3 py-2.5 text-sm font-semibold transition disabled:cursor-default"
+              [class]="item.status === option.value
+                ? 'border-[#12355B] bg-[#12355B]/5 text-[#12355B]'
+                : 'border-slate-200 text-slate-600 hover:border-[#12355B]'">
+              <span>{{ option.label }}</span>
+              @if (item.status === option.value) {
+                <span class="text-[11px] font-bold uppercase tracking-wide text-[#12355B]">Actual</span>
+              }
+            </button>
+          }
+        </div>
+        <button type="button" (click)="closeEditor()"
+          class="mt-4 w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (suspending(); as item) {
+    <div class="fixed inset-0 z-[2100] flex items-center justify-center bg-black/50 p-4">
+      <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6">
+        <h2 class="text-lg font-extrabold text-[#12355B]">
+          {{ item.targetType === 'POST' ? 'Suspender publicación' : 'Suspender chat' }}
+        </h2>
+        <p class="mt-1 text-sm text-slate-500">
+          Indicá el motivo de la suspensión y por qué se llegó a esta decisión.
+        </p>
+        <label for="suspension-reason" class="mt-4 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Motivo de la suspensión</label>
+        <textarea id="suspension-reason" rows="4" maxlength="500" [value]="suspensionReason()"
+          (input)="suspensionReason.set($any($event.target).value)"
+          placeholder="Ej: Se confirmó un intento de estafa en la conversación. Se decide suspender para proteger a la comunidad."
+          class="mt-1 w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-[#12355B] outline-none transition focus:border-[#12355B]"></textarea>
+        <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
+          <button type="button" (click)="cancelSuspension()"
+            class="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50">
+            Cancelar
+          </button>
+          <button type="button" (click)="confirmSuspension()" [disabled]="!suspensionReason().trim()"
+            class="flex-1 rounded-lg bg-[#12355B] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#0d2742] disabled:opacity-50 disabled:cursor-default">
+            Suspender
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

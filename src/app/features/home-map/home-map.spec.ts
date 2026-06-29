@@ -1,14 +1,82 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { HomeMapComponent } from './home-map';
 import { ReportListService } from '../report/application/report-list.service';
 import { ProfileService } from '../profile/application/profile.service';
+import { NotificationService } from '../notifications/application/notification.service';
 import type { Reporte } from '../report/domain/report-read.model';
+
+vi.mock('leaflet', () => {
+  const createMarkerMock = () => ({
+    addTo: vi.fn().mockReturnThis(),
+    bindPopup: vi.fn().mockReturnThis(),
+    on: vi.fn().mockReturnThis(),
+    closePopup: vi.fn(),
+    setLatLng: vi.fn(),
+    setRadius: vi.fn(),
+    remove: vi.fn(),
+  });
+
+  const mapMock = {
+    setView: vi.fn().mockReturnThis(),
+    getCenter: vi.fn().mockReturnValue({
+      lat: -34.6037,
+      lng: -58.3816,
+    }),
+    invalidateSize: vi.fn(),
+    on: vi.fn().mockReturnThis(),
+    attributionControl: {
+      setPrefix: vi.fn(),
+      setPosition: vi.fn(),
+    },
+    zoomControl: {
+      setPosition: vi.fn(),
+    },
+  };
+
+  const domEvent = {
+    on: vi.fn().mockReturnThis(),
+    stop: vi.fn(),
+  };
+
+  return {
+    map: vi.fn().mockReturnValue(mapMock),
+    tileLayer: vi.fn().mockReturnValue({
+      addTo: vi.fn().mockReturnThis(),
+    }),
+    layerGroup: vi.fn().mockReturnValue({
+      addTo: vi.fn().mockReturnThis(),
+      clearLayers: vi.fn(),
+    }),
+    marker: vi.fn().mockReturnValue(createMarkerMock()),
+    circle: vi.fn().mockReturnValue(createMarkerMock()),
+    circleMarker: vi.fn().mockReturnValue(createMarkerMock()),
+    divIcon: vi.fn().mockImplementation((options) => ({
+      options,
+    })),
+    latLng: vi.fn().mockImplementation((lat: number, lng: number) => ({
+      lat,
+      lng,
+    })),
+    Control: class {
+      onAdd?: () => HTMLElement;
+
+      addTo = vi.fn().mockReturnThis();
+    },
+    DomUtil: {
+      create: vi.fn().mockImplementation((tagName: string) =>
+        document.createElement(tagName),
+      ),
+    },
+    DomEvent: domEvent,
+  };
+});
 
 interface MapMock {
   setView: ReturnType<typeof vi.fn>;
+  getCenter: ReturnType<typeof vi.fn>;
   invalidateSize?: ReturnType<typeof vi.fn>;
   attributionControl?: {
     setPrefix: ReturnType<typeof vi.fn>;
@@ -49,6 +117,7 @@ interface PlaceMock {
   nombre: string;
   lat: number;
   lng: number;
+  distancia?: number;
 }
 
 interface ProfileMock {
@@ -66,6 +135,14 @@ interface ProfileServiceMock {
 
 interface RouterMock {
   navigate: ReturnType<typeof vi.fn>;
+}
+
+interface NotificationServiceMock {
+  busy: ReturnType<typeof signal<boolean>>;
+  permission: ReturnType<typeof signal<NotificationPermission>>;
+  active: ReturnType<typeof signal<boolean>>;
+  isSupported: ReturnType<typeof vi.fn>;
+  enable: ReturnType<typeof vi.fn>;
 }
 
 interface HomeMapComponentTest {
@@ -114,7 +191,7 @@ const mockReporte = (overrides: MockReporteOptions = {}): Reporte =>
   ({
     publicId: 'rep-1',
     type: 'LOST',
-    status: 'OPEN',
+    status: 'ACTIVE',
     description: 'Descripción',
     createdAt: '2026-06-01T10:00:00.000Z',
     occurredAt: '2026-06-01T10:00:00.000Z',
@@ -143,12 +220,24 @@ const mockPlace = (overrides: Partial<PlaceMock> = {}): PlaceMock => ({
   nombre: 'Veterinaria',
   lat: -34.6,
   lng: -58.3,
+  distancia: 1.2,
   ...overrides,
 });
 
 const mockMap = (): MapMock => ({
   setView: vi.fn(),
+  getCenter: vi.fn().mockReturnValue({
+    lat: -34.6037,
+    lng: -58.3816,
+  }),
   invalidateSize: vi.fn(),
+  attributionControl: {
+    setPrefix: vi.fn(),
+    setPosition: vi.fn(),
+  },
+  zoomControl: {
+    setPosition: vi.fn(),
+  },
 });
 
 const mockLayer = (): LayerMock => ({
@@ -157,6 +246,7 @@ const mockLayer = (): LayerMock => ({
 
 const mockFetchJson = (data: unknown): void => {
   vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+    ok: true,
     json: vi.fn().mockResolvedValue(data),
   } as unknown as Response);
 };
@@ -164,6 +254,7 @@ const mockFetchJson = (data: unknown): void => {
 describe('HomeMapComponent', () => {
   let reportListService: ReportListServiceMock;
   let profileService: ProfileServiceMock;
+  let notificationService: NotificationServiceMock;
   let router: RouterMock;
   let component: HomeMapComponent;
 
@@ -192,6 +283,14 @@ describe('HomeMapComponent', () => {
       getProfile: vi.fn(),
     };
 
+    notificationService = {
+      busy: signal(false),
+      permission: signal('default'),
+      active: signal(false),
+      isSupported: vi.fn().mockReturnValue(true),
+      enable: vi.fn().mockResolvedValue(undefined),
+    };
+
     router = {
       navigate: vi.fn(),
     };
@@ -206,6 +305,10 @@ describe('HomeMapComponent', () => {
         {
           provide: ProfileService,
           useValue: profileService,
+        },
+        {
+          provide: NotificationService,
+          useValue: notificationService,
         },
         {
           provide: ActivatedRoute,
@@ -241,7 +344,6 @@ describe('HomeMapComponent', () => {
 
   describe('applyFilters', () => {
     it('filters lost reports', () => {
-      // Given
       component.reportes.set([
         mockReporte({ publicId: '1', type: 'LOST' }),
         mockReporte({ publicId: '2', type: 'SIGHTING' }),
@@ -250,16 +352,13 @@ describe('HomeMapComponent', () => {
       component.tipoFiltro.set('perdidos');
       mockDibujarMarcadores();
 
-      // When
       component.aplicarFiltros();
 
-      // Then
       expect(component.reportesFiltrados()).toHaveLength(1);
       expect(component.reportesFiltrados()[0]?.publicId).toBe('1');
     });
 
     it('filters sighting reports', () => {
-      // Given
       component.reportes.set([
         mockReporte({ publicId: '1', type: 'LOST' }),
         mockReporte({ publicId: '2', type: 'SIGHTING' }),
@@ -268,16 +367,13 @@ describe('HomeMapComponent', () => {
       component.tipoFiltro.set('avistados');
       mockDibujarMarcadores();
 
-      // When
       component.aplicarFiltros();
 
-      // Then
       expect(component.reportesFiltrados()).toHaveLength(1);
       expect(component.reportesFiltrados()[0]?.publicId).toBe('2');
     });
 
     it('filters dog reports', () => {
-      // Given
       component.reportes.set([
         mockReporte({
           publicId: '1',
@@ -292,16 +388,13 @@ describe('HomeMapComponent', () => {
       component.mascotaFiltro.set('perro');
       mockDibujarMarcadores();
 
-      // When
       component.aplicarFiltros();
 
-      // Then
       expect(component.reportesFiltrados()).toHaveLength(1);
       expect(component.reportesFiltrados()[0]?.publicId).toBe('1');
     });
 
     it('filters cat reports', () => {
-      // Given
       component.reportes.set([
         mockReporte({
           publicId: '1',
@@ -316,16 +409,13 @@ describe('HomeMapComponent', () => {
       component.mascotaFiltro.set('gato');
       mockDibujarMarcadores();
 
-      // When
       component.aplicarFiltros();
 
-      // Then
       expect(component.reportesFiltrados()).toHaveLength(1);
       expect(component.reportesFiltrados()[0]?.publicId).toBe('2');
     });
 
     it('does not filter reports when all filters are selected', () => {
-      // Given
       component.reportes.set([
         mockReporte({ publicId: '1', type: 'LOST' }),
         mockReporte({
@@ -340,15 +430,12 @@ describe('HomeMapComponent', () => {
       component.cercaniaFiltro.set('todos');
       mockDibujarMarcadores();
 
-      // When
       component.aplicarFiltros();
 
-      // Then
       expect(component.reportesFiltrados()).toHaveLength(2);
     });
 
     it('filters reports by distance', () => {
-      // Given
       component.reportes.set([
         mockReporte({
           publicId: 'near',
@@ -376,10 +463,8 @@ describe('HomeMapComponent', () => {
       component.cercaniaFiltro.set('5km');
       mockDibujarMarcadores();
 
-      // When
       component.aplicarFiltros();
 
-      // Then
       expect(component.reportesFiltrados()).toHaveLength(1);
       expect(component.reportesFiltrados()[0]?.publicId).toBe('near');
     });
@@ -387,14 +472,11 @@ describe('HomeMapComponent', () => {
 
   describe('clearSearch', () => {
     it('clears search term and suggestions', () => {
-      // Given
       component.searchTerm.set('Buenos Aires');
       component.suggestions.set([mockSuggestion()]);
 
-      // When
       component.clearSearch();
 
-      // Then
       expect(component.searchTerm()).toBe('');
       expect(component.suggestions()).toEqual([]);
     });
@@ -402,7 +484,6 @@ describe('HomeMapComponent', () => {
 
   describe('selectSuggestion', () => {
     it('updates search term and clears suggestions', () => {
-      // Given
       const suggestion = mockSuggestion({
         displayName: 'La Plata',
         lat: -34.9,
@@ -416,10 +497,8 @@ describe('HomeMapComponent', () => {
         (): void => undefined,
       );
 
-      // When
       component.selectSuggestion(suggestion);
 
-      // Then
       expect(component.searchTerm()).toBe('La Plata');
       expect(component.suggestions()).toEqual([]);
       expect(testingComponent().map.setView).toHaveBeenCalledWith(
@@ -431,7 +510,6 @@ describe('HomeMapComponent', () => {
 
   describe('searchLocation', () => {
     it('selects the first existing suggestion', async () => {
-      // Given
       const suggestion = mockSuggestion();
       component.suggestions.set([suggestion]);
 
@@ -439,15 +517,12 @@ describe('HomeMapComponent', () => {
         (): void => undefined,
       );
 
-      // When
       await component.searchLocation();
 
-      // Then
       expect(component.selectSuggestion).toHaveBeenCalledWith(suggestion);
     });
 
     it('does nothing when there are no suggestions after fetching', async () => {
-      // Given
       component.suggestions.set([]);
 
       vi.spyOn(testingComponent(), 'fetchSuggestions').mockResolvedValue(
@@ -458,49 +533,38 @@ describe('HomeMapComponent', () => {
         (): void => undefined,
       );
 
-      // When
       await component.searchLocation();
 
-      // Then
       expect(component.selectSuggestion).not.toHaveBeenCalled();
     });
 
     it('fetches suggestions when there are none loaded', async () => {
-      // Given
       component.suggestions.set([]);
 
       const fetchSuggestionsSpy = vi
         .spyOn(testingComponent(), 'fetchSuggestions')
         .mockResolvedValue(undefined);
 
-      // When
       await component.searchLocation();
 
-      // Then
       expect(fetchSuggestionsSpy).toHaveBeenCalled();
     });
   });
 
   describe('closeSuccess', () => {
     it('clears success report id', () => {
-      // Given
       component.successReportId.set('report-123');
 
-      // When
       component.closeSuccess();
 
-      // Then
       expect(component.successReportId()).toBeNull();
     });
 
     it('navigates removing query params', () => {
-      // Given
       component.successReportId.set('report-123');
 
-      // When
       component.closeSuccess();
 
-      // Then
       expect(router.navigate).toHaveBeenCalledWith([], {
         queryParams: {},
         replaceUrl: true,
@@ -510,13 +574,10 @@ describe('HomeMapComponent', () => {
 
   describe('verReporte', () => {
     it('navigates to report detail', () => {
-      // Given
       component.successReportId.set('report-123');
 
-      // When
       component.verReporte();
 
-      // Then
       expect(router.navigate).toHaveBeenCalledWith([
         '/reports',
         'report-123',
@@ -524,26 +585,20 @@ describe('HomeMapComponent', () => {
     });
 
     it('clears success report id after navigation', () => {
-      // Given
       component.successReportId.set('report-123');
 
-      // When
       component.verReporte();
 
-      // Then
       expect(component.successReportId()).toBeNull();
     });
   });
 
   describe('irALugar', () => {
     it('moves the map to the selected place', () => {
-      // Given
       testingComponent().map = mockMap();
 
-      // When
       component.irALugar(-34.6037, -58.3816);
 
-      // Then
       expect(testingComponent().map.setView).toHaveBeenCalledWith(
         [-34.6037, -58.3816],
         18,
@@ -553,33 +608,26 @@ describe('HomeMapComponent', () => {
 
   describe('formatBadge', () => {
     it('returns the number as text when it is less than or equal to ten', () => {
-      // When
       const result = testingComponent().formatBadge(10);
 
-      // Then
       expect(result).toBe('10');
     });
 
     it('returns +10 when the number is greater than ten', () => {
-      // When
       const result = testingComponent().formatBadge(11);
 
-      // Then
       expect(result).toBe('+10');
     });
 
     it('returns zero as text', () => {
-      // When
       const result = testingComponent().formatBadge(0);
 
-      // Then
       expect(result).toBe('0');
     });
   });
 
   describe('calcularDistancia', () => {
     it('returns zero when both points are the same', () => {
-      // When
       const result = testingComponent().calcularDistancia(
         -34.6037,
         -58.3816,
@@ -587,12 +635,10 @@ describe('HomeMapComponent', () => {
         -58.3816,
       );
 
-      // Then
       expect(result).toBe(0);
     });
 
     it('returns a positive distance when points are different', () => {
-      // When
       const result = testingComponent().calcularDistancia(
         -34.6037,
         -58.3816,
@@ -600,142 +646,114 @@ describe('HomeMapComponent', () => {
         -58.4,
       );
 
-      // Then
       expect(result).toBeGreaterThan(0);
     });
   });
 
   describe('onSearchInput', () => {
     it('updates search term', () => {
-      // When
       component.onSearchInput('Buenos Aires');
 
-      // Then
       expect(component.searchTerm()).toBe('Buenos Aires');
     });
 
     it('clears suggestions when the search text has less than three characters', () => {
-      // Given
       component.suggestions.set([mockSuggestion()]);
 
-      // When
       component.onSearchInput('Bo');
 
-      // Then
       expect(component.suggestions()).toEqual([]);
     });
 
     it('fetches suggestions after debounce when the search text has at least three characters', () => {
-      // Given
       vi.useFakeTimers();
 
       const fetchSuggestionsSpy = vi
         .spyOn(testingComponent(), 'fetchSuggestions')
         .mockResolvedValue(undefined);
 
-      // When
       component.onSearchInput('Buenos Aires');
       vi.advanceTimersByTime(350);
 
-      // Then
       expect(fetchSuggestionsSpy).toHaveBeenCalled();
     });
   });
 
   describe('direccionCorta', () => {
     it('returns "Sin ubicación" when address is empty', () => {
-      // When
       const result = testingComponent().direccionCorta('');
 
-      // Then
       expect(result).toBe('Sin ubicación');
     });
 
     it('returns street and number when address starts with a number', () => {
-      // When
       const result = testingComponent().direccionCorta(
         '123, Avenida Corrientes, Buenos Aires',
       );
 
-      // Then
       expect(result).toBe('Avenida Corrientes 123');
     });
 
     it('returns the first address part when address does not start with a number', () => {
-      // When
       const result = testingComponent().direccionCorta(
         'Avenida Corrientes 123, Buenos Aires',
       );
 
-      // Then
       expect(result).toBe('Avenida Corrientes 123');
     });
 
     it('returns address when it has no commas', () => {
-      // When
       const result = testingComponent().direccionCorta(
         'Avenida Corrientes 123',
       );
 
-      // Then
       expect(result).toBe('Avenida Corrientes 123');
     });
   });
 
   describe('fechaPopup', () => {
     it('formats a valid date', () => {
-      // When
       const result = testingComponent().fechaPopup(
         '2026-06-01T10:00:00.000Z',
       );
 
-      // Then
       expect(result).toContain('2026');
     });
 
     it('returns "Sin fecha" when date is invalid', () => {
-      // When
       const result = testingComponent().fechaPopup('invalid-date');
 
-      // Then
       expect(result).toBe('Sin fecha');
     });
   });
 
   describe('horaPopup', () => {
     it('formats a valid time', () => {
-      // When
       const result = testingComponent().horaPopup(
         '2026-06-01T10:30:00.000Z',
       );
 
-      // Then
       expect(result).toContain('hs');
     });
 
     it('returns empty text when date is invalid', () => {
-      // When
       const result = testingComponent().horaPopup('invalid-date');
 
-      // Then
       expect(result).toBe('');
     });
   });
 
   describe('nombrePopup', () => {
     it('returns the provided name when it exists', () => {
-      // When
       const result = testingComponent().nombrePopup(
         mockReporte(),
         'Firulais',
       );
 
-      // Then
       expect(result).toBe('Firulais');
     });
 
     it('returns "Perro perdido" for lost dog reports without name', () => {
-      // When
       const result = testingComponent().nombrePopup(
         mockReporte({
           type: 'LOST',
@@ -744,12 +762,10 @@ describe('HomeMapComponent', () => {
         undefined,
       );
 
-      // Then
       expect(result).toBe('Perro perdido');
     });
 
     it('returns "Gato perdido" for lost cat reports without name', () => {
-      // When
       const result = testingComponent().nombrePopup(
         mockReporte({
           type: 'LOST',
@@ -758,12 +774,10 @@ describe('HomeMapComponent', () => {
         undefined,
       );
 
-      // Then
       expect(result).toBe('Gato perdido');
     });
 
     it('returns "Perro avistado" for dog sightings', () => {
-      // When
       const result = testingComponent().nombrePopup(
         mockReporte({
           type: 'SIGHTING',
@@ -776,12 +790,10 @@ describe('HomeMapComponent', () => {
         undefined,
       );
 
-      // Then
       expect(result).toBe('Perro avistado');
     });
 
     it('returns "Perro en tránsito" for dog sightings in transit', () => {
-      // When
       const result = testingComponent().nombrePopup(
         mockReporte({
           type: 'SIGHTING',
@@ -794,70 +806,54 @@ describe('HomeMapComponent', () => {
         undefined,
       );
 
-      // Then
       expect(result).toBe('Perro en tránsito');
     });
   });
 
   describe('tiempoPopup', () => {
     it('returns "Hace instantes" for reports less than one hour old', () => {
-      // Given
       const fecha = new Date(Date.now() - 30 * 60 * 1000).toISOString();
 
-      // When
       const result = testingComponent().tiempoPopup(fecha);
 
-      // Then
       expect(result).toBe('Hace instantes');
     });
 
     it('returns hours for reports less than one day old', () => {
-      // Given
       const fecha = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
 
-      // When
       const result = testingComponent().tiempoPopup(fecha);
 
-      // Then
       expect(result).toBe('Hace 3hs');
     });
 
     it('returns days for reports older than one day', () => {
-      // Given
       const fecha = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
-      // When
       const result = testingComponent().tiempoPopup(fecha);
 
-      // Then
       expect(result).toBe('Hace 2d');
     });
 
     it('returns one hour text', () => {
-      // Given
       const fecha = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-      // When
       const result = testingComponent().tiempoPopup(fecha);
 
-      // Then
       expect(result).toContain('1');
     });
   });
 
   describe('fallbackIconFor', () => {
     it('returns the lost pet icon for lost reports', () => {
-      // When
       const result = testingComponent().fallbackIconFor(
         mockReporte({ type: 'LOST' }),
       );
 
-      // Then
       expect(result).toBe('Icono-mascota-perdida.png');
     });
 
     it('returns the in-transit sighting icon for sightings in transit', () => {
-      // When
       const result = testingComponent().fallbackIconFor(
         mockReporte({
           type: 'SIGHTING',
@@ -869,12 +865,10 @@ describe('HomeMapComponent', () => {
         }),
       );
 
-      // Then
       expect(result).toBe('Icono-avistamiento-transito.png');
     });
 
     it('returns the non-transit sighting icon for sightings not in transit', () => {
-      // When
       const result = testingComponent().fallbackIconFor(
         mockReporte({
           type: 'SIGHTING',
@@ -886,14 +880,12 @@ describe('HomeMapComponent', () => {
         }),
       );
 
-      // Then
       expect(result).toBe('Icono-avistamiento-sin-transito.png');
     });
   });
 
   describe('buildPopup', () => {
     it('includes the report name in the popup html', () => {
-      // Given
       const reporte = mockReporte({
         details: {
           name: 'Firulais',
@@ -902,36 +894,28 @@ describe('HomeMapComponent', () => {
         },
       });
 
-      // When
       const result = testingComponent().buildPopup(reporte);
 
-      // Then
       expect(result).toContain('Firulais');
     });
 
     it('includes the report detail link', () => {
-      // Given
       const reporte = mockReporte({ publicId: 'rep-123' });
 
-      // When
       const result = testingComponent().buildPopup(reporte);
 
-      // Then
       expect(result).toContain('/reports/rep-123');
     });
 
     it('shows the lost pet badge text for lost reports', () => {
-      // When
       const result = testingComponent().buildPopup(
         mockReporte({ type: 'LOST' }),
       );
 
-      // Then
       expect(result).toContain('Mascota perdida');
     });
 
     it('shows the sighting badge text for sighting reports', () => {
-      // Given
       const reporte = mockReporte({
         type: 'SIGHTING',
         details: {
@@ -941,17 +925,14 @@ describe('HomeMapComponent', () => {
         },
       });
 
-      // When
       const result = testingComponent().buildPopup(reporte);
 
-      // Then
       expect(result).toContain('Mascota avistada');
     });
   });
 
   describe('ngOnInit', () => {
     it('sets success report id when report query param exists', async () => {
-      // Given
       TestBed.inject(ActivatedRoute).snapshot.queryParamMap.get =
         vi.fn().mockReturnValue('report-123');
 
@@ -959,168 +940,132 @@ describe('HomeMapComponent', () => {
         photoUrl: 'https://image.com/profile.jpg',
       } as ProfileMock);
 
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(component.successReportId()).toBe('report-123');
     });
 
     it('loads profile photo when profile has photo url', async () => {
-      // Given
       profileService.getProfile.mockResolvedValue({
         photoUrl: 'https://image.com/profile.jpg',
       } as ProfileMock);
 
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(testingComponent().profilePhotoUrl).toBe(
         'https://image.com/profile.jpg',
       );
     });
 
     it('keeps default profile photo when profile has no photo url', async () => {
-      // Given
       profileService.getProfile.mockResolvedValue({
         photoUrl: '',
       } as ProfileMock);
 
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(testingComponent().profilePhotoUrl).toContain('ui-avatars.com');
     });
 
     it('does not throw when profile loading fails', async () => {
-      // Given
       profileService.getProfile.mockRejectedValue(new Error('Profile error'));
 
-      // When
       const action = component.ngOnInit();
 
-      // Then
       await expect(action).resolves.not.toThrow();
     });
   });
 
   describe('cargarReportes', () => {
     it('loads reports and updates counters', async () => {
-      // Given
       const reportes = [
         mockReporte({ publicId: 'r1' }),
         mockReporte({ publicId: 'r2' }),
       ];
 
       const misReportes = [
-        mockReporte({ publicId: 'm1' }),
-        mockReporte({ publicId: 'm2' }),
-        mockReporte({ publicId: 'm3' }),
-        mockReporte({ publicId: 'm4' }),
+        mockReporte({ publicId: 'm1', status: 'ACTIVE' }),
+        mockReporte({ publicId: 'm2', status: 'ACTIVE' }),
+        mockReporte({ publicId: 'm3', status: 'RESOLVED' }),
+        mockReporte({ publicId: 'm4', status: 'CLOSED' }),
       ];
 
       reportListService.getGenerales.mockResolvedValue(reportes);
       reportListService.getMisReportes.mockResolvedValue(misReportes);
       mockDibujarMarcadores();
 
-      // When
       await testingComponent().cargarReportes();
 
-      // Then
+      expect(reportListService.getGenerales).toHaveBeenCalledWith({
+        status: 'ACTIVE',
+      });
       expect(component.reportes()).toEqual(reportes);
       expect(component.reportesFiltrados()).toEqual(reportes);
-      expect(component.totalMisReportes()).toBe(4);
-      expect(component.misReportes()).toHaveLength(3);
+      expect(component.totalMisReportes()).toBe(2);
+      expect(component.misReportes()).toHaveLength(2);
       expect(component.totalCercanos()).toBe(2);
       expect(component.reportesCercanos()).toHaveLength(2);
     });
 
     it('does not throw when report loading fails', async () => {
-      // Given
       reportListService.getGenerales.mockRejectedValue(
         new Error('Backend error'),
       );
 
-      // When
       const action = testingComponent().cargarReportes();
 
-      // Then
       await expect(action).resolves.toBeUndefined();
     });
   });
 
   describe('aplicarFiltroCentros', () => {
     it('searches veterinary places when veterinary filter is selected', async () => {
-      // Given
       component.centrosFiltro.set('veterinarias');
 
       const buscarLugaresSpy = vi
         .spyOn(testingComponent(), 'buscarLugares')
         .mockResolvedValue(undefined);
 
-      // When
       await component.aplicarFiltroCentros();
 
-      // Then
       expect(buscarLugaresSpy).toHaveBeenCalledWith('veterinary');
     });
 
     it('searches police places when police filter is selected', async () => {
-      // Given
       component.centrosFiltro.set('comisarias');
 
       const buscarLugaresSpy = vi
         .spyOn(testingComponent(), 'buscarLugares')
         .mockResolvedValue(undefined);
 
-      // When
       await component.aplicarFiltroCentros();
 
-      // Then
       expect(buscarLugaresSpy).toHaveBeenCalledWith('police');
     });
 
     it('clears places when all centers filter is selected', async () => {
-      // Given
       component.centrosFiltro.set('todos');
       component.lugares.set([mockPlace()]);
       testingComponent().lugaresLayer = mockLayer();
 
-      // When
       await component.aplicarFiltroCentros();
 
-      // Then
       expect(component.lugares()).toEqual([]);
       expect(testingComponent().lugaresLayer.clearLayers).toHaveBeenCalled();
+      expect(component.centrosCargando()).toBe(false);
     });
   });
 
   describe('buscarLugares', () => {
-    it('does nothing when user location does not exist', async () => {
-      // Given
+    it('uses map center when user location does not exist', async () => {
       testingComponent().userLatLng = undefined;
-
-      const fetchSpy = vi.spyOn(globalThis, 'fetch');
-
-      // When
-      await testingComponent().buscarLugares('veterinary');
-
-      // Then
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
-
-    it('loads nearby veterinary places', async () => {
-      // Given
-      testingComponent().userLatLng = {
-        lat: -34.6037,
-        lng: -58.3816,
-      };
+      testingComponent().map = mockMap();
 
       mockFetchJson({
         elements: [
           {
+            type: 'node',
+            id: 1,
             tags: {
               name: 'Veterinaria Central',
             },
@@ -1132,10 +1077,36 @@ describe('HomeMapComponent', () => {
 
       mockDibujarLugares();
 
-      // When
       await testingComponent().buscarLugares('veterinary');
 
-      // Then
+      expect(globalThis.fetch).toHaveBeenCalled();
+      expect(component.lugares()[0]?.nombre).toBe('Veterinaria Central');
+    });
+
+    it('loads nearby veterinary places', async () => {
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
+
+      mockFetchJson({
+        elements: [
+          {
+            type: 'node',
+            id: 1,
+            tags: {
+              name: 'Veterinaria Central',
+            },
+            lat: -34.604,
+            lon: -58.382,
+          },
+        ],
+      });
+
+      mockDibujarLugares();
+
+      await testingComponent().buscarLugares('veterinary');
+
       expect(component.lugares()).toEqual([
         {
           nombre: 'Veterinaria Central',
@@ -1146,8 +1117,7 @@ describe('HomeMapComponent', () => {
       ]);
     });
 
-    it('uses default police name when place has no name', async () => {
-      // Given
+    it('loads nearby places using center when element is a way', async () => {
       testingComponent().userLatLng = {
         lat: -34.6037,
         lng: -58.3816,
@@ -1156,6 +1126,44 @@ describe('HomeMapComponent', () => {
       mockFetchJson({
         elements: [
           {
+            type: 'way',
+            id: 10,
+            tags: {
+              name: 'Veterinaria de Barrio',
+            },
+            center: {
+              lat: -34.605,
+              lon: -58.383,
+            },
+          },
+        ],
+      });
+
+      mockDibujarLugares();
+
+      await testingComponent().buscarLugares('veterinary');
+
+      expect(component.lugares()).toEqual([
+        {
+          nombre: 'Veterinaria de Barrio',
+          lat: -34.605,
+          lng: -58.383,
+          distancia: expect.any(Number),
+        },
+      ]);
+    });
+
+    it('uses default police name when place has no name', async () => {
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
+
+      mockFetchJson({
+        elements: [
+          {
+            type: 'node',
+            id: 1,
             tags: {},
             lat: -34.604,
             lon: -58.382,
@@ -1165,15 +1173,12 @@ describe('HomeMapComponent', () => {
 
       mockDibujarLugares();
 
-      // When
       await testingComponent().buscarLugares('police');
 
-      // Then
-      expect(component.lugares()[0]?.nombre).toBe('Comisaría');
+      expect(component.lugares()[0]?.nombre).toBe('Dependencia policial');
     });
 
     it('uses default veterinary name when place has no name', async () => {
-      // Given
       testingComponent().userLatLng = {
         lat: -34.6037,
         lng: -58.3816,
@@ -1182,6 +1187,8 @@ describe('HomeMapComponent', () => {
       mockFetchJson({
         elements: [
           {
+            type: 'node',
+            id: 1,
             tags: {},
             lat: -34.604,
             lon: -58.382,
@@ -1191,35 +1198,57 @@ describe('HomeMapComponent', () => {
 
       mockDibujarLugares();
 
-      // When
       await testingComponent().buscarLugares('veterinary');
 
-      // Then
-      expect(component.lugares()[0]?.nombre).toBe('Veterinaria');
+      expect(component.lugares()[0]?.nombre).toBe('Centro veterinario');
     });
 
-    it('does not throw when nearby places request fails', async () => {
-      // Given
+    it('clears places and sets error when nearby places request fails', async () => {
       testingComponent().userLatLng = {
         lat: -34.6037,
         lng: -58.3816,
       };
+
+      component.lugares.set([mockPlace()]);
+      testingComponent().lugaresLayer = mockLayer();
 
       vi.spyOn(globalThis, 'fetch').mockRejectedValue(
         new Error('Network error'),
       );
 
-      // When
       const action = testingComponent().buscarLugares('veterinary');
 
-      // Then
       await expect(action).resolves.toBeUndefined();
+      expect(component.lugares()).toEqual([]);
+      expect(testingComponent().lugaresLayer.clearLayers).toHaveBeenCalled();
+      expect(component.centrosError()).toBe(
+        'No se pudieron cargar los centros cercanos. Intentá nuevamente.',
+      );
+    });
+
+    it('sets an error when response has no places', async () => {
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
+
+      mockFetchJson({
+        elements: [],
+      });
+
+      mockDibujarLugares();
+
+      await testingComponent().buscarLugares('veterinary');
+
+      expect(component.lugares()).toEqual([]);
+      expect(component.centrosError()).toBe(
+        'No se encontraron centros cercanos en OpenStreetMap.',
+      );
     });
   });
 
   describe('centerOnUser', () => {
     it('centers the map when user location exists', () => {
-      // Given
       const userLatLng = {
         lat: -34.6037,
         lng: -58.3816,
@@ -1228,10 +1257,8 @@ describe('HomeMapComponent', () => {
       testingComponent().userLatLng = userLatLng;
       testingComponent().map = mockMap();
 
-      // When
       testingComponent().centerOnUser();
 
-      // Then
       expect(testingComponent().map.setView).toHaveBeenCalledWith(
         userLatLng,
         16,
@@ -1239,35 +1266,28 @@ describe('HomeMapComponent', () => {
     });
 
     it('tries to get user location when user location does not exist', () => {
-      // Given
       testingComponent().userLatLng = undefined;
 
       const getUserLocationSpy = vi
         .spyOn(testingComponent(), 'getUserLocation')
         .mockImplementation((): void => undefined);
 
-      // When
       testingComponent().centerOnUser();
 
-      // Then
       expect(getUserLocationSpy).toHaveBeenCalled();
     });
   });
 
   describe('placeUserMarker', () => {
     it('does nothing when user location does not exist', () => {
-      // Given
       testingComponent().userLatLng = undefined;
 
-      // When
       testingComponent().placeUserMarker();
 
-      // Then
       expect(testingComponent().userMarker).toBeUndefined();
     });
 
     it('updates existing user marker position', () => {
-      // Given
       const userLatLng = {
         lat: -34.6037,
         lng: -58.3816,
@@ -1280,34 +1300,28 @@ describe('HomeMapComponent', () => {
       testingComponent().userLatLng = userLatLng;
       testingComponent().userMarker = userMarker;
 
-      // When
       testingComponent().placeUserMarker();
 
-      // Then
       expect(userMarker.setLatLng).toHaveBeenCalledWith(userLatLng);
     });
   });
 
   describe('markSearchResult', () => {
     it('updates existing search marker position', () => {
-      // Given
       const searchMarker = {
         setLatLng: vi.fn(),
       };
 
       testingComponent().searchMarker = searchMarker;
 
-      // When
       testingComponent().markSearchResult(-34.6037, -58.3816);
 
-      // Then
       expect(searchMarker.setLatLng).toHaveBeenCalled();
     });
   });
 
   describe('clearSearch with marker', () => {
     it('removes search marker when it exists', () => {
-      // Given
       const searchMarker = {
         remove: vi.fn(),
       };
@@ -1315,10 +1329,8 @@ describe('HomeMapComponent', () => {
       testingComponent().searchMarker = searchMarker;
       component.searchTerm.set('Buenos Aires');
 
-      // When
       component.clearSearch();
 
-      // Then
       expect(searchMarker.remove).toHaveBeenCalled();
       expect(testingComponent().searchMarker).toBeUndefined();
     });
@@ -1326,54 +1338,44 @@ describe('HomeMapComponent', () => {
 
   describe('buildPin', () => {
     it('creates a pin with image when image url exists', () => {
-      // When
       const result = testingComponent().buildPin(
         '#E8842E',
         'https://image.com/dog.jpg',
       );
 
-      // Then
       expect(result.options.html).toContain('dog.jpg');
     });
 
     it('creates a pin with fallback icon when image does not exist', () => {
-      // When
       const result = testingComponent().buildPin(
         '#E8842E',
         undefined,
         'Icono-mascota-perdida.png',
       );
 
-      // Then
       expect(result.options.html).toContain('Icono-mascota-perdida.png');
     });
 
     it('creates a pin without image content when no image or fallback exists', () => {
-      // When
       const result = testingComponent().buildPin('#E8842E');
 
-      // Then
       expect(result.options.html).not.toContain('<img');
     });
   });
 
   describe('dibujarLugares', () => {
     it('clears previous places layer', () => {
-      // Given
       testingComponent().lugaresLayer = mockLayer();
       component.lugares.set([]);
 
-      // When
       testingComponent().dibujarLugares();
 
-      // Then
       expect(testingComponent().lugaresLayer.clearLayers).toHaveBeenCalled();
     });
   });
 
   describe('getUserLocation', () => {
     it('sets user location and centers the map when geolocation succeeds', () => {
-      // Given
       vi.useFakeTimers();
 
       const placeUserMarkerSpy = vi
@@ -1397,11 +1399,9 @@ describe('HomeMapComponent', () => {
         },
       });
 
-      // When
       testingComponent().getUserLocation();
       vi.advanceTimersByTime(100);
 
-      // Then
       expect(testingComponent().userLatLng?.lat).toBe(-34.6037);
       expect(testingComponent().userLatLng?.lng).toBe(-58.3816);
       expect(placeUserMarkerSpy).toHaveBeenCalled();
@@ -1413,7 +1413,6 @@ describe('HomeMapComponent', () => {
     });
 
     it('centers the map on default location when geolocation fails', () => {
-      // Given
       vi.useFakeTimers();
 
       testingComponent().map = mockMap();
@@ -1428,11 +1427,9 @@ describe('HomeMapComponent', () => {
         },
       });
 
-      // When
       testingComponent().getUserLocation();
       vi.advanceTimersByTime(100);
 
-      // Then
       expect(testingComponent().map.setView).toHaveBeenCalledWith(
         [-34.603734, -58.38157],
         13,
@@ -1443,36 +1440,29 @@ describe('HomeMapComponent', () => {
 
   describe('fetchSuggestions', () => {
     it('clears suggestions when request fails', async () => {
-      // Given
       component.searchTerm.set('Buenos Aires');
 
       vi.spyOn(globalThis, 'fetch').mockRejectedValue(
         new Error('Network error'),
       );
 
-      // When
       await testingComponent().fetchSuggestions();
 
-      // Then
       expect(component.suggestions()).toEqual([]);
     });
 
     it('does nothing when search term is empty', async () => {
-      // Given
       component.searchTerm.set('');
 
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
       fetchSpy.mockClear();
 
-      // When
       await testingComponent().fetchSuggestions();
 
-      // Then
       expect(fetchSpy).not.toHaveBeenCalled();
     });
 
     it('loads and maps location suggestions', async () => {
-      // Given
       component.searchTerm.set('Buenos Aires');
 
       mockFetchJson([
@@ -1483,10 +1473,8 @@ describe('HomeMapComponent', () => {
         },
       ]);
 
-      // When
       await testingComponent().fetchSuggestions();
 
-      // Then
       expect(component.suggestions()).toEqual([
         {
           displayName: 'Buenos Aires, Argentina',
@@ -1499,7 +1487,6 @@ describe('HomeMapComponent', () => {
 
   describe('initializeMap', () => {
     it('creates the map, adds layers, gets user location and loads reports', () => {
-      // Given
       vi.useFakeTimers();
 
       const getUserLocationSpy = vi
@@ -1510,11 +1497,9 @@ describe('HomeMapComponent', () => {
         .spyOn(testingComponent(), 'cargarReportes')
         .mockResolvedValue(undefined);
 
-      // When
       testingComponent().initializeMap();
       vi.advanceTimersByTime(500);
 
-      // Then
       expect(getUserLocationSpy).toHaveBeenCalled();
       expect(cargarReportesSpy).toHaveBeenCalled();
     });
@@ -1522,15 +1507,12 @@ describe('HomeMapComponent', () => {
 
   describe('dibujarMarcadores', () => {
     it('uses orange color for lost reports', () => {
-      // Given
       const reporte = mockReporte({ type: 'LOST' });
 
       const buildPinSpy = vi.spyOn(testingComponent(), 'buildPin');
 
-      // When
       testingComponent().dibujarMarcadores([reporte]);
 
-      // Then
       expect(buildPinSpy).toHaveBeenCalledWith(
         '#E8842E',
         undefined,
@@ -1539,7 +1521,6 @@ describe('HomeMapComponent', () => {
     });
 
     it('uses blue color for sighting reports', () => {
-      // Given
       const reporte = mockReporte({
         type: 'SIGHTING',
         details: {
@@ -1551,10 +1532,8 @@ describe('HomeMapComponent', () => {
 
       const buildPinSpy = vi.spyOn(testingComponent(), 'buildPin');
 
-      // When
       testingComponent().dibujarMarcadores([reporte]);
 
-      // Then
       expect(buildPinSpy).toHaveBeenCalledWith(
         '#12355B',
         undefined,
@@ -1563,7 +1542,6 @@ describe('HomeMapComponent', () => {
     });
 
     it('uses the first report image when it exists', () => {
-      // Given
       const reporte = mockReporte({
         details: {
           animalType: 'DOG',
@@ -1573,10 +1551,8 @@ describe('HomeMapComponent', () => {
 
       const buildPinSpy = vi.spyOn(testingComponent(), 'buildPin');
 
-      // When
       testingComponent().dibujarMarcadores([reporte]);
 
-      // Then
       expect(buildPinSpy).toHaveBeenCalledWith(
         '#E8842E',
         'https://image.com/pet.jpg',

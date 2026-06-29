@@ -1,69 +1,174 @@
 <div class="flex-1 bg-[#f3f4f6]">
-  <div class="max-w-[1200px] mx-auto px-8 py-6">
+  <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
     @if (loading()) {
-      <p class="text-slate-500 py-12 text-center">Cargando...</p>
+    <p class="text-slate-500 py-12 text-center">Cargando...</p>
     } @else if (error()) {
-      <p class="text-[#b04632] py-12 text-center">{{ error() }}</p>
+    <p class="text-[#b04632] py-12 text-center">{{ error() }}</p>
     } @else if (report(); as r) {
-      <nav class="flex items-center gap-1.5 text-sm text-slate-400 mb-5">
-        <a routerLink="/home" class="hover:text-[#1D6FA3]">Inicio</a>
-        <span>›</span>
-        <a routerLink="/reports" class="hover:text-[#1D6FA3]">{{ esPropio() ? 'Mis reportes' : 'Reportes' }}</a>
-        <span>›</span>
-        <span class="text-[#12355B] font-semibold">{{ r.details.name || (r.type === 'LOST' ? 'Mascota perdida' : 'Avistamiento') }}</span>
-      </nav>
+    <nav class="flex items-center gap-1.5 text-sm text-slate-400 mb-5">
+      <a routerLink="/home" class="hover:text-[#1D6FA3]">Inicio</a>
+      <span>›</span>
+      <a routerLink="/reports" class="hover:text-[#1D6FA3]">{{ esPropio() ? 'Mis reportes' : 'Reportes' }}</a>
+      <span>›</span>
+      <span class="text-[#12355B] font-semibold">{{ r.details.name || (r.type === 'LOST' ? 'Mascota perdida' :
+        (r.details.isInTransit ? 'En tránsito' : 'Avistamiento')) }}</span>
+    </nav>
 
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
-        <div class="flex flex-col gap-5 min-w-0">
-          <app-report-gallery [report]="r" />
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+      <div class="flex flex-col gap-5 min-w-0">
+        <app-report-gallery [report]="r" />
 
-          <app-report-info [report]="r">
-            @if (esPropio()) {
-              <div slot="actions" class="shrink-0">
-                <button type="button" (click)="irAEditarDatos()"
-                  class="inline-flex items-center gap-1 text-sm font-semibold text-[#E8842E] hover:underline px-2 py-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z" />
-                  </svg>
-                  Editar
-                </button>
-              </div>
-            }
-          </app-report-info>
-        </div>
-
-        <div class="flex flex-col gap-5 lg:sticky lg:top-16 self-start">
-          <app-report-location [report]="r" [esPropio]="esPropio()" (editar)="irAEditarUbicacion()" />
-
-          <app-report-contact [report]="r" [esPropio]="esPropio()">
-            @if (esPropio() && r.status === 'ACTIVE') {
-              <div class="mt-2.5">
-                @if (!confirmandoResolucion()) {
-                  <button type="button" (click)="abrirConfirmacion()" [disabled]="actualizando()"
-                    class="w-full inline-flex items-center justify-center gap-1.5 border border-[#1D6FA3] text-[#1D6FA3] hover:bg-[#1D6FA3]/5 text-sm font-semibold py-2.5 rounded-lg transition disabled:opacity-50">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                    Cerrar reporte
-                  </button>
-                } @else {
-                  <div class="flex flex-col gap-2">
-                    <p class="text-sm text-slate-500 text-center">¿Cerrar el reporte?</p>
-                    <div class="flex gap-2">
-                      <button type="button" (click)="resolverReporte()" [disabled]="actualizando()"
-                        class="flex-1 bg-[#1D6FA3] text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50">
-                        @if (actualizando()) { … } @else { Sí }
-                      </button>
-                      <button type="button" (click)="cancelarConfirmacion()" [disabled]="actualizando()"
-                        class="flex-1 bg-slate-100 text-slate-600 text-sm font-semibold py-2 rounded-lg">No</button>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </app-report-contact>
-        </div>
+        <app-report-info [report]="r">
+          @if (esPropio()) {
+          <div slot="actions" class="shrink-0">
+            <button type="button" (click)="irAEditarDatos()"
+              class="inline-flex items-center gap-1 text-sm font-semibold text-[#E8842E] hover:underline px-2 py-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z" />
+              </svg>
+              Editar
+            </button>
+          </div>
+          }
+        </app-report-info>
       </div>
+
+      <div class="flex flex-col gap-5 lg:sticky lg:top-16 self-start">
+        <app-report-location [report]="r" [esPropio]="esPropio()" (editar)="irAEditarUbicacion()" />
+
+        @if (puedeSeguirHistoria()) {
+        <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+          <div class="flex items-start gap-3">
+            <div
+              class="w-10 h-10 rounded-full bg-[#E8842E]/10 text-[#E8842E] flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-bold text-[#12355B]">
+                Seguir historia
+              </p>
+
+              <p class="text-sm text-slate-500 mt-1">
+                Recibí una notificación cuando este caso sea marcado como resuelto o cerrado.
+              </p>
+
+              <button type="button"
+                class="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border text-sm font-semibold py-2.5 transition disabled:opacity-50"
+                [ngClass]="siguiendoHistoria()
+          ? 'bg-[#1D6FA3] text-white border-[#1D6FA3]'
+          : 'bg-white text-[#1D6FA3] border-[#1D6FA3] hover:bg-[#1D6FA3]/5'"
+                [disabled]="cargandoSeguimiento() || actualizandoSeguimiento()" (click)="toggleSeguirHistoria()">
+                @if (cargandoSeguimiento() || actualizandoSeguimiento()) {
+                Procesando...
+                } @else if (siguiendoHistoria()) {
+                Siguiendo historia
+                } @else {
+                Seguir historia
+                }
+              </button>
+            </div>
+          </div>
+        </section>
+        }
+
+        @if (!esPropio()) {
+        <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Valoración del usuario
+              </p>
+
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-2xl font-bold text-[#12355B]">
+                  {{ valoracionUsuario(r) }}/5.0
+                </span>
+
+                <span class="text-yellow-400 text-lg leading-none">
+                  ★
+                </span>
+              </div>
+            </div>
+
+            @if (esUsuarioBajaValoracion(r)) {
+            <span
+              class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 border border-red-100">
+              Baja
+            </span>
+            } @else {
+            <span
+              class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-600 border border-green-100">
+              Alta
+            </span>
+            }
+          </div>
+
+          @if (esUsuarioBajaValoracion(r)) {
+          <p class="text-sm text-slate-500 mt-3">
+            Este usuario tiene una valoración baja. Te recomendamos revisar bien la información antes de coordinar un
+            encuentro.
+          </p>
+          } @else {
+          <p class="text-sm text-slate-500 mt-3">
+            Usuario con buena valoración dentro de la comunidad.
+          </p>
+          }
+        </section>
+        }
+
+        <app-report-contact [report]="r" [esPropio]="esPropio()">
+          @if (esPropio() && r.status === 'ACTIVE') {
+          <div class="mt-2.5">
+            @if (!confirmandoResolucion()) {
+            <button type="button" (click)="abrirConfirmacion()" [disabled]="actualizando()"
+              class="w-full inline-flex items-center justify-center gap-1.5 border border-[#1D6FA3] text-[#1D6FA3] hover:bg-[#1D6FA3]/5 text-sm font-semibold py-2.5 rounded-lg transition disabled:opacity-50">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              Cerrar reporte
+            </button>
+            } @else {
+            <div class="flex flex-col gap-2">
+              <p class="text-sm text-slate-500 text-center">¿Cerrar el reporte?</p>
+              <div class="flex gap-2">
+                <button type="button" (click)="resolverReporte()" [disabled]="actualizando()"
+                  class="flex-1 bg-[#1D6FA3] text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50">
+                  @if (actualizando()) { … } @else { Sí }
+                </button>
+                <button type="button" (click)="cancelarConfirmacion()" [disabled]="actualizando()"
+                  class="flex-1 bg-slate-100 text-slate-600 text-sm font-semibold py-2 rounded-lg">No</button>
+              </div>
+            </div>
+            }
+          </div>
+          }
+
+          @if (!esPropio()) {
+          <button type="button" (click)="abrirModalDenuncia()"
+            class="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 border border-red-300 text-red-500 hover:bg-red-50 text-sm font-semibold py-2.5 rounded-lg transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+            </svg>
+            Denunciar
+          </button>
+          }
+        </app-report-contact>
+
+        <app-report-timeline [report]="r" />
+      </div>
+    </div>
     }
   </div>
+  <!-- Modal Denuncia -->
+  @if (mostrandoModalDenuncia() && report()) {
+  <app-report-modal tipo="reporte" [targetPublicId]="report()!.publicId" (cerrar)="cerrarModalDenuncia()" />
+  }
 </div>

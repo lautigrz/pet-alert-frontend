@@ -1,11 +1,15 @@
-import { Component, AfterViewInit, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, AfterViewInit, HostListener, OnInit, NgZone, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReportListService } from '../report/application/report-list.service';
 import { AnimalType, Reporte, SightingDetails } from '../report/domain/report-read.model';
 import { HomeReportCardComponent } from './components/home-report-card/home-report-card';
+import { NotificationPrompt } from '../notifications/presentation/notification-prompt/notification-prompt';
+import { NotificationService } from '../notifications/application/notification.service';
 import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
+import { PetIconComponent } from '../../shared/component/pet-icon/pet-icon.component';
 
+import { InfoTooltipComponent } from '../../shared/component/info-tooltip/info-tooltip.component';
 interface LocationSuggestion {
   displayName: string;
   lat: number;
@@ -20,19 +24,30 @@ interface Lugar {
 }
 
 interface OverpassElement {
+  type: 'node' | 'way' | 'relation';
+  id: number;
+  lat?: number;
+  lon?: number;
+  center?: {
+    lat: number;
+    lon: number;
+  };
   tags?: {
     name?: string;
+    amenity?: string;
+    healthcare?: string;
+    office?: string;
+    police?: string;
   };
-  lat: number;
-  lon: number;
 }
 
 @Component({
   selector: 'app-home-map',
   standalone: true,
-  imports: [HomeReportCardComponent, RouterLink],
+  imports: [HomeReportCardComponent, RouterLink, NotificationPrompt, PetIconComponent, InfoTooltipComponent],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './home-map.html',
+  styleUrl: './home-map.css'
 })
 export class HomeMapComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
@@ -42,7 +57,15 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
   private readonly reportesService = inject(ReportListService);
   private readonly profileService = inject(ProfileService);
+  private readonly zone = inject(NgZone);
+  private readonly notifications = inject(NotificationService);
   readonly successReportId = signal<string | null>(null);
+
+  readonly notifBusy = this.notifications.busy;
+
+  readonly canAskNotifications = computed(
+    () => this.notifications.isSupported() && this.notifications.permission() === 'default' && !this.notifications.active(),
+  );
 
   readonly tipoFiltro = signal('todos');
   readonly cercaniaFiltro = signal('todos');
@@ -50,6 +73,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly centrosFiltro = signal('todos');
   readonly searchTerm = signal('');
   readonly suggestions = signal<LocationSuggestion[]>([]);
+  readonly mostrarFiltros = signal(false);
+  readonly reporteSeleccionado = signal<Reporte | null>(null);
 
 
   readonly reportes = signal<Reporte[]>([]);
@@ -61,7 +86,18 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly badgeMisReportes = computed(() => this.formatBadge(this.totalMisReportes()));
   readonly badgeCercanos = computed(() => this.formatBadge(this.totalCercanos()));
   readonly lugares = signal<Lugar[]>([]);
-  
+
+  readonly centrosCargando = signal(false);
+  readonly centrosError = signal<string | null>(null);
+  private readonly tooltipCentrosHover = signal(false);
+  private readonly tooltipCentrosClick = signal(false);
+  readonly tooltipCentrosAbierto = computed(
+    () => this.tooltipCentrosHover() || this.tooltipCentrosClick(),
+  );
+
+  private readonly lugaresCache = new Map<string, Lugar[]>();
+  private centrosRequestId = 0;
+
 
   private readonly DEFAULT_LOCATION = {
     lat: -34.603734,
@@ -70,6 +106,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
 
   private userMarker?: L.Marker;
+  private radarCircle?: L.Circle;
+
+  readonly radioRadar = signal(5);
   private userLatLng?: L.LatLng;
   private searchMarker?: L.Marker;
   private searchDebounce?: ReturnType<typeof setTimeout>;
@@ -132,59 +171,59 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private async cargarReportes(): Promise<void> {
     try {
       const [reportes, misReportes] = await Promise.all([
-  this.reportesService.getGenerales(),
-  this.reportesService.getMisReportes(),
-]);
+        this.reportesService.getGenerales({ status: 'ACTIVE' }),
+        this.reportesService.getMisReportes(),
+      ]);
 
-      console.log('REPORTES', reportes);
+      const misReportesActivos = misReportes.filter((r) => r.status === 'ACTIVE');
       this.reportes.set(reportes);
       this.reportesFiltrados.set(reportes);
       this.dibujarMarcadores(reportes);
-      this.totalMisReportes.set(misReportes.length);
-      this.misReportes.set(misReportes.slice(0, 3));
+      this.totalMisReportes.set(misReportesActivos.length);
+      this.misReportes.set(misReportesActivos.slice(0, 3));
       this.totalCercanos.set(reportes.length);
       this.reportesCercanos.set(reportes.slice(0, 5));
     } catch (error) {
       console.error('Error cargando reportes', error);
     }
-};
+  };
 
   private formatBadge(n: number): string {
     return n > 10 ? '+10' : String(n);
   }
 
-private dibujarMarcadores(reportes: Reporte[]): void {
+  private dibujarMarcadores(reportes: Reporte[]): void {
 
-  this.markersLayer.clearLayers();
+    this.markersLayer.clearLayers();
 
-  reportes.forEach((reporte) => {
+    reportes.forEach((reporte) => {
 
-    const lat = reporte.location.latitude;
-    const lng = reporte.location.longitude;
+      const lat = reporte.location.latitude;
+      const lng = reporte.location.longitude;
 
-    const color =
-      reporte.type === 'LOST'
-        ? '#E8842E'
-        : '#12355B';
+      const color =
+        reporte.type === 'LOST'
+          ? '#E8842E'
+          : '#12355B';
 
-    const fallbackIcon =
-      this.fallbackIconFor(reporte);
+      const fallbackIcon =
+        this.fallbackIconFor(reporte);
 
-    const imageUrl =
-      reporte.details?.images?.[0]?.url;
+      const imageUrl =
+        reporte.details?.images?.[0]?.url;
 
-    L.marker(
-      [lat, lng],
-      {
-        icon: this.buildPin(
-          color,
-          imageUrl,
-          fallbackIcon
-        ),
-      }
-    )
-      .addTo(this.markersLayer)
-      .bindPopup(
+      const marker = L.marker(
+        [lat, lng],
+        {
+          icon: this.buildPin(
+            color,
+            imageUrl,
+            fallbackIcon
+          ),
+        }
+      ).addTo(this.markersLayer);
+
+      marker.bindPopup(
         this.buildPopup(reporte),
         {
           className: 'report-popup',
@@ -195,92 +234,104 @@ private dibujarMarcadores(reportes: Reporte[]): void {
         }
       );
 
-  });
-}
+      marker.on('click', () => {
+        if (this.esMobile()) {
+          marker.closePopup();
+          this.zone.run(() => this.reporteSeleccionado.set(reporte));
+        }
+      });
 
-aplicarFiltros(): void {
-
-  let filtrados = [...this.reportes()];
-
-  
-  if (this.tipoFiltro() === 'perdidos') {
-
-    filtrados = filtrados.filter(
-      reporte => reporte.type === 'LOST'
-    );
-
-  }
-
-  
-  if (this.tipoFiltro() === 'avistados') {
-
-    filtrados = filtrados.filter(
-      reporte => reporte.type === 'SIGHTING'
-    );
-
-  }
-
-  
-  if (this.mascotaFiltro() === 'perro') {
-
-    filtrados = filtrados.filter(reporte => {
-      const animalType =
-        (reporte.details as { animalType?: AnimalType }).animalType;
-
-      return animalType === 'DOG';
     });
-
   }
 
- 
-if (this.mascotaFiltro() === 'gato') {
+  private esMobile(): boolean {
+    return window.innerWidth < 1024;
+  }
 
-  filtrados = filtrados.filter(reporte => {
-    const animalType =
-      (reporte.details as { animalType?: AnimalType }).animalType;
+  aplicarFiltros(): void {
 
-    return animalType === 'CAT';
-  });
-
-}
+    let filtrados = [...this.reportes()];
 
 
-if (
-  this.cercaniaFiltro() !== 'todos' &&
-  this.userLatLng
-) {
+    if (this.tipoFiltro() === 'perdidos') {
 
-  const distanciaMaxima =
-    Number(
-      this.cercaniaFiltro()
-        .replace('km', '')
-    );
-
-  filtrados = filtrados.filter(
-    reporte => {
-
-      const distancia =
-        this.calcularDistancia(
-          this.userLatLng!.lat,
-          this.userLatLng!.lng,
-          reporte.location.latitude,
-          reporte.location.longitude
-        );
-
-      return distancia <= distanciaMaxima;
+      filtrados = filtrados.filter(
+        reporte => reporte.type === 'LOST'
+      );
 
     }
-  );
 
 
+    if (this.tipoFiltro() === 'avistados') {
+
+      filtrados = filtrados.filter(
+        reporte => reporte.type === 'SIGHTING'
+      );
+
+    }
+
+
+    if (this.mascotaFiltro() === 'perro') {
+
+      filtrados = filtrados.filter(reporte => {
+        const animalType =
+          (reporte.details as { animalType?: AnimalType }).animalType;
+
+        return animalType === 'DOG';
+      });
+
+    }
+
+
+    if (this.mascotaFiltro() === 'gato') {
+
+      filtrados = filtrados.filter(reporte => {
+        const animalType =
+          (reporte.details as { animalType?: AnimalType }).animalType;
+
+        return animalType === 'CAT';
+      });
+
+    }
+
+
+    if (
+      this.cercaniaFiltro() !== 'todos' &&
+      this.userLatLng
+    ) {
+
+      const distanciaMaxima =
+        Number(
+          this.cercaniaFiltro()
+            .replace('km', '')
+        );
+
+      filtrados = filtrados.filter(
+        reporte => {
+
+          const distancia =
+            this.calcularDistancia(
+              this.userLatLng!.lat,
+              this.userLatLng!.lng,
+              reporte.location.latitude,
+              reporte.location.longitude
+            );
+
+          return distancia <= distanciaMaxima;
+
+        }
+      );
+
+
+    }
+
+    this.reportesFiltrados.set(filtrados);
+
+    this.dibujarMarcadores(filtrados);
   }
 
-  this.reportesFiltrados.set(filtrados);
-
-  this.dibujarMarcadores(filtrados);
-}
-  
   async ngOnInit(): Promise<void> {
+    
     const reportId = this.route.snapshot.queryParamMap.get('reporte');
     if (reportId) this.successReportId.set(reportId);
 
@@ -309,11 +360,18 @@ if (
     this.router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
+  async activarNotificaciones(): Promise<void> {
+    await this.notifications.enable();
+  }
+
   private initializeMap(): void {
     this.map = L.map('map').setView([this.DEFAULT_LOCATION.lat, this.DEFAULT_LOCATION.lng], 13);
     this.map.attributionControl.setPrefix(false);
     this.map.attributionControl.setPosition('bottomleft');
     this.map.zoomControl.setPosition('bottomright');
+    this.map.on('click', () =>
+      this.zone.run(() => this.reporteSeleccionado.set(null)),
+    );
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap',
@@ -331,32 +389,31 @@ if (
 
   private dibujarLugares(): void {
 
-  this.lugaresLayer.clearLayers();
+    this.lugaresLayer.clearLayers();
 
-  this.lugares().forEach(lugar => {
+    this.lugares().forEach(lugar => {
 
-    L.circleMarker(
-      [lugar.lat, lugar.lng],
-      {
-        radius: 10,
-        fillColor:
-          this.centrosFiltro() === 'veterinarias'
-            ? '#22c55e'
-            : '#2563eb',
-        color:
-          this.centrosFiltro() === 'veterinarias'
-            ? '#15803d'
-            : '#1d4ed8',
-        weight: 2,
-        fillOpacity: 0.9
-      }
-    )
-      .addTo(this.lugaresLayer)
-      .bindPopup(`${lugar.nombre}<br>${lugar.distancia?.toFixed(1)} km`);
+      L.circleMarker(
+        [lugar.lat, lugar.lng],
+        {
+          radius: 10,
+          fillColor:
+            this.centrosFiltro() === 'veterinarias'
+              ? '#22c55e'
+              : '#2563eb',
+          color:
+            this.centrosFiltro() === 'veterinarias'
+              ? '#15803d'
+              : '#1d4ed8',
+          weight: 2,
+          fillOpacity: 0.9
+        }
+      )
+        .addTo(this.lugaresLayer)
+        .bindPopup(`${lugar.nombre}<br>${lugar.distancia?.toFixed(1)} km`);
+    });
 
-  });
-
-}
+  }
 
   private addFocusControl(): void {
     const control = new L.Control({ position: 'bottomright' });
@@ -380,6 +437,7 @@ if (
       (position) => {
         this.userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
         this.placeUserMarker();
+        this.dibujarRadar();
         this.map.setView(this.userLatLng, 15);
         setTimeout(() => this.map.invalidateSize(), 100);
       },
@@ -391,192 +449,189 @@ if (
   }
 
   private calcularDistancia(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number {
 
-  const R = 6371;
+    const R = 6371;
 
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
 
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) *
-    Math.sin(dLon / 2);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) *
+      Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
 
-  const c = 2 * Math.atan2(
-    Math.sqrt(a),
-    Math.sqrt(1 - a)
-  );
-
-  return R * c;
-}
-
-private async buscarLugares(
-  tipo: 'veterinary' | 'police'
-): Promise<void> {
-
-  if (!this.userLatLng) return;
-
-  const query = `
-    [out:json];
-    (
-      node["amenity"="${tipo}"]
-      (around:5000,
-      ${this.userLatLng.lat},
-      ${this.userLatLng.lng});
+    const c = 2 * Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
     );
-    out;
+
+    return R * c;
+  }
+
+  private async buscarLugares(
+    tipo: 'veterinary' | 'police'
+  ): Promise<void> {
+    const centro = this.getCentroBusqueda();
+    const cacheKey = this.getCacheKey(tipo, centro);
+
+    const lugaresCacheados = this.lugaresCache.get(cacheKey);
+
+    if (lugaresCacheados) {
+      this.lugares.set(lugaresCacheados);
+      this.dibujarLugares();
+      return;
+    }
+
+    const requestId = ++this.centrosRequestId;
+
+    this.centrosCargando.set(true);
+    this.centrosError.set(null);
+
+    const radioBusqueda = 8000;
+
+    const filtros =
+      tipo === 'veterinary'
+        ? `
+        node["amenity"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
+        way["amenity"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
+        relation["amenity"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
+
+        node["healthcare"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
+        way["healthcare"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
+        relation["healthcare"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
+      `
+        : `
+        node["amenity"="police"](around:${radioBusqueda},${centro.lat},${centro.lng});
+        way["amenity"="police"](around:${radioBusqueda},${centro.lat},${centro.lng});
+        relation["amenity"="police"](around:${radioBusqueda},${centro.lat},${centro.lng});
+      `;
+
+    const query = `
+    [out:json][timeout:20];
+    (
+      ${filtros}
+    );
+    out center tags;
   `;
 
-  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch(
-      'https://overpass-api.de/api/interpreter',
-      {
-        method: 'POST',
-        body: query
+    try {
+      const response = await fetch(
+        'https://overpass-api.de/api/interpreter',
+        {
+          method: 'POST',
+          body: query,
+          signal: controller.signal,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error Overpass: ${response.status}`);
       }
-    );
 
-    const data = await response.json() as { elements: OverpassElement[] };
-    console.log(
-      data.elements.map((l) => ({
-        nombre: l.tags?.name,
-        lat: l.lat,
-        lng: l.lon,
-      }))
-    );
+      const data = await response.json() as { elements: OverpassElement[] };
 
-   const lugares = data.elements
-  .filter((l) => {
+      if (requestId !== this.centrosRequestId) {
+        return;
+      }
 
-    const nombre =
-      (l.tags?.name || '')
-        .toLowerCase();
+      const lugares: Lugar[] = data.elements
+        .map((l): Lugar | null => {
+          const lat = l.lat ?? l.center?.lat;
+          const lng = l.lon ?? l.center?.lon;
 
-    // If no name, include it (will get default name)
-    if (!nombre) return true;
+          if (lat === undefined || lng === undefined) {
+            return null;
+          }
 
-    if (tipo === 'police') {
+          const nombre =
+            l.tags?.name ||
+            (tipo === 'police'
+              ? 'Dependencia policial'
+              : 'Centro veterinario');
 
-      return (
-        nombre.includes('comisaria') ||
-        nombre.includes('comisaría')
-      );
+          return {
+            nombre,
+            lat,
+            lng,
+            distancia: this.calcularDistancia(
+              centro.lat,
+              centro.lng,
+              lat,
+              lng,
+            ),
+          };
+        })
+        .filter((lugar): lugar is Lugar => lugar !== null)
+        .sort((a, b) => (a.distancia ?? 0) - (b.distancia ?? 0))
+        .slice(0, 15);
 
+      this.lugaresCache.set(cacheKey, lugares);
+
+      this.lugares.set(lugares);
+      this.dibujarLugares();
+
+      if (lugares.length === 0) {
+        this.centrosError.set('No se encontraron centros cercanos en OpenStreetMap.');
+      }
+    } catch (error) {
+      if (requestId !== this.centrosRequestId) {
+        return;
+      }
+
+      console.error('Error buscando lugares cercanos', error);
+
+      this.lugares.set([]);
+      this.lugaresLayer.clearLayers();
+      this.centrosError.set('No se pudieron cargar los centros cercanos. Intentá nuevamente.');
+    } finally {
+      clearTimeout(timeout);
+
+      if (requestId === this.centrosRequestId) {
+        this.centrosCargando.set(false);
+      }
+    }
+  }
+
+  async aplicarFiltroCentros(): Promise<void> {
+    this.centrosError.set(null);
+
+    if (this.centrosFiltro() === 'veterinarias') {
+      await this.buscarLugares('veterinary');
+      return;
     }
 
-    if (tipo === 'veterinary') {
-
-      return (
-        nombre.includes('veterinaria') ||
-        nombre.includes('veterinaria ') ||
-        nombre.includes('veterinary')
-      );
-
+    if (this.centrosFiltro() === 'comisarias') {
+      await this.buscarLugares('police');
+      return;
     }
 
-    return true;
-
-  })
-  .map((l) => ({
-
-    nombre:
-      l.tags?.name ||
-      (tipo === 'police'
-        ? 'Comisaría'
-        : 'Veterinaria'),
-
-    lat: l.lat,
-
-    lng: l.lon,
-
-    distancia: this.calcularDistancia(
-      this.userLatLng!.lat,
-      this.userLatLng!.lng,
-      l.lat,
-      l.lon
-    )
-
-  }))
-  .sort((a, b) => {
-    const distA = this.calcularDistancia(
-      this.userLatLng!.lat,
-      this.userLatLng!.lng,
-      a.lat,
-      a.lng
-    );
-    const distB = this.calcularDistancia(
-      this.userLatLng!.lat,
-      this.userLatLng!.lng,
-      b.lat,
-      b.lng
-    );
-    return distA - distB;
-  });
-
-  this.lugares.set(lugares);
-
-    this.dibujarLugares();
-
-
-
-  } catch (error) {
-
-    console.error(error);
-
+    this.centrosRequestId++;
+    this.lugares.set([]);
+    this.lugaresLayer.clearLayers();
+    this.centrosCargando.set(false);
   }
 
-}
- 
-async aplicarFiltroCentros(): Promise<void> {
+  irALugar(
+    lat: number,
+    lng: number
+  ): void {
 
-  if (
-    this.centrosFiltro() === 'veterinarias'
-  ) {
-
-    await this.buscarLugares(
-      'veterinary'
+    this.map.setView(
+      [lat, lng],
+      18
     );
 
   }
-
-  else if (
-    this.centrosFiltro() === 'comisarias'
-  ) {
-
-    await this.buscarLugares(
-      'police'
-    );
-
-  }
-  else {
-
-  this.lugares.set([]);
-
-  this.lugaresLayer.clearLayers();
-
-}
-
-}
-
-irALugar(
-  lat: number,
-  lng: number
-): void {
-
-  this.map.setView(
-    [lat, lng],
-    18
-  );
-
-}
 
   private placeUserMarker(): void {
     if (!this.userLatLng) return;
@@ -589,6 +644,39 @@ irALugar(
       zIndexOffset: 1000,
     }).addTo(this.map);
   }
+
+  private dibujarRadar(): void {
+
+  if (!this.userLatLng) return;
+
+  const radioMetros =
+    this.radioRadar() * 1000;
+
+  if (this.radarCircle) {
+
+    this.radarCircle.setRadius(
+      radioMetros
+    );
+
+    this.radarCircle.setLatLng(
+      this.userLatLng
+    );
+
+    return;
+  }
+
+  this.radarCircle = L.circle(
+    this.userLatLng,
+    {
+      radius: radioMetros,
+      color: '#E8842E',
+      weight: 2,
+      fillColor: '#E8842E',
+      fillOpacity: 0.15
+    }
+  ).addTo(this.map);
+
+}
 
   private centerOnUser(): void {
     if (this.userLatLng) {
@@ -628,6 +716,85 @@ irALugar(
     }
   }
 
+  private filtrarPorRadar(): void {
+
+  if (!this.userLatLng) return;
+
+  let filtrados = [...this.reportes()];
+
+  // FILTRO TIPO
+
+  if (this.tipoFiltro() === 'perdidos') {
+
+    filtrados = filtrados.filter(
+      reporte => reporte.type === 'LOST'
+    );
+
+  }
+
+  if (this.tipoFiltro() === 'avistados') {
+
+    filtrados = filtrados.filter(
+      reporte => reporte.type === 'SIGHTING'
+    );
+
+  }
+
+  // FILTRO MASCOTA
+
+  if (this.mascotaFiltro() === 'perro') {
+
+    filtrados = filtrados.filter(reporte => {
+      const animalType =
+        (reporte.details as { animalType?: AnimalType }).animalType;
+
+      return animalType === 'DOG';
+    });
+
+  }
+
+  if (this.mascotaFiltro() === 'gato') {
+
+    filtrados = filtrados.filter(reporte => {
+      const animalType =
+        (reporte.details as { animalType?: AnimalType }).animalType;
+
+      return animalType === 'CAT';
+    });
+
+  }
+
+  // FILTRO RADAR
+
+  const distanciaMaxima =
+    this.radioRadar();
+
+  filtrados = filtrados.filter(
+    reporte => {
+
+      const distancia =
+        this.calcularDistancia(
+          this.userLatLng!.lat,
+          this.userLatLng!.lng,
+          reporte.location.latitude,
+          reporte.location.longitude
+        );
+
+      return distancia <= distanciaMaxima;
+
+    }
+  );
+
+  this.reportesFiltrados.set(
+    filtrados
+  );
+
+  this.dibujarMarcadores(
+    filtrados
+  );
+
+}
+
   selectSuggestion(suggestion: LocationSuggestion): void {
     this.searchTerm.set(suggestion.displayName);
     this.suggestions.set([]);
@@ -647,6 +814,68 @@ irALugar(
     this.suggestions.set([]);
     this.searchMarker?.remove();
     this.searchMarker = undefined;
+  }
+
+  abrirFiltros(): void {
+    this.mostrarFiltros.set(true);
+  }
+
+  cerrarFiltros(): void {
+    this.mostrarFiltros.set(false);
+  }
+
+  seleccionarTipo(valor: string): void {
+    this.tipoFiltro.set(valor);
+      this.filtrarPorRadar();
+
+  }
+
+  seleccionarCercania(valor: string): void {
+    this.cercaniaFiltro.set(valor);
+    this.aplicarFiltros();
+  }
+
+  seleccionarMascota(valor: string): void {
+    this.mascotaFiltro.set(valor);
+    this.filtrarPorRadar();
+  }
+
+  seleccionarCentros(valor: string): void {
+    this.centrosFiltro.set(valor);
+    this.aplicarFiltroCentros();
+  }
+
+  cambiarRadar(event: Event): void {
+
+  const valor =
+    Number(
+      (event.target as HTMLInputElement)
+      .value
+    );
+
+  this.radioRadar.set(valor);
+
+  this.dibujarRadar();
+
+  this.filtrarPorRadar();
+}
+
+  toggleTooltipCentros(event: Event): void {
+    event.stopPropagation();
+    this.tooltipCentrosClick.update((abierto) => !abierto);
+  }
+
+  onTooltipPointerEnter(event: PointerEvent): void {
+    if (event.pointerType === 'mouse') this.tooltipCentrosHover.set(true);
+  }
+
+  onTooltipPointerLeave(event: PointerEvent): void {
+    if (event.pointerType === 'mouse') this.tooltipCentrosHover.set(false);
+  }
+
+  @HostListener('document:click')
+  cerrarTooltipCentros(): void {
+    this.tooltipCentrosClick.set(false);
   }
 
   private markSearchResult(lat: number, lng: number): void {
@@ -747,5 +976,13 @@ irALugar(
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} hs`;
   }
 
-  
+  private getCentroBusqueda(): L.LatLng {
+    return this.userLatLng ?? this.map.getCenter();
+  }
+
+  private getCacheKey(tipo: 'veterinary' | 'police', centro: L.LatLng): string {
+    return `${tipo}:${centro.lat.toFixed(3)}:${centro.lng.toFixed(3)}`;
+  }
+
+
 }

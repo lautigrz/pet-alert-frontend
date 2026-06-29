@@ -113,4 +113,28 @@ export class ReportService {
       throw this.mapReportError(error);
     }
   }
+
+  async followReport(publicId: string): Promise<void> {
+    try {
+      await this.reportHttp.followReport(publicId);
+    } catch (error) {
+      throw this.mapReportError(error);
+    }
+  }
+
+  async unfollowReport(publicId: string): Promise<void> {
+    try {
+      await this.reportHttp.unfollowReport(publicId);
+    } catch (error) {
+      throw this.mapReportError(error);
+    }
+  }
+
+  async isFollowingReport(publicId: string): Promise<{ isFollowing: boolean }> {
+    try {
+      return await this.reportHttp.isFollowingReport(publicId);
+    } catch (error) {
+      throw this.mapReportError(error);
+    }
+  }
 }

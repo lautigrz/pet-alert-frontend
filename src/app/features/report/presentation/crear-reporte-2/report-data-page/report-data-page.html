@@ -1,4 +1,4 @@
-  <main class="flex-1 flex flex-col w-full max-w-6xl mx-auto px-10 py-6">
+  <main class="flex-1 flex flex-col w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6">
     <nav class="text-sm mb-3">
       <a routerLink="/home" class="text-[#1D6FA3] hover:underline">Inicio</a>
       <span class="text-slate-400"> &gt; </span>
@@ -20,10 +20,32 @@
     <input #fileInput type="file" accept="image/*" multiple class="hidden" (change)="onFilesSelected($event)" />
 
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-      <div class="bg-white border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
-        <div class="flex items-start gap-4">
+      <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-start gap-4">
           <div class="flex-1 min-w-0">
-            <span class="block text-sm font-semibold text-[#12355B]">Foto de la mascota</span>
+            
+            <div class="flex items-center gap-1.5">
+  <span class="text-sm font-semibold text-[#12355B]">
+    Foto de la mascota
+  </span>
+
+  <app-info-tooltip
+    tooltipTitle ="¿Cómo funciona la comparación?"
+    [ariaLabel]="'Información sobre la foto de la mascota'"
+  >
+    <p class="text-xs text-slate-500 leading-relaxed">
+      La búsqueda utiliza principalmente la
+      <span class="font-semibold text-[#12355B]">foto de la mascota</span>
+      para encontrar coincidencias.
+    </p>
+
+    <p class="text-xs text-slate-500 leading-relaxed mt-2">
+      Una imagen clara, donde se vea bien el animal, mejora significativamente
+      los resultados.
+    </p>
+  </app-info-tooltip>
+</div>
+            
             <p class="text-xs text-slate-400 mt-0.5 mb-2">Proporcioná una foto clara de la mascota</p>
             <button
               type="button"
@@ -40,10 +62,10 @@
             </button>
           </div>
 
-          <div class="flex gap-3 shrink-0">
+          <div class="grid grid-cols-3 gap-3 sm:flex sm:flex-wrap shrink-0">
             @for (slot of slots; track slot) {
               @if (photos()[slot]; as photo) {
-                <div class="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-200 shrink-0">
+                <div class="relative w-full aspect-square sm:w-24 sm:h-24 sm:aspect-auto rounded-lg overflow-hidden border border-slate-200 shrink-0">
                   <img [src]="photo" alt="" class="w-full h-full object-cover" />
                   <button
                     type="button"
@@ -58,7 +80,7 @@
                 <button
                   type="button"
                   (click)="fileInput.click()"
-                  class="w-24 h-24 rounded-lg border-2 border-dashed border-slate-300 hover:border-[#E8842E] text-slate-300 flex items-center justify-center shrink-0 transition"
+                  class="w-full aspect-square sm:w-24 sm:h-24 sm:aspect-auto rounded-lg border-2 border-dashed border-slate-300 hover:border-[#E8842E] text-slate-300 flex items-center justify-center shrink-0 transition"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
@@ -73,7 +95,7 @@
         <div class="flex flex-wrap gap-x-6 gap-y-3">
           <div>
             <span class="block text-sm font-semibold text-[#12355B] mb-1.5">Especie</span>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               <button type="button" (click)="petSpecies.set('gato')"
                 class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petSpecies() === 'gato' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
@@ -91,7 +113,7 @@
 
           <div>
             <span class="block text-sm font-semibold text-[#12355B] mb-1.5">Género</span>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               <button type="button" (click)="petGender.set('macho')"
                 class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petGender() === 'macho' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
@@ -109,7 +131,7 @@
 
           <div>
             <span class="block text-sm font-semibold text-[#12355B] mb-1.5">Tamaño</span>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               <button type="button" (click)="petSize.set('pequeño')"
                 class="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-xs font-semibold border transition"
                 [class]="petSize() === 'pequeño' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
@@ -155,7 +177,7 @@
         <div class="flex flex-wrap items-start justify-between gap-y-3">
           <div>
             <span class="block text-sm font-semibold text-[#12355B] mb-1.5">¿Posee collar con identificación?</span>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               <button type="button" (click)="hasIdentification.set('si')"
                 class="px-4 py-1.5 rounded-md text-sm font-semibold border transition"
                 [class]="hasIdentification() === 'si' ? 'bg-[#E8842E] border-[#E8842E] text-white' : 'bg-white border-slate-300 text-slate-600 hover:border-[#E8842E]'">
@@ -182,10 +204,39 @@
         </div>
 
         <div>
-          <label for="description" class="block text-sm font-semibold text-[#12355B] mb-1.5">Descripción adicional</label>
-          <textarea id="description" #descRef [value]="petDescription()" (input)="petDescription.set(descRef.value)"
-            placeholder="Ingresá información que creas relevante para el caso" rows="3"
-            class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400 resize-none"></textarea>
+          <div class="flex items-center gap-1.5 mb-1.5">
+  <label
+    for="description"
+    class="text-sm font-semibold text-[#12355B]"
+  >
+    Descripción adicional
+  </label>
+
+  <app-info-tooltip
+    tooltipTitle ="¿Por qué agregar una descripción?"
+    [ariaLabel]="'Información sobre la descripción'"
+  >
+    <p class="text-xs text-slate-500 leading-relaxed">
+      La comparación se ayuda de la descripción para identificar o descartar coincidencias.
+    </p>
+
+    <p class="text-xs text-slate-500 leading-relaxed mt-2">
+      Agregar detalles como manchas, cicatrices, color de ojos, tipo de pelaje,
+      accesorios o cualquier característica distintiva ayuda a mejorar la precisión
+      de las coincidencias.
+    </p>
+  </app-info-tooltip>
+</div>
+
+<textarea
+  id="description"
+  #descRef
+  [value]="petDescription()"
+  (input)="petDescription.set(descRef.value)"
+  placeholder="Ingresá información que creas relevante para el caso. Ej: manchas, cicatrices o rasgos distintivos del pelaje"
+  rows="3"
+  class="w-full px-4 py-2.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400 resize-none"
+></textarea>
         </div>
       </div>
 

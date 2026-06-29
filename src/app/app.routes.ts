@@ -86,11 +86,24 @@ export const routes: Routes = [
           .then(m => m.ChatsPage),
       },
       {
+        path: 'admin',
+        loadComponent: () =>
+          import('./features/admin/presentation/admin-dashboard/admin-dashboard')
+          .then((m) => m.AdminDashboardComponent),
+      },
+      {
         path: 'reports/:publicId',
         loadComponent: () =>
           import(
             './features/report/presentation/report-detail/report-detail'
           ).then((m) => m.ReportDetailPage),
+      },
+      {
+        path: 'reports/:publicId/matches',
+        loadComponent: () =>
+          import(
+            './features/report/presentation/matches/matches'
+          ).then((m) => m.MatchesPage),
       },
       {
         path: 'reports/:publicId/edit/datos',

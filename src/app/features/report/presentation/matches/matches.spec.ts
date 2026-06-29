@@ -1,0 +1,181 @@
+import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { of } from 'rxjs';
+
+import { MatchesPage } from './matches';
+import { MatchService } from '../../application/match.service';
+import { ReportService } from '../../application/report.service';
+import { ChatsService } from '../../../chats/application/chats.service';
+import { ToastService } from '../../../../shared/application/toast.service';
+import { SeenMatchesStore } from '../../application/seen-matches.store';
+import { ReportDetail } from '../../infrastructure/report.http';
+import { Match } from '../../domain/match.model';
+
+function makeReportDetail(overrides: Partial<ReportDetail> = {}): ReportDetail {
+  return {
+    publicId: 'src',
+    type: 'LOST',
+    status: 'ACTIVE',
+    description: 'desc',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    occurredAt: '2024-01-01T10:00:00.000Z',
+    updatedAt: null,
+    location: { address: 'Calle 1', latitude: 0, longitude: 0 },
+    details: { name: 'Toby', animalType: 'DOG', color: 'negro', hasIdCollar: false, images: [] },
+    user: { publicId: 'me', username: 'yo', photoUrl: null },
+    ...overrides,
+  };
+}
+
+function makeMatch(overrides: Partial<Match> = {}): Match {
+  return {
+    matchPublicId: 'm1',
+    reportPublicId: 'r1',
+    userPublicId: 'owner-1',
+    name: 'Michi',
+    image: 'img.jpg',
+    username: 'ana',
+    foundAt: '2024-01-01T10:00:00.000Z',
+    distanceKm: 2.1,
+    score: 0.9,
+    imageScore: 0.85,
+    descriptionScore: 0.7,
+    ...overrides,
+  };
+}
+
+describe('MatchesPage', () => {
+  let fixture: ComponentFixture<MatchesPage>;
+  let component: MatchesPage;
+  let matchService: { getReportMatches: ReturnType<typeof vi.fn> };
+  let reportService: { getReportByPublicId: ReturnType<typeof vi.fn> };
+  let chatsService: { getOrCreateConversation: ReturnType<typeof vi.fn> };
+  let toastService: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn> };
+  let seenMatchesStore: {
+    isNew: ReturnType<typeof vi.fn>;
+    markSeen: ReturnType<typeof vi.fn>;
+    ensureLoaded: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(() => {
+    matchService = { getReportMatches: vi.fn() };
+    reportService = { getReportByPublicId: vi.fn() };
+    chatsService = { getOrCreateConversation: vi.fn() };
+    toastService = { error: vi.fn(), success: vi.fn() };
+    router = { navigate: vi.fn() };
+    seenMatchesStore = {
+      isNew: vi.fn().mockReturnValue(false),
+      markSeen: vi.fn(),
+      ensureLoaded: vi.fn().mockResolvedValue(undefined),
+    };
+
+    TestBed.configureTestingModule({
+      imports: [MatchesPage],
+      providers: [
+        { provide: MatchService, useValue: matchService },
+        { provide: ReportService, useValue: reportService },
+        { provide: ChatsService, useValue: chatsService },
+        { provide: ToastService, useValue: toastService },
+        { provide: Router, useValue: router },
+        { provide: SeenMatchesStore, useValue: seenMatchesStore },
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ publicId: 'src' })) } },
+      ],
+    });
+
+    fixture = TestBed.createComponent(MatchesPage);
+    component = fixture.componentInstance;
+  });
+
+  it('carga el reporte y las coincidencias', async () => {
+    const report = makeReportDetail();
+    const matches = [makeMatch()];
+    matchService.getReportMatches.mockResolvedValue({ report, matches });
+
+    component.ngOnInit();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(matchService.getReportMatches).toHaveBeenCalledWith('src');
+    expect(component.report()).toEqual(report);
+    expect(component.matches()).toEqual(matches);
+    expect(component.loading()).toBe(false);
+    expect(component.reportTitle()).toBe('Toby');
+  });
+
+  it('marca las nuevas al cargar y las desmarca al verlas', async () => {
+    const report = makeReportDetail();
+    const matches = [makeMatch({ matchPublicId: 'm1' })];
+    matchService.getReportMatches.mockResolvedValue({ report, matches });
+    seenMatchesStore.isNew.mockReturnValue(true);
+
+    component.ngOnInit();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(component.nuevos().has('m1')).toBe(true);
+
+    component.marcarVista(makeMatch({ matchPublicId: 'm1' }));
+
+    expect(seenMatchesStore.markSeen).toHaveBeenCalledWith('m1');
+    expect(component.nuevos().has('m1')).toBe(false);
+  });
+
+  it('setea error cuando falla la carga', async () => {
+    matchService.getReportMatches.mockRejectedValue(new Error('boom'));
+
+    component.ngOnInit();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(component.error()).toBe('No se pudieron cargar las coincidencias');
+    expect(component.loading()).toBe(false);
+  });
+
+  it('abre el chat obteniendo o creando la conversación', async () => {
+    chatsService.getOrCreateConversation.mockResolvedValue('conv-9');
+
+    await component.openChat(makeMatch({ userPublicId: 'owner-1' }));
+
+    expect(chatsService.getOrCreateConversation).toHaveBeenCalledWith('owner-1');
+    expect(router.navigate).toHaveBeenCalledWith(['/chats'], { queryParams: { conversation: 'conv-9' } });
+  });
+
+  it('no hace nada si la coincidencia no tiene dueño', async () => {
+    await component.openChat(makeMatch({ userPublicId: '' }));
+
+    expect(chatsService.getOrCreateConversation).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('muestra un toast si no se puede abrir el chat', async () => {
+    chatsService.getOrCreateConversation.mockRejectedValue(new Error('x'));
+
+    await component.openChat(makeMatch({ userPublicId: 'owner-1' }));
+
+    expect(toastService.error).toHaveBeenCalledWith('No se pudo abrir el chat');
+  });
+
+  it('abre el detalle marcando la vista y cargando el reporte de la coincidencia', async () => {
+    matchService.getReportMatches.mockResolvedValue({ report: makeReportDetail(), matches: [] });
+    component.ngOnInit();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    const detalle = makeReportDetail({ publicId: 'r1' });
+    reportService.getReportByPublicId.mockResolvedValue(detalle);
+
+    await component.openDetail(makeMatch({ reportPublicId: 'r1' }));
+
+    expect(seenMatchesStore.markSeen).toHaveBeenCalledWith('m1');
+    expect(reportService.getReportByPublicId).toHaveBeenCalledWith('r1');
+    expect(component.selectedMatch()?.reportPublicId).toBe('r1');
+    expect(component.selectedDetail()).toEqual(detalle);
+    expect(component.detailLoading()).toBe(false);
+  });
+
+  it('navega al reporte y cierra el modal al ver reporte', () => {
+    component.selectedMatch.set(makeMatch({ reportPublicId: 'r1' }));
+
+    component.verReporte(makeMatch({ reportPublicId: 'r1' }));
+
+    expect(router.navigate).toHaveBeenCalledWith(['/reports', 'r1']);
+    expect(component.selectedMatch()).toBeNull();
+  });
+});

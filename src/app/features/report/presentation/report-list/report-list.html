@@ -1,17 +1,37 @@
-<aside class="w-[430px] shrink-0 bg-white overflow-y-auto px-8 py-7">
-  <h2 class="text-lg font-bold text-[#12355B] mb-4">Filtros</h2>
+@if (mostrarFiltros()) {
+<button type="button" aria-label="Cerrar filtros" (click)="cerrarFiltros()" class="fixed inset-0 bg-black/40 z-[1090] lg:hidden"></button>
+}
+
+<aside
+  class="fixed inset-y-0 left-0 z-[1100] w-[88%] max-w-[380px] bg-white overflow-y-auto px-5 py-5 -translate-x-full transition-transform duration-300 lg:static lg:z-auto lg:w-[430px] lg:max-w-none lg:translate-x-0 lg:transition-none shrink-0"
+  [class.!translate-x-0]="mostrarFiltros()">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-bold text-[#12355B]">Filtros</h2>
+    <div class="flex items-center gap-3">
+      <button type="button" (click)="limpiarTodo()" class="text-xs font-semibold text-[#E8842E] hover:underline">
+        Limpiar
+      </button>
+      <button type="button" (click)="cerrarFiltros()" aria-label="Cerrar filtros"
+        class="lg:hidden text-slate-400 hover:text-[#12355B]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
 
   <div class="mb-4">
     <p class="text-xs font-semibold text-slate-500 mb-2">Tipo de reporte</p>
     <div class="flex flex-wrap gap-2">
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroTipo() === 'TODOS' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroTipo() === 'TODOS' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroTipo('TODOS')">Todos</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroTipo() === 'LOST' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroTipo() === 'LOST' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroTipo('LOST')">Perdidos</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroTipo() === 'SIGHTING' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroTipo() === 'SIGHTING' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroTipo('SIGHTING')">Avistados</button>
     </div>
   </div>
@@ -20,16 +40,16 @@
     <p class="text-xs font-semibold text-slate-500 mb-2">Cercanía</p>
     <div class="flex flex-wrap gap-2">
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroCercania() === 'TODOS' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroCercania() === 'TODOS' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroCercania('TODOS')">Todos</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroCercania() === '5' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroCercania() === '5' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroCercania('5')">5km</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroCercania() === '10' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroCercania() === '10' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroCercania('10')">10km</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroCercania() === '20' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroCercania() === '20' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroCercania('20')">20km</button>
     </div>
   </div>
@@ -38,55 +58,14 @@
     <p class="text-xs font-semibold text-slate-500 mb-2">Mascota</p>
     <div class="flex flex-wrap gap-2">
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroMascota() === 'TODOS' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroMascota() === 'TODOS' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroMascota('TODOS')">Todos</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroMascota() === 'DOG' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroMascota() === 'DOG' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroMascota('DOG')">Perro</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroMascota() === 'CAT' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-slate-600 border-slate-300 hover:border-[#E8842E]'"
+        [class]="filtroMascota() === 'CAT' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
         (click)="setFiltroMascota('CAT')">Gato</button>
-    </div>
-  </div>
-
-  <div class="pt-4">
-    <div class="flex items-center justify-between mb-2">
-      <p class="text-xs font-semibold text-slate-500">Ubicación</p>
-
-      @if (busquedaLocalidad()) {
-      <button type="button" (click)="limpiarBusquedaLocalidad()"
-        class="text-xs font-semibold text-[#E8842E] hover:underline">
-        Limpiar
-      </button>
-      }
-    </div>
-
-    <div class="relative">
-      <svg xmlns="http://www.w3.org/2000/svg"
-        class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.3-4.3" />
-      </svg>
-
-      <input type="text"
-        class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg text-xs text-[#12355B] bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]"
-        placeholder="Buscar localidad" autocomplete="off" [value]="busquedaLocalidad()"
-        (input)="onLocationSearchInput($any($event.target).value)" (keyup.enter)="searchLocation()" />
-
-      @if (locationSuggestions().length) {
-      <ul
-        class="absolute left-0 right-0 mt-1 z-[1000] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden max-h-72 overflow-y-auto">
-        @for (suggestion of locationSuggestions(); track suggestion.displayName) {
-        <li>
-          <button type="button" (click)="selectLocationSuggestion(suggestion)"
-            class="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-slate-100 border-b border-slate-100 last:border-0">
-            {{ suggestion.displayName }}
-          </button>
-        </li>
-        }
-      </ul>
-      }
     </div>
   </div>
 
@@ -98,40 +77,55 @@
         class="text-xs font-semibold text-[#E8842E] hover:underline">Limpiar</button>
       }
     </div>
-    <div class="flex gap-2">
-      <label class="flex flex-col gap-1">
+    <div class="grid grid-cols-2 gap-2">
+      <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs text-slate-500">Desde</span>
         <input type="date" [value]="fechaDesde()" [max]="fechaHasta()"
           (change)="setFechaDesde($any($event.target).value)"
-          class="w-32 px-2 py-1.5 rounded-md text-xs border border-slate-300 text-slate-600 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]" />
+          class="w-full px-2 py-2.5 rounded-md text-xs border border-slate-300 text-slate-600 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]" />
       </label>
-      <label class="flex flex-col gap-1">
+      <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs text-slate-500">Hasta</span>
         <input type="date" [value]="fechaHasta()" [min]="fechaDesde()"
           (change)="setFechaHasta($any($event.target).value)"
-          class="w-32 px-2 py-1.5 rounded-md text-xs border border-slate-300 text-slate-600 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]" />
+          class="w-full px-2 py-2.5 rounded-md text-xs border border-slate-300 text-slate-600 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]" />
       </label>
     </div>
   </div>
 </aside>
 
 <main class="flex-1 bg-[#f3f4f6] flex flex-col min-h-0 overflow-hidden">
-  <div class="shrink-0 px-8 pt-7">
+  <div class="shrink-0 overflow-y-auto [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 pt-5 lg:pt-7">
     <div class="max-w-[1180px]">
-      <h1 class="text-2xl font-extrabold text-[#12355B] mb-5">Reportes</h1>
+      <div class="flex items-center justify-between gap-3 mb-5">
+        <h1 class="text-2xl font-extrabold text-[#12355B]">Reportes</h1>
+
+        <button type="button" (click)="abrirFiltros()"
+          class="lg:hidden inline-flex items-center gap-1.5 text-sm font-semibold text-[#E8842E]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          Filtros
+        </button>
+      </div>
 
       <div
-        class="inline-flex items-stretch mb-5 bg-white border border-slate-200 rounded-xl overflow-hidden divide-x divide-slate-200">
-        <button class="px-6 py-2.5 text-sm font-semibold transition"
+        class="flex items-stretch mb-5 bg-white border border-slate-200 rounded-xl overflow-hidden divide-x divide-slate-200 lg:inline-flex">
+        <button
+          class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'todos' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
           (click)="seleccionarTab('todos')">Todos</button>
-        <button class="px-6 py-2.5 text-sm font-semibold transition"
+        <button
+          class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'recientes' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
           (click)="seleccionarTab('recientes')">Recientes</button>
-        <button class="px-6 py-2.5 text-sm font-semibold transition"
+        <button
+          class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'cercanos' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
           (click)="seleccionarTab('cercanos')">Cercanos</button>
-        <button class="px-6 py-2.5 text-sm font-semibold transition"
+        <button
+          class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'mis-reportes' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
           (click)="seleccionarTab('mis-reportes')">Mis Reportes</button>
       </div>
@@ -145,9 +139,9 @@
           <path d="m21 21-4.3-4.3" />
         </svg>
 
-        <input type="search"
+        <input type="text"
           class="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg text-sm text-[#12355B] bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]"
-          placeholder="Buscar algo distintivo de la mascota" autocomplete="off" [value]="busquedaDescripcion()"
+          placeholder="Buscar por nombre, raza, color, ubicación…" autocomplete="off" [value]="busquedaDescripcion()"
           (input)="onDescriptionSearchInput($any($event.target).value)" />
 
         @if (busquedaDescripcion()) {
@@ -160,7 +154,7 @@
     </div>
   </div>
 
-  <div class="flex-1 min-h-0 overflow-y-auto px-8 pb-7">
+  <div class="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 pb-7">
     <div class="max-w-[1180px]">
       @if (cargando()) {
       <div
@@ -194,10 +188,31 @@
       </div>
       } @else {
       <div class="grid grid-cols-1 xl:grid-cols-2 items-start gap-4">
-        @for (reporte of reportesVisibles(); track reporte.publicId) {
+        @for (reporte of reportes(); track reporte.publicId) {
         <app-report-card [reporte]="reporte" />
         }
       </div>
+
+      @if (showPagination()) {
+      <nav class="flex flex-wrap items-center justify-center gap-1.5 mt-6">
+        <button type="button" (click)="goToPage(page() - 1)" [disabled]="page() === 1"
+          class="px-3 py-1.5 rounded-md text-sm font-semibold border border-neutral-300 text-slate-600 transition hover:border-[#E8842E] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-neutral-300">
+          Anterior
+        </button>
+        @for (p of pages(); track p) {
+        <button type="button" (click)="goToPage(p)"
+          class="min-w-9 px-3 py-1.5 rounded-md text-sm font-semibold border transition" [class]="p === page()
+            ? 'bg-[#E8842E] text-white border-[#E8842E]'
+            : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+          {{ p }}
+        </button>
+        }
+        <button type="button" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()"
+          class="px-3 py-1.5 rounded-md text-sm font-semibold border border-neutral-300 text-slate-600 transition hover:border-[#E8842E] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-neutral-300">
+          Siguiente
+        </button>
+      </nav>
+      }
       }
     </div>
   </div>

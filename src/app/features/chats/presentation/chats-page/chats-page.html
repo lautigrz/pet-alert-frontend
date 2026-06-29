@@ -1,129 +1,220 @@
-<div class="chats-page">
-  <aside class="chats-sidebar">
-    <div class="sidebar-header">
-      <h2>Chats</h2>
-      <span class="chat-count">5</span>
-    </div>
+<aside class="w-full lg:w-[370px] shrink-0 bg-white lg:border-r lg:border-slate-200 flex-col lg:flex"
+  [class.flex]="!selectedContact()" [class.hidden]="!!selectedContact()">
 
-    <div class="search-box">
-      <span>🔍</span>
-      <input
-        type="text"
-        placeholder="Buscar conversación"
-        [ngModel]="searchTerm()"
+  <div class="lg:hidden flex items-center justify-center px-5 pt-5 pb-4 shrink-0">
+    <h2 class="text-xl font-extrabold text-[#12355B]">Mis Chats</h2>
+  </div>
+
+  <div class="hidden lg:flex px-6 pt-5 pb-3 items-center justify-between shrink-0">
+    <h2 class="text-xl font-extrabold text-[#12355B]">Chats</h2>
+    <span
+      class="min-w-[22px] h-[22px] px-1.5 bg-[#12355B] text-white rounded-full text-xs font-bold inline-flex items-center justify-center">
+      {{ contacts.length }}
+    </span>
+  </div>
+
+  <div class="hidden lg:block mx-5 mb-3 shrink-0">
+    <div class="h-10 bg-slate-100 rounded-lg flex items-center gap-2 px-3">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+      <input type="text" placeholder="Buscar conversación" [ngModel]="searchTerm()"
         (ngModelChange)="searchTerm.set($event)"
-      />
+        class="flex-1 min-w-0 bg-transparent outline-none text-sm text-[#12355B] placeholder:text-slate-400" />
     </div>
+  </div>
 
-    <div class="contacts-list">
-      @for (contact of filteredContacts; track contact.id) {
-        <button
-          type="button"
-          class="contact-card"
-          [class.active]="selectedContact().id === contact.id"
-          (click)="selectContact(contact)"
-        >
-          <div class="avatar">
-            <span>👤</span>
-          </div>
-
-          <div class="contact-info">
-            <div class="contact-top">
-              <strong>{{ contact.name }}</strong>
-              <small>{{ contact.time }}</small>
-            </div>
-
-            <div class="contact-bottom">
-              <p>{{ contact.lastMessage }}</p>
-
-              @if (contact.unread) {
-                <span class="unread">
-                  {{ contact.unread }}
-                </span>
-              }
-            </div>
-          </div>
-        </button>
-      }
-    </div>
-  </aside>
-
-  <section class="chat-content">
-    <header class="chat-header">
-      <div class="avatar big">
-        <span>👤</span>
+  <div class="flex-1 min-h-0 overflow-y-auto px-3 lg:px-0 pb-3 lg:pb-0">
+    @for (contact of filteredContacts; track contact.publicId) {
+    <button type="button" (click)="selectContact(contact)"
+      class="w-full flex items-center gap-3 text-left transition-colors mt-2 lg:mt-0 px-3 lg:px-5 py-3 rounded-2xl border border-slate-200 lg:rounded-none lg:border-0 lg:border-l-4 lg:border-transparent"
+      [class]="selectedContact()?.publicId === contact.publicId ? 'border-[#E8842E] lg:bg-slate-50' : 'lg:hover:bg-slate-50'">
+      <div class="w-11 h-11 lg:w-10 lg:h-10 rounded-full overflow-hidden shrink-0 bg-slate-200">
+        <img
+          [src]="contact.otherUser.photoUrl || ('https://ui-avatars.com/api/?name=' + contact.otherUser.username + '&background=e2e8f0&color=12355B&size=128')"
+          alt="" class="w-full h-full object-cover" />
       </div>
-
-      <div>
-        <h3>{{ selectedContact().name }}</h3>
-
-        @if (selectedContact().online) {
-          <p>en línea</p>
-        }
-      </div>
-    </header>
-
-    <main class="messages-area">
-      <div class="day-pill">Hoy</div>
-
-      @for (message of messages; track message.id) {
-        <div
-          class="message-row"
-          [class.mine]="message.sender === 'me'"
-        >
-          <div class="message-bubble">
-            @if (message.text) {
-              <p>{{ message.text }}</p>
-            }
-
-            @if (message.imageUrl) {
-              <img
-                [src]="message.imageUrl"
-                alt="Imagen enviada por chat"
-                class="message-image"
-              />
-            }
-
-            @if (message.audioUrl) {
-              <div class="audio-message">
-                🎤 Audio enviado
-              </div>
-            }
-
-            <span>{{ message.time }}</span>
-          </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between gap-2">
+          <strong class="text-sm font-bold text-[#12355B] truncate">{{ contact.otherUser.username }}</strong>
+          <small class="hidden lg:block text-[10px] text-[#E8842E] shrink-0 whitespace-nowrap">{{
+            contact.lastMessage?.createdAt | date:'shortTime' }}</small>
         </div>
+        <p class="text-xs text-slate-500 truncate mt-0.5">{{ contact.lastMessage?.text || (contact.lastMessage ?
+          'Imagen' : '') }}</p>
+      </div>
+    </button>
+    }
+  </div>
+</aside>
+
+<section class="flex-1 min-w-0 flex-col lg:flex" [class.flex]="!!selectedContact()" [class.hidden]="!selectedContact()">
+
+  @if (selectedContact(); as contact) {
+
+  <header
+    class="relative shrink-0 bg-white border-b border-slate-200 flex items-center justify-center lg:justify-between gap-3.5 px-4 lg:px-7 py-3 lg:h-[78px]">
+
+    <!-- Botón Volver (solo mobile, flotante) -->
+    <button type="button" (click)="selectedContact.set(null)" aria-label="Volver"
+      class="lg:hidden absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#12355B]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 19-7-7 7-7" />
+        <path d="M19 12H5" />
+      </svg>
+    </button>
+
+    <!-- Info del contacto -->
+    <div class="flex flex-col lg:flex-row items-center gap-1 lg:gap-3.5">
+      <div class="w-12 h-12 lg:w-10 lg:h-10 rounded-full overflow-hidden shrink-0 bg-slate-200">
+        <img
+          [src]="contact.otherUser.photoUrl || ('https://ui-avatars.com/api/?name=' + contact.otherUser.username + '&background=e2e8f0&color=12355B&size=128')"
+          alt="" class="w-full h-full object-cover" />
+      </div>
+      <div class="text-center lg:text-left">
+        <h3 class="text-[15px] font-extrabold text-[#12355B]">{{ contact.otherUser.username }}</h3>
+        <p class="text-[11px] text-[#E8842E] flex items-center justify-center lg:justify-start gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#E8842E]"></span> en línea
+        </p>
+      </div>
+    </div>
+
+    <div
+      class="absolute right-3 top-1/2 -translate-y-1/2 lg:relative lg:right-auto lg:top-auto lg:translate-y-0">
+      <button type="button" (click)="toggleMenuOpciones($event)" aria-label="Opciones"
+        class="p-1.5 -m-1.5 rounded-lg text-slate-400 hover:text-[#12355B] hover:bg-slate-100 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" />
+        </svg>
+      </button>
+
+      @if (menuOpcionesAbierto()) {
+      <div
+        class="absolute right-0 top-[calc(100%+8px)] z-[1100] min-w-[170px] bg-white border border-slate-200 rounded-xl shadow-xl p-1.5">
+        <button type="button" (click)="denunciarDesdeMenu()"
+          class="w-full inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-red-500 hover:bg-red-50 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+          </svg>
+          Denunciar
+        </button>
+      </div>
       }
-    </main>
+    </div>
 
-    <footer class="message-composer">
-      <input
-        #fileInput
-        type="file"
-        accept="image/*"
-        hidden
-        (change)="sendImage($event)"
-      />
+  </header>
 
-      <button type="button" class="composer-icon" (click)="openFilePicker()">
-        📎
+  <main class="flex-1 min-h-0 overflow-y-auto px-4 lg:px-16 py-6" #messagesContainer>
+    <div class="w-fit mx-auto mb-5 px-3 py-1.5 rounded-full bg-white text-slate-400 text-[11px] shadow-sm">Hoy</div>
+
+    @for (message of allMessages; track message.publicId) {
+    <div class="flex mb-3.5" [class.justify-end]="message.senderId === currentUserId()">
+      <div class="max-w-[75%] lg:max-w-[420px] rounded-lg px-3.5 py-2.5 shadow-sm"
+        [class]="message.senderId === currentUserId() ? 'bg-[#dbe9f3]' : 'bg-white'">
+
+        @if (message.imageUrl) {
+        <button type="button"
+          class="mb-2 max-w-full rounded overflow-hidden cursor-pointer hover:opacity-90 transition-opacity block border-0 bg-transparent p-0 text-left"
+          (click)="openImage(message.imageUrl)">
+          <img [src]="message.imageUrl" alt="Imagen enviada" class="w-full h-auto max-h-[300px] object-cover rounded" />
+        </button>
+        } @else if (message.images?.length) {
+        <button type="button"
+          class="mb-2 max-w-full rounded overflow-hidden cursor-pointer hover:opacity-90 transition-opacity block border-0 bg-transparent p-0 text-left"
+          (click)="openImage(getMessageImageUrl(message))">
+          <img [src]="getMessageImageUrl(message)" alt="Imagen enviada"
+            class="w-full h-auto max-h-[300px] object-cover rounded" />
+        </button>
+        }
+
+        @if (message.text) {
+        <p class="text-[13px] leading-snug text-[#12355B]">{{ message.text }}</p>
+        }
+        <span class="block mt-1 text-[10px] text-slate-400 text-right">{{ message.createdAt | date:'shortTime' }}</span>
+      </div>
+    </div>
+    }
+  </main>
+
+  <footer class="shrink-0 bg-white border-t border-slate-200 flex flex-col px-3 lg:px-6 py-3 gap-2">
+
+    @if (selectedImagePreview()) {
+    <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100 w-fit relative group ml-12">
+      <div class="w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
+        <img [src]="selectedImagePreview()" alt="Preview" class="w-full h-full object-cover" />
+      </div>
+      <div class="flex flex-col pr-6">
+        <span class="text-xs font-semibold text-[#12355B] truncate max-w-[150px]">{{ selectedImageFile()?.name }}</span>
+        <span class="text-[10px] text-slate-400">{{ (selectedImageFile()?.size ?? 0) / 1024 | number:'1.0-1' }}
+          KB</span>
+      </div>
+      <button type="button" (click)="clearSelectedImage()" aria-label="Eliminar imagen"
+        class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    }
+
+    <div class="flex items-center gap-2 lg:gap-2.5">
+      <input #fileInput type="file" accept="image/*" hidden (change)="onFileSelected($event)" />
+
+      <button type="button" (click)="openFilePicker()" aria-label="Adjuntar imagen"
+        class="w-10 h-10 shrink-0 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path
+            d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+        </svg>
       </button>
 
-      <button type="button" class="composer-icon" (click)="sendAudio()">
-        🎤
-      </button>
+      <input type="text" placeholder="Enviá un mensaje..." [ngModel]="newMessage()"
+        (ngModelChange)="newMessage.set($event)" (keyup.enter)="sendMessage()"
+        class="flex-1 min-w-0 h-[42px] border border-slate-200 rounded-full px-4 text-[13px] text-[#12355B] outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]" />
 
-      <input
-        type="text"
-        placeholder="Escribí un mensaje..."
-        [ngModel]="newMessage()"
-        (ngModelChange)="newMessage.set($event)"
-        (keyup.enter)="sendMessage()"
-      />
-
-      <button type="button" class="send-button" (click)="sendMessage()">
-        Enviar
+      <button type="button" (click)="sendMessage()" aria-label="Enviar"
+        class="shrink-0 bg-[#E8842E] hover:bg-[#d57821] text-white font-bold rounded-full transition-colors w-10 h-10 flex items-center justify-center lg:w-auto lg:h-[42px] lg:px-5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 lg:hidden" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2 11 13" />
+          <path d="M22 2 15 22l-4-9-9-4Z" />
+        </svg>
+        <span class="hidden lg:inline">Enviar</span>
       </button>
-    </footer>
-  </section>
+    </div>
+  </footer>
+  } @else {
+  <div class="hidden lg:flex flex-1 items-center justify-center text-slate-400 text-sm px-6 text-center">
+    Seleccioná una conversación para comenzar
+  </div>
+  }
+
+  <!-- Modal Denuncia -->
+  @if (mostrandoModalDenuncia() && conversationId) {
+    <app-report-modal tipo="chat" [targetPublicId]="conversationId" (cerrar)="cerrarModalDenuncia()" />
+  }
+</section>
+
+@if (activePreviewImageUrl(); as previewUrl) {
+<div #backdrop class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm"
+  role="button" tabindex="0" (click)="$event.target === backdrop && closeImage()" (keydown.escape)="closeImage()">
+  <button type="button" (click)="closeImage()" aria-label="Cerrar vista"
+    class="absolute top-4 right-4 text-white hover:text-slate-300 bg-black/30 hover:bg-black/50 p-2.5 rounded-full transition-all">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </button>
+  <div class="max-w-[90vw] max-h-[90vh] overflow-hidden rounded-xl border border-white/10 shadow-2xl relative">
+    <img [src]="previewUrl" alt="Vista ampliada" class="w-full h-full object-contain max-h-[90vh]" />
+  </div>
 </div>
+}

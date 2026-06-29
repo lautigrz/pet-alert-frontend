@@ -6,11 +6,12 @@ import { ReportWizardService } from '../../../application/report-wizard.service'
 import { Pet } from '../../../domain/report.model';
 import { DOG_BREEDS, PET_COLORS } from '../../../domain/pet-options';
 import { CatalogService } from '../../../application/catalog.service';
+import { InfoTooltipComponent } from '../../../../../shared/component/info-tooltip/info-tooltip.component';
 
 @Component({
   selector: 'app-lost-data-page',
   standalone: true,
-  imports: [RouterLink, WizardStepperComponent, PetIconComponent],
+  imports: [RouterLink, WizardStepperComponent, PetIconComponent, InfoTooltipComponent],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './lost-data-page.html',
 })

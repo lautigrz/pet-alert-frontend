@@ -1,92 +1,150 @@
-import { Injectable } from '@angular/core';
-import { ChatContact, ChatMessage } from '../domain/chat.models';
+import { inject, Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { SocketService } from '../../../core/services/socket.service';
+import { firstValueFrom, Observable } from 'rxjs';
+import { ConversationOutput, ConversationSummaryOutput } from '../domain/chat.models';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
+
+export interface MessagePayload {
+  publicId:   string;
+  text:       string;
+  senderId:   string;
+  receiverId: string;
+  isRead:     boolean;
+  createdAt:  Date;
+  imageUrl?:  string;
+  images?:    { publicId: string; url: string }[];
+   conversationId: string;
+}
+
+export interface CreateConversationResponse {
+  publicId:  string;
+  createdAt: string;
+}
+
 
 @Injectable({
   providedIn: 'root',
 })
+
+
 export class ChatsService {
-  getContacts(): ChatContact[] {
-    return [
-      {
-        id: 1,
-        name: 'Juan Pérez',
-        lastMessage: 'Sí dale! Si querés podemos encontrarnos...',
-        time: 'hace 2h',
-        unread: 2,
-        online: true,
-      },
-      {
-        id: 2,
-        name: 'Dona',
-        lastMessage: 'Te pareció, pero él no es Carlitos.',
-        time: 'hace 3h',
-      },
-      {
-        id: 3,
-        name: 'Milton Delgado',
-        lastMessage: 'Te paso una foto más con Flan.',
-        time: '12:30',
-        unread: 1,
-      },
-      {
-        id: 4,
-        name: 'Pablo Pérez',
-        lastMessage: 'Lo encontré ayer cerca del parque.',
-        time: 'ayer',
-      },
-      {
-        id: 5,
-        name: 'Sofía R.',
-        lastMessage: 'Hola! Vi un gato parecido en Caballito.',
-        time: '02/03',
-      },
-    ];
+
+  private readonly socketService = inject(SocketService);
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = environment.apiUrl;
+  private unreadChatsSubject = new BehaviorSubject<number>(0);
+    
+  
+
+  unreadChats$ = this.unreadChatsSubject.asObservable();
+  sendMessage(conversationId: string, text: string): void {
+    this.socketService.emit('message:send', { conversationId, text });
   }
 
-  getMessages(): ChatMessage[] {
-    return [
-      {
-        id: 1,
-        sender: 'other',
-        text: 'Hola! Te escribo por el Golden que encontraste hace unos días.',
-        time: '12:28',
-      },
-      {
-        id: 2,
-        sender: 'other',
-        text: 'Se parece bastante al mío que perdí la semana pasada, ¿podrías enviarme más fotos?',
-        time: '12:28',
-      },
-      {
-        id: 3,
-        sender: 'me',
-        text: 'Hola! Sí dale, ya te mando.',
-        time: '12:29',
-      },
-      {
-        id: 4,
-        sender: 'me',
-        imageUrl: 'assets/images/chat-cat.jpg',
-        time: '12:29',
-      },
-      {
-        id: 5,
-        sender: 'other',
-        text: 'Creo que es él!! Para quitarme la duda, ¿podríamos encontrarnos?',
-        time: '12:30',
-      },
-      {
-        id: 6,
-        sender: 'other',
-        text: 'En cualquier Veterinaria o punto en común',
-        time: '12:30',
-      },
-      {
-        id: 7,
-        sender: 'me',
-        text: 'Sí dale! Si querés podemos encontrarnos en Veterinaria Puppi',
-        time: '12:31',
-      },
-    ];
+  sendImage(conversationId: string, file: File, text?: string): Observable<MessagePayload> {
+    const formData = new FormData();
+    const data = {
+      conversationId,
+      content: text || ''
+    };
+    formData.append('data', JSON.stringify(data));
+    formData.append('photos', file);
+
+    return this.http.post<MessagePayload>(`${this.apiUrl}/messages`, formData);
   }
+
+  onMessageSent(): Observable<MessagePayload> {
+    return this.socketService.on<MessagePayload>('message:sent');
+  }
+
+  onMessageReceived(): Observable<MessagePayload> {
+    return this.socketService.on<MessagePayload>('message:received');
+  }
+
+  readMessage(conversationId: string){
+    this.socketService.emit('message:read', { conversationId });
+  }
+
+  onMessageRead(): Observable<{ conversationId: string }> {
+    return this.socketService.on<{ conversationId: string }>('message:read');
+  }
+
+  onError(): Observable<{ message: string }> {
+    return this.socketService.on<{ message: string }>('message:error');
+  }
+
+  getConversations(): Observable<ConversationSummaryOutput[]> {
+   return this.http.get<ConversationSummaryOutput[]>(`${this.apiUrl}/conversations`);
+  }
+
+  getMessagesForConversation(conversationId: string): Observable<ConversationOutput> {
+    return this.http.get<ConversationOutput>(`${this.apiUrl}/conversations/${conversationId}`);
+  }
+
+  createConversation(publicTargetId: string): Observable<CreateConversationResponse> {
+    return this.http.post<CreateConversationResponse>(`${this.apiUrl}/conversations`, { publicTargetId });
+  }
+
+  async getOrCreateConversation(publicTargetId: string): Promise<string> {
+    try {
+      const created = await firstValueFrom(this.createConversation(publicTargetId));
+      return created.publicId;
+    } catch {
+      const conversations = await firstValueFrom(this.getConversations());
+      const existing = conversations.find((c) => c.otherUser.publicId === publicTargetId);
+      if (existing) return existing.publicId;
+      throw new Error('No se pudo abrir el chat');
+    }
+  }
+
+private listenersInitialized = false;
+
+initializeSocketListeners(): void {
+
+  if (this.listenersInitialized) {
+    return;
+  }
+
+  this.listenersInitialized = true;
+
+  this.onMessageReceived().subscribe(() => {
+    this.refreshUnreadChats();
+  });
+
+  this.onMessageRead().subscribe(() => {
+    this.refreshUnreadChats();
+  });
+}
+
+  setUnreadChats(count: number): void {
+  this.unreadChatsSubject.next(count);
+}
+
+
+
+getUnreadChats(): number {
+  return this.unreadChatsSubject.value;
+}
+
+refreshUnreadChats(): void {
+  this.getConversations().subscribe({
+    next: (conversations) => {
+
+      console.log("CONVERSACIONES:", conversations);
+
+      const unread = conversations.filter(
+        c => (c.unreadCount ?? 0) > 0
+      ).length;
+
+      console.log("UNREAD:", unread);
+
+      this.setUnreadChats(unread);
+    },
+    error: (err) => {
+      console.error("ERROR getConversations:", err);
+    }
+  });
+}
 }

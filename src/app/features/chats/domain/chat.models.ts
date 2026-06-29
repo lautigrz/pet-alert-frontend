@@ -1,5 +1,7 @@
 export interface ChatContact {
   id: number;
+  publicId: string;
+  conversationId: string;
   name: string;
   lastMessage: string;
   time: string;
@@ -14,4 +16,44 @@ export interface ChatMessage {
   time: string;
   imageUrl?: string;
   audioUrl?: string;
+}
+
+export interface ConversationSummaryOutput {
+    unreadCount?: number;
+    publicId: string;
+    otherUser: {
+        publicId: string;
+        username: string;
+        photoUrl: string | null;  
+    };
+    lastMessage: {
+        text: string;
+        isRead: boolean;
+        createdAt: Date;
+    } | null;
+    createdAt: Date;
+}
+
+
+interface UserOutput {
+    publicId: string;
+    username: string;
+    photoUrl: string;
+}
+
+interface MessageOutput {
+    publicId: string;
+    text: string;
+    senderId: string;
+    isRead: boolean;
+    createdAt: Date;
+    imageUrl?: string;
+    images?: { publicId: string; url: string }[];
+}
+
+export interface ConversationOutput {
+    publicId: string;
+    otherUser: UserOutput;
+    messages: MessageOutput[];
+    createdAt: Date;
 }

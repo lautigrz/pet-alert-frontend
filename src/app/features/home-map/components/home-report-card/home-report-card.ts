@@ -54,6 +54,12 @@ export class HomeReportCardComponent {
     return this.haceCuanto(r.createdAt);
   });
 
+  readonly estadoLabel = computed(() => {
+    const status = this.data()?.status;
+    if (status === 'RESOLVED' || status === 'CLOSED') return 'Cerrado';
+    return null;
+  });
+
   private especie(tipo: string): string {
     const map: Record<string, string> = { DOG: 'Perro', CAT: 'Gato' };
     return map[tipo?.toUpperCase()] ?? tipo ?? '';

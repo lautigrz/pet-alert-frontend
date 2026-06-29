@@ -37,18 +37,17 @@ export class ReportCardComponent {
     const r = this.data();
     if (!r) return '';
 
+    const nombre = (r.type === 'LOST'
+      ? (r.details as LostDetails).name
+      : (r.details as SightingDetails).petName
+    )?.trim();
+    if (nombre) return nombre;
+
     const especie = this.especie((r.details as LostDetails | SightingDetails).animalType);
 
     if (r.type === 'LOST') return `${especie} perdido`;
     if (this.enTransito()) return `${especie} en tránsito`;
     return `${especie} avistado`;
-  });
-
-  readonly nombre = computed(() => {
-    const r = this.data();
-    if (!r) return '';
-    const name = (r.details as Partial<LostDetails>).name;
-    return name?.trim() ? name : this.titulo();
   });
 
   readonly direccion = computed(() => {

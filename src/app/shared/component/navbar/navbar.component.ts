@@ -3,17 +3,24 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { ProfileService } from '../../../features/profile/application/profile.service';
 import { AuthService } from '../../../features/auth/application/auth.service';
+import { NotificationsBell } from '../../../features/notifications/presentation/notifications-bell/notifications-bell';
+import { ChatsService } from '../../../features/chats/application/chats.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NotificationsBell],
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent implements OnInit {
   private readonly profileService = inject(ProfileService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly chatsService = inject(ChatsService);
+  
+  
+
 
   rutaHome = '/home';
   rutaMiPerfil = '/profile';
@@ -22,16 +29,25 @@ export class NavbarComponent implements OnInit {
   readonly nombreUsuario = signal('');
   readonly fotoUsuario = signal<string | null>(null);
   readonly menuAbierto = signal(false);
+  readonly unreadChats = toSignal(
+  this.chatsService.unreadChats$,
+  { initialValue: 0 }
+);
+
+
 
   async ngOnInit(): Promise<void> {
-    try {
-      const perfil = await this.profileService.getProfile();
-      this.nombreUsuario.set(perfil.name?.trim() || perfil.username);
-      this.fotoUsuario.set(perfil.photoUrl ?? null);
-    } catch {
-      this.nombreUsuario.set('');
-    }
-  }
+    
+
+  this.chatsService.unreadChats$
+    .subscribe(v => console.log("NAVBAR:", v));
+
+  this.chatsService.refreshUnreadChats();
+    
+     try { const perfil = await this.profileService.getProfile(); 
+      this.nombreUsuario.set(perfil.name?.trim() || perfil.username); 
+      this.fotoUsuario.set(perfil.photoUrl ?? null); }
+       catch { this.nombreUsuario.set(''); } }
 
   nuevoReporte(): void {
     this.router.navigate(['/report/type']);
@@ -51,4 +67,5 @@ export class NavbarComponent implements OnInit {
     this.profileService.clearCache();
     this.router.navigate(['/login']);
   }
+  
 }

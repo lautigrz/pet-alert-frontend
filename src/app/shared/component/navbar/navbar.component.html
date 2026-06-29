@@ -1,4 +1,4 @@
-<header class="sticky top-0 z-[1000] h-[75px] bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-8">
+<header class="sticky top-0 z-[1050] h-[75px] bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-8">
 
   <a [routerLink]="[rutaHome]" class="flex items-center shrink-0">
     <img src="nuevologo.png" alt="PetFinder" class="h-12 w-auto" />
@@ -7,15 +7,29 @@
   <nav class="hidden md:flex gap-7 text-slate-700">
     <a [routerLink]="[rutaHome]" routerLinkActive="text-[#E8842E]" [routerLinkActiveOptions]="{ exact: true }" class="hover:text-[#E8842E] transition-colors">Inicio</a>
     <a routerLink="/reports" routerLinkActive="text-[#E8842E]" class="hover:text-[#E8842E] transition-colors">Reportes</a>
-    <a routerLink="/chats" routerLinkActive="text-[#E8842E]" class="hover:text-[#E8842E] transition-colors">Chats</a>
+   <a
+  routerLink="/chats"
+  routerLinkActive="text-[#E8842E]"
+  class="flex items-center gap-1.5 hover:text-[#E8842E] transition-colors">
+
+  Chats
+
+  <span
+    class="flex items-center justify-center bg-[#E8842E] text-white text-xs font-bold min-w-[18px] h-[18px] px-1 rounded-full">
+    {{ unreadChats() }}
+  </span>
+
+</a>
     <a [routerLink]="[rutaMiPerfil]" routerLinkActive="text-[#E8842E]" class="hover:text-[#E8842E] transition-colors">Perfil</a>
   </nav>
 
   <div class="flex items-center gap-4 shrink-0">
     <button type="button" (click)="nuevoReporte()"
-      class="inline-flex items-center gap-1.5 bg-[#E8842E] hover:bg-[#d2741f] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
+      class="hidden md:inline-flex items-center gap-1.5 bg-[#E8842E] hover:bg-[#d2741f] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
       + Reportar mascota
     </button>
+
+    <app-notifications-bell variante="navbar" />
 
     <div class="relative">
       <button type="button" (click)="toggleMenu()" class="flex items-center gap-2.5 select-none">

@@ -1,4 +1,4 @@
-<main class="flex-1 bg-slate-50 px-6 py-10">
+<main class="flex-1 bg-slate-50 px-4 py-6 sm:px-6 sm:py-10">
   <section class="mx-auto w-full max-w-5xl">
     @if (loading()) {
       <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
@@ -28,13 +28,26 @@
           <span class="font-semibold text-[#12355B]">4.7</span>
           <span class="text-[#E8842E] font-medium">Leer reseñas</span>
         </div>
+        <div class="flex justify-center items-center gap-2 mt-2">
 
-        <a
-          [routerLink]="rutaMiPerfil"
-          class="mt-4 inline-flex items-center gap-2 border border-slate-300 hover:border-[#12355B] text-[#12355B] font-semibold text-sm px-4 py-2 rounded-md bg-white transition-colors"
-        >
-          ✎ Editar perfil
-        </a>
+          <a
+            [routerLink]="rutaMiPerfil"
+            class="inline-flex items-center gap-1 border border-slate-300 hover:border-[#12355B] text-[#12355B] font-semibold text-sm px-4 py-2 rounded-md bg-white transition-colors">
+            ✎ Editar perfil
+          </a>
+
+<!-- reportar perfil
+          <button
+            type="button"
+            class="w-10 h-10 inline-flex items-center justify-center border border-red-500 text-red-500 hover:bg-red-100 rounded-lg transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <text x="12" y="17" text-anchor="middle" font-size="20" font-weight="bold" fill="currentColor">!</text>
+              <circle cx="12" cy="4" r="1.5" fill="currentColor"/>
+            </svg>
+          </button>
+          -->
+
+        </div>
       </section>
 
       <section class="mb-5">
@@ -42,7 +55,7 @@
           <button
             type="button"
             (click)="setTab('reports')"
-            class="px-4 py-2 text-sm font-medium transition-colors"
+            class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium transition-colors"
             [class.bg-[#E8842E]]="activeTab() === 'reports'"
             [class.text-white]="activeTab() === 'reports'"
             [class.text-[#12355B]]="activeTab() !== 'reports'"
@@ -53,7 +66,7 @@
           <button
             type="button"
             (click)="setTab('missions')"
-            class="px-4 py-2 text-sm font-medium border-l border-slate-200 transition-colors"
+            class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium border-l border-slate-200 transition-colors"
             [class.bg-[#E8842E]]="activeTab() === 'missions'"
             [class.text-white]="activeTab() === 'missions'"
             [class.text-[#12355B]]="activeTab() !== 'missions'"
@@ -64,7 +77,7 @@
           <button
             type="button"
             (click)="setTab('achievements')"
-            class="px-4 py-2 text-sm font-medium border-l border-slate-200 transition-colors"
+            class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium border-l border-slate-200 transition-colors"
             [class.bg-[#E8842E]]="activeTab() === 'achievements'"
             [class.text-white]="activeTab() === 'achievements'"
             [class.text-[#12355B]]="activeTab() !== 'achievements'"
@@ -76,14 +89,33 @@
 
       <section>
         @if (activeTab() === 'reports') {
-          <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-            <h2 class="text-lg font-bold text-[#12355B] mb-2">
-              Mis reportes
-            </h2>
-            <p class="text-sm text-slate-500">
-              Todavía no tenés reportes cargados.
-            </p>
-          </div>
+          @if (reportsLoading()) {
+            <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+              Cargando reportes...
+            </div>
+          } @else if (reportsError()) {
+            <div
+              role="alert"
+              class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded"
+            >
+              {{ reportsError() }}
+            </div>
+          } @else if (reports().length === 0) {
+            <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+              <h2 class="text-lg font-bold text-[#12355B] mb-2">
+                Mis reportes
+              </h2>
+              <p class="text-sm text-slate-500">
+                Todavía no tenés reportes cargados.
+              </p>
+            </div>
+          } @else {
+            <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+              @for (reporte of reports(); track reporte.publicId) {
+                <app-home-report-card [reporte]="reporte" />
+              }
+            </div>
+          }
         }
 
         @if (activeTab() === 'missions') {
