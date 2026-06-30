@@ -34,4 +34,13 @@ export class ContentReportAdminHttp {
       }),
     );
   }
+
+  resolve(publicId: string, status: string, suspensionReason?: string): Promise<void> {
+    return firstValueFrom(
+      this.http.patch<void>(`${this.baseUrl}/content-reports/${publicId}`, {
+        status,
+        ...(suspensionReason ? { suspensionReason } : {}),
+      }),
+    );
+  }
 }

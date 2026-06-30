@@ -80,8 +80,8 @@ export class AdminDashboardComponent {
   readonly editorStatusOptions = computed<{ value: ContentReportStatus; label: string }[]>(() => {
     const values: ContentReportStatus[] =
       this.editing()?.targetType === 'POST'
-        ? ['PENDING', 'APPROVED', 'SUSPENDED', 'DISMISSED']
-        : ['PENDING', 'SUSPENDED', 'DISMISSED'];
+        ? ['PENDING', 'APPROVED', 'DISMISSED']
+        : ['PENDING', 'DISMISSED'];
     return values.map((value) => ({ value, label: STATUS_LABELS[value] }));
   });
 
@@ -173,21 +173,18 @@ export class AdminDashboardComponent {
   }
 
   askDelete(item: ContentReportQueueItem): void {
-    const isPost = item.targetType === 'POST';
     this.confirmation.set({
       action: 'delete',
       item,
-      label: isPost ? 'Eliminar publicación' : 'Eliminar chat',
-      description: isPost
-        ? 'Vas a eliminar la publicación denunciada. Esta acción no se puede deshacer.'
-        : 'Vas a eliminar el chat denunciado. Esta acción no se puede deshacer.',
+      label: 'Descartar denuncia',
+      description: 'Vas a descartar esta denuncia. El reporte no se modifica y la denuncia pasa a "Descartados".',
     });
   }
 
   confirmAction(): void {
     const pending = this.confirmation();
     if (!pending) return;
-    this.removeItem(pending.item);
+    this.applyStatus(pending.item, 'DISMISSED');
     this.cancelConfirmation();
   }
 
@@ -225,10 +222,10 @@ export class AdminDashboardComponent {
     if (selected?.publicId === item.publicId) {
       this.selected.set({ ...selected, status, ...patch });
     }
-  }
-
-  private removeItem(item: ContentReportQueueItem): void {
-    this.items.update((items) => items.filter((current) => current.publicId !== item.publicId));
-    if (this.selected()?.publicId === item.publicId) this.closeDetail();
+    this.service
+      .resolve(item.publicId, status, patch.suspensionReason ?? undefined)
+      .catch(() => {
+        void this.load();
+      });
   }
 }
