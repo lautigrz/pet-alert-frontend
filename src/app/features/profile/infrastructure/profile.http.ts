@@ -27,6 +27,7 @@ export interface GetProfileResponse {
   name?: string;
   lastname?: string;
   photoUrl?: string;
+  role?: string;
 }
 
 @Injectable({ providedIn: 'root'})

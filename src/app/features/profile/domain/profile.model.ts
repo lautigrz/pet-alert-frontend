@@ -5,4 +5,5 @@ export interface UpdatedProfile{
   name: string | null;
   lastname: string | null;
   photoUrl: string | null;
+  role: string | null;
 }

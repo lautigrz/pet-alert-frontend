@@ -4,6 +4,8 @@ import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { verifiedGuard } from './core/guards/verified.guard';
 import { wizardStepGuard } from './features/report/guards/wizard-step.guard';
+import { adminGuard, adminGuestGuard } from './features/admin/guards/admin.guard';
+import { AdminLayoutComponent } from './features/admin/presentation/admin-layout/admin-layout';
 import { AppShellComponent } from './shared/component/app-shell/app-shell.component';
 
 export const routes: Routes = [
@@ -49,6 +51,29 @@ export const routes: Routes = [
   },
 
   {
+    path: 'admin/login',
+    canActivate: [adminGuestGuard],
+    loadComponent: () =>
+      import('./features/admin/presentation/admin-login/admin-login').then(
+        (m) => m.AdminLoginPage,
+      ),
+  },
+  {
+    path: 'admin',
+    component: AdminLayoutComponent,
+    canActivate: [adminGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/admin/presentation/admin-dashboard/admin-dashboard').then(
+            (m) => m.AdminDashboardComponent,
+          ),
+      },
+    ],
+  },
+
+  {
     path: '',
     component: AppShellComponent,
     canActivate: [authGuard],
@@ -84,12 +109,6 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/chats/presentation/chats-page/chats-page')
           .then(m => m.ChatsPage),
-      },
-      {
-        path: 'admin',
-        loadComponent: () =>
-          import('./features/admin/presentation/admin-dashboard/admin-dashboard')
-          .then((m) => m.AdminDashboardComponent),
       },
       {
         path: 'reports/:publicId',
