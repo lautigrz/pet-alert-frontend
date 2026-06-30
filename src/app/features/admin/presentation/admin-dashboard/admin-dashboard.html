@@ -1,11 +1,6 @@
 <div class="flex flex-1 min-h-0 bg-[#f3f4f6]">
   <aside class="hidden sm:flex w-60 shrink-0 bg-[#12355B] text-white flex-col">
-    <div class="px-5 py-5 border-b border-white/10">
-      <p class="text-lg font-extrabold leading-tight">PetFinder</p>
-      <p class="text-xs text-white/60">Panel de moderación</p>
-    </div>
-
-    <nav class="flex-1 px-3 py-4 space-y-1">
+    <nav class="flex-1 px-3 py-5 space-y-1">
       <button type="button" (click)="selectSection('posts')"
         class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition"
         [class]="section() === 'posts' ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10'">

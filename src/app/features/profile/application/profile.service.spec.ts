@@ -74,6 +74,7 @@ describe('ProfileService.updateProfile', () => {
         name: 'Facundo',
         lastname: 'Pereira',
         photoUrl: 'https://image.com/avatar.jpg',
+        role: null,
       });
     });
   });
@@ -197,6 +198,7 @@ describe('ProfileService.getProfile', () => {
         name: 'Facundo',
         lastname: 'Pereira',
         photoUrl: null,
+        role: 'USER',
       });
 
       // When
@@ -210,6 +212,7 @@ describe('ProfileService.getProfile', () => {
         name: 'Facundo',
         lastname: 'Pereira',
         photoUrl: null,
+        role: 'USER',
       });
     });
   });
