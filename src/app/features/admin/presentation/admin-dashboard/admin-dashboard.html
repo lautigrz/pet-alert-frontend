@@ -155,7 +155,7 @@
                       </button>
                     }
                   </div>
-                } @else {
+                } @else if (item.status !== 'SUSPENDED') {
                   <button type="button" (click)="$event.stopPropagation(); openEditor(item)"
                     class="min-w-24 self-center rounded-lg bg-[#12355B] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#0d2742]">
                     Editar estado
@@ -263,7 +263,7 @@
               </button>
             }
           </div>
-        } @else {
+        } @else if (item.status !== 'SUSPENDED') {
           <div class="flex shrink-0 justify-center border-t border-slate-100 px-6 py-4">
             <button type="button" (click)="openEditor(item)"
               class="min-w-24 rounded-lg bg-[#12355B] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#0d2742]">

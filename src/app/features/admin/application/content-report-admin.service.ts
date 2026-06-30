@@ -8,7 +8,7 @@ import {
   ContentReportStatus,
 } from '../domain/content-report-queue.model';
 
-const BACKEND_STATUSES = ['PENDING', 'REVIEWED', 'DISMISSED'];
+const BACKEND_STATUSES = ['PENDING', 'REVIEWED', 'DISMISSED', 'SUSPENDED'];
 
 @Injectable({ providedIn: 'root' })
 export class ContentReportAdminService {
@@ -21,6 +21,18 @@ export class ContentReportAdminService {
     const items = responses.flat();
     const counts = this.countByTarget(items);
     return items.map((item) => this.toQueueItem(item, counts));
+  }
+
+  async resolve(
+    publicId: string,
+    status: ContentReportStatus,
+    suspensionReason?: string,
+  ): Promise<void> {
+    await this.http.resolve(publicId, this.toBackendStatus(status), suspensionReason);
+  }
+
+  private toBackendStatus(status: ContentReportStatus): string {
+    return status === 'APPROVED' ? 'REVIEWED' : status;
   }
 
   private countByTarget(items: ContentReportQueueItemResponse[]): Map<string, number> {
