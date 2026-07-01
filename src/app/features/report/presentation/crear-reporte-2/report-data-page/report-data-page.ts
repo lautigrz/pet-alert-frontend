@@ -21,7 +21,8 @@ export class ReportDataPage {
 
   readonly maxPhotos = 4;
   readonly slots = [0, 1, 2, 3];
-
+  readonly isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
   petName = signal('');
   petSpecies = signal<'perro' | 'gato'>('perro');
   petBreed = signal('');

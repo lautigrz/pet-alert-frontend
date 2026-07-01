@@ -17,7 +17,22 @@
 
     <app-wizard-stepper [current]="2" />
 
-    <input #fileInput type="file" accept="image/*" multiple class="hidden" (change)="onFilesSelected($event)" />
+    <input
+      #galleryInput
+      type="file"
+      accept="image/*"
+      multiple
+      class="hidden"
+      (change)="onFilesSelected($event)"
+    />
+    <input
+      #cameraInput
+      type="file"
+      accept="image/*"
+      capture="environment"
+      class="hidden"
+      (change)="onFilesSelected($event)"
+    />
 
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
       <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col gap-3">
@@ -49,7 +64,7 @@
             <p class="text-xs text-slate-400 mt-0.5 mb-2">Proporcioná una foto clara de la mascota</p>
             <button
               type="button"
-              (click)="fileInput.click()"
+              (click)="isMobile ? cameraInput.click() : galleryInput.click()"
               [disabled]="photos().length >= maxPhotos"
               class="w-full inline-flex items-center justify-center gap-2 bg-[#12355B] hover:bg-[#0e2a4a] disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-2.5 rounded-md transition"
             >
@@ -79,7 +94,7 @@
               } @else {
                 <button
                   type="button"
-                  (click)="fileInput.click()"
+                  (click)="isMobile ? cameraInput.click() : galleryInput.click()"
                   class="w-full aspect-square sm:w-24 sm:h-24 sm:aspect-auto rounded-lg border-2 border-dashed border-slate-300 hover:border-[#E8842E] text-slate-300 flex items-center justify-center shrink-0 transition"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
