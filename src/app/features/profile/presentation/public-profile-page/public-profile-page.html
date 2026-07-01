@@ -1,9 +1,9 @@
 <main class="relative flex-1 bg-slate-50 px-4 py-6 sm:px-6 sm:py-10">
   @if (profile() && !esPropio()) {
-    <div class="absolute top-4 right-4 sm:top-6 sm:right-6 z-[1100]">
+    <div class="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
       <button type="button" (click)="toggleMenuOpciones($event)" aria-label="Opciones"
-        class="p-1.5 rounded-lg text-slate-400 hover:text-[#12355B] hover:bg-slate-100 transition">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+        class="p-2 rounded-lg text-[#12355B] hover:bg-slate-100 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" />
         </svg>
       </button>
