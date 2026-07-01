@@ -80,9 +80,28 @@
             No hay denuncias en esta vista.
           </p>
         } @else {
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            @for (item of visibleItems(); track item.publicId) {
-              <article class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 transition hover:border-[#12355B]">
+          <div class="flex flex-col gap-6">
+            @for (group of groupedItems(); track group.targetPublicId) {
+              <section class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4">
+                <header class="mb-3 flex items-center gap-2 flex-wrap">
+                  <span class="text-base font-extrabold text-[#12355B]">
+                    {{ group.title }}
+                  </span>
+                  @if (group.reportedUser?.username; as owner) {
+                    <span class="text-sm font-semibold text-slate-500">— publicación de {{ owner }}</span>
+                  }
+                  @if (group.pendingCount > 0) {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#E8842E]/10 text-[#E8842E]">
+                      Quedan {{ group.pendingCount }} por revisar
+                    </span>
+                  }
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#12355B]/10 text-[#12355B]">
+                    {{ group.reportCount }} {{ group.reportCount === 1 ? 'denuncia total' : 'denuncias totales' }}
+                  </span>
+                </header>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  @for (item of group.items; track item.publicId) {
+              <article class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 transition hover:border-[#1D6FA3]">
                 <div class="flex items-start gap-3">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2 mb-2 flex-wrap">
@@ -162,6 +181,9 @@
                   </button>
                 }
               </article>
+                  }
+                </div>
+              </section>
             }
           </div>
         }
@@ -188,6 +210,17 @@
             <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold" [class]="statusBadgeClass(item.status)">{{ statusLabel(item.status) }}</span>
             <span class="text-xs text-slate-500">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }} hs</span>
           </div>
+
+          @if (item.targetType === 'POST') {
+            <button type="button" (click)="openReportedPost(item)"
+              class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold text-[#1D6FA3] transition hover:bg-slate-100">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              </svg>
+              Ver la publicación denunciada
+            </button>
+            <p class="-mt-2 text-center text-[11px] text-slate-400">Se abre en una pestaña nueva para verificar la denuncia.</p>
+          }
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">

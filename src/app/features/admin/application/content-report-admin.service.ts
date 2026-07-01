@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import {
   ContentReportAdminHttp,
   ContentReportQueueItemResponse,
+  ResolveContentReportResult,
 } from '../infrastructure/content-report-admin.http';
 import {
   ContentReportQueueItem,
@@ -23,12 +24,12 @@ export class ContentReportAdminService {
     return items.map((item) => this.toQueueItem(item, counts));
   }
 
-  async resolve(
+  resolve(
     publicId: string,
     status: ContentReportStatus,
     suspensionReason?: string,
-  ): Promise<void> {
-    await this.http.resolve(publicId, this.toBackendStatus(status), suspensionReason);
+  ): Promise<ResolveContentReportResult> {
+    return this.http.resolve(publicId, this.toBackendStatus(status), suspensionReason);
   }
 
   private toBackendStatus(status: ContentReportStatus): string {
@@ -59,6 +60,7 @@ export class ContentReportAdminService {
       reportCount: item.reportCount ?? counts.get(item.targetPublicId) ?? 1,
       suspensionReason: item.suspensionReason ?? null,
       reportedUser: item.reportedUser ?? null,
+      reportedContent: item.reportedContent ?? null,
       reporter: {
         username: item.reporter.username,
         email: item.reporter.email ?? null,
