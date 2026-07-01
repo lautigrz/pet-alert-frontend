@@ -234,3 +234,68 @@ describe('ProfileService.getProfile', () => {
     });
   });
 });
+
+describe('ProfileService.getPublicProfile', () => {
+  let profileHttp: {
+    getPublicProfile: ReturnType<typeof vi.fn>;
+  };
+
+  let service: ProfileService;
+
+  beforeEach(() => {
+    profileHttp = {
+      getPublicProfile: vi.fn(),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        ProfileService,
+        {
+          provide: ProfileHttp,
+          useValue: profileHttp,
+        },
+      ],
+    });
+
+    service = TestBed.inject(ProfileService);
+  });
+
+  describe('when the public profile exists', () => {
+    it('returns only public fields (no email) normalizing optionals to null', async () => {
+      // Given
+      profileHttp.getPublicProfile.mockResolvedValue({
+        id: 'user-999',
+        username: 'ana',
+        name: 'Ana',
+      });
+
+      // When
+      const profile = await service.getPublicProfile('user-999');
+
+      // Then
+      expect(profileHttp.getPublicProfile).toHaveBeenCalledWith('user-999');
+      expect(profile).toEqual({
+        id: 'user-999',
+        username: 'ana',
+        name: 'Ana',
+        lastname: null,
+        photoUrl: null,
+      });
+    });
+  });
+
+  describe('when the backend returns 404', () => {
+    it('throws UserNotFoundError', async () => {
+      // Given
+      profileHttp.getPublicProfile.mockRejectedValue(
+        new HttpErrorResponse({ status: 404 }),
+      );
+
+      // When
+      const action = () => service.getPublicProfile('inexistente');
+
+      // Then
+      await expect(action).rejects.toThrow(UserNotFoundError);
+    });
+  });
+});

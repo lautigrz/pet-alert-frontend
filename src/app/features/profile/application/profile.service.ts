@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ProfileHttp } from '../infrastructure/profile.http';
 import { UpdatedProfile } from '../domain/profile.model';
+import { PublicProfile } from '../domain/public-profile';
 import {
   InvalidProfileDataError,
   NetworkError,
@@ -69,6 +70,21 @@ export class ProfileService {
         role: response.role ?? null,
       };
       return this.cachedProfile;
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async getPublicProfile(publicId: string): Promise<PublicProfile> {
+    try {
+      const response = await this.profileHttp.getPublicProfile(publicId);
+      return {
+        id: response.id,
+        username: response.username,
+        name: response.name ?? null,
+        lastname: response.lastname ?? null,
+        photoUrl: response.photoUrl ?? null,
+      };
     } catch (error) {
       throw this.mapUpdateProfileError(error);
     }
