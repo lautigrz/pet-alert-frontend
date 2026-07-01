@@ -58,6 +58,16 @@ describe('ReportModalComponent', () => {
     expect(payload.reason).toBe(ContentReportReason.FALSE_INFORMATION);
   });
 
+  it('mapea el tipo "usuario" al target USER con su primer motivo', async () => {
+    setInputs('usuario', 'user-uuid');
+
+    await component.enviar();
+
+    const [payload] = contentReportService.report.mock.calls[0];
+    expect(payload.targetType).toBe('USER');
+    expect(payload.reason).toBe(ContentReportReason.SUSPICIOUS_BEHAVIOR);
+  });
+
   it('envía description undefined cuando el detalle está vacío', async () => {
     setInputs('chat', 'conv-uuid');
     component.detalle.set('   ');
