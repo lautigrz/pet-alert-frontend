@@ -1,9 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { ContentReportAdminService } from '../../application/content-report-admin.service';
+import { ToastService } from '../../../../shared/application/toast.service';
 import {
   ContentReportQueueItem,
   ContentReportStatus,
+  ReportedUserSummary,
 } from '../../domain/content-report-queue.model';
 import {
   ContentReportReason,
@@ -19,6 +22,27 @@ interface PendingConfirmation {
   item: ContentReportQueueItem;
   label: string;
   description: string;
+}
+
+interface ContentReportGroup {
+  targetPublicId: string;
+  targetType: ContentReportTargetType;
+  title: string;
+  reportedUser: ReportedUserSummary | null;
+  reportCount: number;
+  pendingCount: number;
+  items: ContentReportQueueItem[];
+}
+
+function buildGroupTitle(item: ContentReportQueueItem): string {
+  const content = item.reportedContent;
+  if (content?.petName) {
+    return content.petName;
+  }
+  if (content) {
+    return content.reportType === 'LOST' ? 'Mascota perdida' : 'Mascota avistada';
+  }
+  return item.targetType === 'CHAT' ? 'Chat reportado' : 'Publicación reportada';
 }
 
 const REASON_LABELS: Record<ContentReportReason, string> = {
@@ -56,6 +80,8 @@ const STATUS_BADGE_CLASSES: Record<ContentReportStatus, string> = {
 })
 export class AdminDashboardComponent {
   private readonly service = inject(ContentReportAdminService);
+  private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService);
 
   readonly section = signal<AdminSection>('posts');
   readonly status = signal<ContentReportStatus>('PENDING');
@@ -102,19 +128,55 @@ export class AdminDashboardComponent {
     );
   });
 
+  readonly groupedItems = computed<ContentReportGroup[]>(() => {
+    const pendingByTarget = new Map<string, number>();
+    for (const item of this.items()) {
+      if (item.status === 'PENDING') {
+        pendingByTarget.set(item.targetPublicId, (pendingByTarget.get(item.targetPublicId) ?? 0) + 1);
+      }
+    }
+
+    const groups: ContentReportGroup[] = [];
+    const byTarget = new Map<string, ContentReportGroup>();
+    for (const item of this.visibleItems()) {
+      let group = byTarget.get(item.targetPublicId);
+      if (!group) {
+        group = {
+          targetPublicId: item.targetPublicId,
+          targetType: item.targetType,
+          title: buildGroupTitle(item),
+          reportedUser: item.reportedUser,
+          reportCount: item.reportCount,
+          pendingCount: pendingByTarget.get(item.targetPublicId) ?? 0,
+          items: [],
+        };
+        byTarget.set(item.targetPublicId, group);
+        groups.push(group);
+      }
+      group.items.push(item);
+    }
+    return groups.sort(
+      (a, b) => b.reportCount - a.reportCount || b.pendingCount - a.pendingCount,
+    );
+  });
+
   constructor() {
     void this.load();
   }
 
-  async load(): Promise<void> {
-    this.loading.set(true);
+  async load(silent = false): Promise<void> {
+    if (!silent) {
+      this.loading.set(true);
+    }
     this.error.set(null);
     try {
       this.items.set(await this.service.getQueue());
     } catch {
       this.error.set('No pudimos cargar las denuncias. Reintentá en unos segundos.');
     } finally {
-      this.loading.set(false);
+      if (!silent) {
+        this.loading.set(false);
+      }
     }
   }
 
@@ -135,6 +197,14 @@ export class AdminDashboardComponent {
 
   openDetail(item: ContentReportQueueItem): void {
     this.selected.set(item);
+  }
+
+  openReportedPost(item: ContentReportQueueItem): void {
+    if (item.targetType !== 'POST') return;
+    const url = this.router.serializeUrl(
+      this.router.createUrlTree(['/reports', item.targetPublicId]),
+    );
+    window.open(url, '_blank', 'noopener');
   }
 
   closeDetail(): void {
@@ -224,8 +294,19 @@ export class AdminDashboardComponent {
     }
     this.service
       .resolve(item.publicId, status, patch.suspensionReason ?? undefined)
-      .catch(() => {
-        void this.load();
+      .then((result) => {
+        if (result.autoSuspended) {
+          this.toastService.brand(
+            'Se aprobaron 5 denuncias: la publicación quedó suspendida y las que seguían pendientes también pasaron a Suspendidos.',
+          );
+        } else if (status === 'SUSPENDED') {
+          this.toastService.brand(
+            'La publicación se suspendió y todas sus denuncias pasaron a Suspendidos.',
+          );
+        }
+      })
+      .finally(() => {
+        void this.load(true);
       });
   }
 }
