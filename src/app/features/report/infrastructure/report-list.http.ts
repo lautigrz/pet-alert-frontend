@@ -50,6 +50,13 @@ export class ReportListHttp {
   }
 
 
+  getReportesDeUsuario(publicId: string): Promise<Reporte[]> {
+    return firstValueFrom(
+      this.http.get<Reporte[]>(`${this.baseUrl}/reports/user/${publicId}`),
+    );
+  }
+
+
   updateStatus(publicId: string, status: 'RESOLVED'): Promise<void> {
     return firstValueFrom(
       this.http.patch<void>(

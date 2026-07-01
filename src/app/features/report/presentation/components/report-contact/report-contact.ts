@@ -40,6 +40,11 @@ export class ReportContactComponent {
     this.router.navigate(['/reports', this.report().publicId, 'matches']);
   }
 
+  verPerfil(): void {
+    if (this.esPropio()) return;
+    this.router.navigate(['/users', this.report().user.publicId]);
+  }
+
   async enviarMensaje(): Promise<void> {
     const targetPublicId = this.report().user.publicId;
     if (!targetPublicId) return;

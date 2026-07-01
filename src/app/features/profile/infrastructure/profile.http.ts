@@ -30,6 +30,14 @@ export interface GetProfileResponse {
   role?: string;
 }
 
+export interface PublicProfileResponse {
+  id: string;
+  username: string;
+  name?: string;
+  lastname?: string;
+  photoUrl?: string;
+}
+
 @Injectable({ providedIn: 'root'})
 export class ProfileHttp {
   private readonly http = inject(HttpClient);
@@ -48,6 +56,12 @@ export class ProfileHttp {
     this.http.get<GetProfileResponse>(`${this.baseUrl}/users/me`),
   );
 }
+
+  getPublicProfile(publicId: string): Promise<PublicProfileResponse> {
+    return firstValueFrom(
+      this.http.get<PublicProfileResponse>(`${this.baseUrl}/users/${publicId}`),
+    );
+  }
 
   uploadProfilePhoto(file: File): Promise<UpdateProfileResponse>{
     const formData = new FormData();

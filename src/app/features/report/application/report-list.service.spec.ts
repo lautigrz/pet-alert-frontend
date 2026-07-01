@@ -16,7 +16,7 @@ function makeReporte(over: Partial<Reporte> = {}): Reporte {
     location: over.location ?? { address: 'Calle 1', latitude: -34.6, longitude: -58.3 },
     details:
       over.details ??
-      ({ animalType: 'DOG', hasIdCollar: false, isInTransit: false, color: 'negro', images: [] } as Reporte['details']),
+      ({ petName: 'Rex', animalType: 'DOG', hasIdCollar: false, isInTransit: false, color: 'negro', images: [] } as Reporte['details']),
     occurredAt: over.occurredAt ?? '2026-06-01T10:00:00.000Z',
     createdAt: over.createdAt ?? '2026-06-01T10:00:00.000Z',
   };
@@ -30,6 +30,7 @@ describe('ReportListService', () => {
   let reportesHttp: {
     getFiltered: ReturnType<typeof vi.fn>;
     getMisReportesPaginado: ReturnType<typeof vi.fn>;
+    getReportesDeUsuario: ReturnType<typeof vi.fn>;
   };
   let service: ReportListService;
 
@@ -37,6 +38,7 @@ describe('ReportListService', () => {
     reportesHttp = {
       getFiltered: vi.fn(),
       getMisReportesPaginado: vi.fn(),
+      getReportesDeUsuario: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -104,6 +106,26 @@ describe('ReportListService', () => {
         animalType: 'CAT',
         radiusKm: 5,
       });
+    });
+  });
+
+  describe('getReportesDeUsuario', () => {
+    it('pide los reportes del usuario por publicId y los devuelve', async () => {
+      const reportes = [makeReporte({ publicId: 'de-otro-1' })];
+      reportesHttp.getReportesDeUsuario.mockResolvedValue(reportes);
+
+      const result = await service.getReportesDeUsuario('user-99');
+
+      expect(reportesHttp.getReportesDeUsuario).toHaveBeenCalledWith('user-99');
+      expect(result).toEqual(reportes);
+    });
+
+    it('mapea el error si el http falla', async () => {
+      reportesHttp.getReportesDeUsuario.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+
+      await expect(service.getReportesDeUsuario('user-99')).rejects.toThrow(
+        'No se pudo conectar con el servidor',
+      );
     });
   });
 

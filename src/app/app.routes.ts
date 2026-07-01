@@ -105,6 +105,13 @@ export const routes: Routes = [
           ).then((m) => m.EditProfilePage),
       },
       {
+        path: 'users/:publicId',
+        loadComponent: () =>
+          import(
+            './features/profile/presentation/public-profile-page/public-profile-page'
+          ).then((m) => m.PublicProfilePage),
+      },
+      {
         path: 'chats',
         loadComponent: () =>
           import('./features/chats/presentation/chats-page/chats-page')
