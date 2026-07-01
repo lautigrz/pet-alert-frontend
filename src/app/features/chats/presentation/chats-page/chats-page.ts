@@ -1,7 +1,7 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ChatsService, MessagePayload } from '../../application/chats.service';
 import { ConversationOutput, ConversationSummaryOutput } from '../../domain/chat.models';
 import { Subject, takeUntil } from 'rxjs';
@@ -11,7 +11,7 @@ import { ReportModalComponent } from '../../../../shared/component/report-modal/
 @Component({
   selector: 'app-chats-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReportModalComponent],
+  imports: [CommonModule, FormsModule, ReportModalComponent, RouterLink],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden bg-[#f4f4f4]' },
   templateUrl: './chats-page.html',
   styleUrl: './chats-page.css',
