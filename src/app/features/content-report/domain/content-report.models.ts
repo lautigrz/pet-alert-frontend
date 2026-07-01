@@ -1,4 +1,4 @@
-export type ContentReportTargetType = 'CHAT' | 'POST';
+export type ContentReportTargetType = 'CHAT' | 'POST' | 'USER';
 
 export const ContentReportReason = {
   SUSPICIOUS_BEHAVIOR: 'SUSPICIOUS_BEHAVIOR',

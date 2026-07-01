@@ -5,12 +5,14 @@ import { PublicProfilePage } from './public-profile-page';
 import { ProfileService } from '../../application/profile.service';
 import { ReportListService } from '../../../report/application/report-list.service';
 import { PublicProfile } from '../../domain/public-profile';
+import { AuthService } from '../../../auth/application/auth.service';
 
 describe('PublicProfilePage', () => {
   let component: PublicProfilePage;
   let fixture: ComponentFixture<PublicProfilePage>;
   let profileService: { getPublicProfile: ReturnType<typeof vi.fn> };
   let reportListService: { getReportesDeUsuario: ReturnType<typeof vi.fn> };
+  let authService: { getCurrentUserId: ReturnType<typeof vi.fn> };
   let publicIdParam: string | null;
 
   const fakeProfile: PublicProfile = {
@@ -25,12 +27,14 @@ describe('PublicProfilePage', () => {
     publicIdParam = 'u-1';
     profileService = { getPublicProfile: vi.fn().mockResolvedValue(fakeProfile) };
     reportListService = { getReportesDeUsuario: vi.fn().mockResolvedValue([]) };
+    authService = { getCurrentUserId: vi.fn().mockReturnValue('me-999') };
 
     TestBed.configureTestingModule({
       imports: [PublicProfilePage],
       providers: [
         { provide: ProfileService, useValue: profileService },
         { provide: ReportListService, useValue: reportListService },
+        { provide: AuthService, useValue: authService },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: { get: () => publicIdParam } } },
@@ -91,5 +95,28 @@ describe('PublicProfilePage', () => {
   it('setTab cambia la pestaña activa', () => {
     component.setTab('missions');
     expect(component.activeTab()).toBe('missions');
+  });
+
+  it('esPropio es false cuando el perfil es de otro usuario', async () => {
+    await component.ngOnInit();
+    expect(component.esPropio()).toBe(false);
+  });
+
+  it('esPropio es true cuando el perfil es del usuario logueado', async () => {
+    authService.getCurrentUserId.mockReturnValue('u-1');
+
+    await component.ngOnInit();
+
+    expect(component.esPropio()).toBe(true);
+  });
+
+  it('abre y cierra el modal de denuncia', () => {
+    expect(component.mostrandoModalDenuncia()).toBe(false);
+
+    component.abrirModalDenuncia();
+    expect(component.mostrandoModalDenuncia()).toBe(true);
+
+    component.cerrarModalDenuncia();
+    expect(component.mostrandoModalDenuncia()).toBe(false);
   });
 });

@@ -1,5 +1,30 @@
-<main class="flex-1 bg-slate-50 px-4 py-6 sm:px-6 sm:py-10">
-  <section class="mx-auto w-full max-w-5xl">
+<main class="relative flex-1 bg-slate-50 px-4 py-6 sm:px-6 sm:py-10">
+  @if (profile() && !esPropio()) {
+    <div class="absolute top-4 right-4 sm:top-6 sm:right-6 z-[1100]">
+      <button type="button" (click)="toggleMenuOpciones($event)" aria-label="Opciones"
+        class="p-1.5 rounded-lg text-slate-400 hover:text-[#12355B] hover:bg-slate-100 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" />
+        </svg>
+      </button>
+
+      @if (menuOpcionesAbierto()) {
+        <div
+          class="absolute right-0 top-[calc(100%+8px)] z-[1100] min-w-[170px] bg-white border border-slate-200 rounded-xl shadow-xl p-1.5">
+          <button type="button" (click)="denunciarDesdeMenu()"
+            class="w-full inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-red-500 hover:bg-red-50 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+            </svg>
+            Denunciar
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <section class="relative mx-auto w-full max-w-5xl">
     @if (loading()) {
       <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
         Cargando perfil...
@@ -122,4 +147,8 @@
       </section>
     }
   </section>
+
+  @if (mostrandoModalDenuncia() && profile()) {
+    <app-report-modal tipo="usuario" [targetPublicId]="profile()!.id" (cerrar)="cerrarModalDenuncia()" />
+  }
 </main>

@@ -2,7 +2,7 @@ import { Component, OnDestroy, computed, inject, input, output, signal } from '@
 import { ContentReportService } from '../../../features/content-report/application/content-report.service';
 import { ContentReportReason, ContentReportTargetType } from '../../../features/content-report/domain/content-report.models';
 
-export type TipoDenuncia = 'chat' | 'reporte';
+export type TipoDenuncia = 'chat' | 'reporte' | 'usuario';
 
 interface Motivo {
   label: string;
@@ -40,11 +40,25 @@ const CONFIG: Record<TipoDenuncia, DenunciaConfig> = {
       { label: 'Otro', descripcion: 'Contanos más en el detalle', code: ContentReportReason.OTHER },
     ],
   },
+  usuario: {
+    titulo: 'Denunciar usuario',
+    intro: 'Contanos por qué lo denunciás. Tu denuncia nos ayuda a mantener la comunidad segura.',
+    motivos: [
+      { label: 'Comportamiento sospechoso', descripcion: 'Actitud o mensajes que generan desconfianza', code: ContentReportReason.SUSPICIOUS_BEHAVIOR },
+      { label: 'Fraude o estafa', descripcion: 'Intento de engaño o pedido de dinero', code: ContentReportReason.FRAUD_OR_SCAM },
+      { label: 'Suplantación de identidad', descripcion: 'Se hace pasar por otra persona o perfil falso', code: ContentReportReason.IMPERSONATION },
+      { label: 'Contenido inapropiado', descripcion: 'Publica imágenes o texto ofensivo', code: ContentReportReason.INAPPROPRIATE_CONTENT },
+      { label: 'Datos personales expuestos', descripcion: 'Comparte información privada de otros', code: ContentReportReason.PERSONAL_DATA_EXPOSED },
+      { label: 'Spam o publicidad', descripcion: 'Publicaciones repetidas o promocionales', code: ContentReportReason.SPAM },
+      { label: 'Otro', descripcion: 'Contanos más en el detalle', code: ContentReportReason.OTHER },
+    ],
+  },
 };
 
 const TARGET_TYPE_BY_TIPO: Record<TipoDenuncia, ContentReportTargetType> = {
   chat: 'CHAT',
   reporte: 'POST',
+  usuario: 'USER',
 };
 
 @Component({
