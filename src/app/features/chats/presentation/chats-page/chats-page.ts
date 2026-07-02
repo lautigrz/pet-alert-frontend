@@ -167,12 +167,17 @@ abrirConversacion(conversationId: string): void {
     });
 }
 
+  get chatSuspendido(): boolean {
+    return this.conversationOutput()?.isSuspended ?? false;
+  }
+
   sendMessage(): void {
     const text = this.newMessage().trim();
     const imageFile = this.selectedImageFile();
     const imagePreview = this.selectedImagePreview();
 
     if ((!text && !imageFile) || !this.conversationId) return;
+    if (this.chatSuspendido) return;
 
     if (imageFile && imagePreview) {
 
