@@ -13,7 +13,7 @@ import {
   ContentReportTargetType,
 } from '../../../content-report/domain/content-report.models';
 
-type AdminSection = 'posts' | 'chats';
+type AdminSection = 'posts' | 'chats' | 'profiles';
 
 type ConfirmableAction = 'delete';
 
@@ -41,6 +41,9 @@ function buildGroupTitle(item: ContentReportQueueItem): string {
   }
   if (content) {
     return content.reportType === 'LOST' ? 'Mascota perdida' : 'Mascota avistada';
+  }
+  if (item.targetType === 'USER') {
+    return item.reportedUser?.username ?? 'Perfil reportado';
   }
   return item.targetType === 'CHAT' ? 'Chat reportado' : 'Publicación reportada';
 }
@@ -113,6 +116,7 @@ export class AdminDashboardComponent {
 
   readonly posts = computed(() => this.items().filter((item) => item.targetType === 'POST'));
   readonly chats = computed(() => this.items().filter((item) => item.targetType === 'CHAT'));
+  readonly profiles = computed(() => this.items().filter((item) => item.targetType === 'USER'));
 
   readonly pendingPosts = computed(
     () => this.posts().filter((item) => item.status === 'PENDING').length,
@@ -120,9 +124,13 @@ export class AdminDashboardComponent {
   readonly pendingChats = computed(
     () => this.chats().filter((item) => item.status === 'PENDING').length,
   );
+  readonly pendingProfiles = computed(
+    () => this.profiles().filter((item) => item.status === 'PENDING').length,
+  );
 
   readonly visibleItems = computed(() => {
-    const target: ContentReportTargetType = this.section() === 'posts' ? 'POST' : 'CHAT';
+    const target: ContentReportTargetType =
+      this.section() === 'posts' ? 'POST' : this.section() === 'chats' ? 'CHAT' : 'USER';
     return this.items().filter(
       (item) => item.targetType === target && item.status === this.status(),
     );
@@ -156,7 +164,7 @@ export class AdminDashboardComponent {
       group.items.push(item);
     }
     return groups.sort(
-      (a, b) => b.reportCount - a.reportCount || b.pendingCount - a.pendingCount,
+      (a, b) => b.reportCount - a.reportCount || a.targetPublicId.localeCompare(b.targetPublicId),
     );
   });
 
@@ -275,7 +283,11 @@ export class AdminDashboardComponent {
   }
 
   targetTypeLabel(targetType: ContentReportTargetType): string {
-    return targetType === 'POST' ? 'Publicación' : 'Chat';
+    return targetType === 'POST' ? 'Publicación' : targetType === 'CHAT' ? 'Chat' : 'Perfil';
+  }
+
+  targetTypeBadgeClass(targetType: ContentReportTargetType): string {
+    return targetType === 'POST' ? 'bg-[#12355B]' : targetType === 'CHAT' ? 'bg-[#1D6FA3]' : 'bg-[#17597f]';
   }
 
   private applyStatus(
@@ -295,14 +307,20 @@ export class AdminDashboardComponent {
     this.service
       .resolve(item.publicId, status, patch.suspensionReason ?? undefined)
       .then((result) => {
-        if (result.autoSuspended) {
+        if (status === 'APPROVED' && result.autoSuspended) {
           this.toastService.brand(
-            'Se aprobaron 5 denuncias: la publicación quedó suspendida y las que seguían pendientes también pasaron a Suspendidos.',
+            `El usuario alcanzó 5 publicaciones aprobadas: se suspendió automáticamente y ${result.suspendedCount} ${result.suspendedCount === 1 ? 'denuncia pasó' : 'denuncias pasaron'} a Suspendidas.`,
           );
-        } else if (status === 'SUSPENDED') {
+        } else if (status === 'APPROVED' && result.approvedCount > 0) {
           this.toastService.brand(
-            'La publicación se suspendió y todas sus denuncias pasaron a Suspendidos.',
+            'Todas las denuncias de esta publicación se pasaron a Aprobadas.',
           );
+        } else if (status === 'SUSPENDED' && result.suspendedCount > 0) {
+          const message =
+            item.targetType === 'CHAT'
+              ? 'Se suspendió el chat. Todas sus denuncias se pasaron a Suspendidas.'
+              : 'Se suspendió al usuario. Todas las denuncias de sus publicaciones y perfil se pasaron a Suspendidas.';
+          this.toastService.brand(message);
         }
       })
       .finally(() => {
