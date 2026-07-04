@@ -1,0 +1,132 @@
+<div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+  <div class="flex items-start gap-3">
+    <div class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#1D6FA3]/10">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#1D6FA3]" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+      </svg>
+    </div>
+
+    <div class="flex-1">
+      <h3 class="text-sm font-extrabold text-[#12355B]">
+        Preferencias de notificación
+      </h3>
+      <p class="mt-0.5 text-[13px] text-slate-500">
+        Elegí qué avisos querés recibir y desde qué distancia.
+      </p>
+    </div>
+  </div>
+
+  @if (loading()) {
+  <p class="mt-4 text-sm text-slate-500">
+    Cargando preferencias...
+  </p>
+  } @else {
+  <div class="mt-5 space-y-5">
+    <div>
+      <div class="flex items-center justify-between gap-3">
+        <label class="text-sm font-bold text-[#12355B]">
+          Radio de notificación
+        </label>
+
+        <span class="rounded-full bg-[#E8842E]/10 px-3 py-1 text-sm font-bold text-[#E8842E]">
+          {{ notificationRadius() }} km
+        </span>
+      </div>
+
+      <p class="mt-1 text-[13px] text-slate-500">
+        Se usará para avisarte sobre avistamientos cercanos a tus reportes.
+      </p>
+
+      <input type="range" min="1" max="100" [value]="notificationRadius()" (input)="onRadiusChange($event)"
+        class="mt-3 w-full accent-[#E8842E]" />
+
+      <div class="mt-1 flex justify-between text-[11px] text-slate-400">
+        <span>1 km</span>
+        <span>100 km</span>
+      </div>
+    </div>
+
+    <div class="border-t border-slate-100 pt-4">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm font-bold text-[#12355B]">
+            Avistamientos cercanos
+          </p>
+          <p class="mt-0.5 text-[13px] text-slate-500">
+            Recibí avisos cuando alguien cargue un avistamiento cerca de una mascota que perdiste.
+          </p>
+        </div>
+
+        <button type="button" role="switch" [attr.aria-checked]="sightingReportsEnabled()" (click)="toggleSightings()"
+          class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors"
+          [class.bg-[#E8842E]]="sightingReportsEnabled()" [class.bg-slate-300]="!sightingReportsEnabled()">
+          <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200"
+            [class.translate-x-5]="sightingReportsEnabled()" [class.translate-x-1]="!sightingReportsEnabled()"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="border-t border-slate-100 pt-4">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm font-bold text-[#12355B]">
+            Coincidencias detectadas
+          </p>
+          <p class="mt-0.5 text-[13px] text-slate-500">
+            Recibí avisos cuando el sistema encuentre una posible coincidencia con tu mascota.
+          </p>
+        </div>
+
+        <button type="button" role="switch" [attr.aria-checked]="matchesEnabled()" (click)="toggleMatches()"
+          class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors"
+          [class.bg-[#E8842E]]="matchesEnabled()" [class.bg-slate-300]="!matchesEnabled()">
+          <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200"
+            [class.translate-x-5]="matchesEnabled()" [class.translate-x-1]="!matchesEnabled()"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="border-t border-slate-100 pt-4">
+      <p class="text-sm font-bold text-[#12355B]">
+        Pausar notificaciones
+      </p>
+
+      <p class="mt-0.5 text-[13px] text-slate-500">
+        {{ pausedText() }}
+      </p>
+
+      <div class="mt-3 grid grid-cols-3 gap-2">
+        <button type="button" (click)="clearPause()"
+          class="rounded-lg border px-3 py-2 text-xs font-bold transition-colors" [class.border-[#1D6FA3]]="!isPaused()"
+          [class.bg-[#1D6FA3]]="!isPaused()" [class.text-white]="!isPaused()" [class.border-slate-200]="isPaused()"
+          [class.text-slate-600]="isPaused()">
+          Activas
+        </button>
+
+        <button type="button" (click)="pauseForHours(24)"
+          class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
+          24 h
+        </button>
+
+        <button type="button" (click)="pauseForHours(168)"
+          class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
+          7 días
+        </button>
+      </div>
+    </div>
+
+    @if (serverError()) {
+    <div role="alert" class="rounded-lg bg-red-50 border-l-4 border-red-500 px-3 py-2 text-sm text-red-700">
+      {{ serverError() }}
+    </div>
+    }
+
+    <button type="button" [disabled]="saving()" (click)="save()"
+      class="w-full rounded-lg bg-[#E8842E] py-3 text-sm font-bold text-white transition-colors hover:bg-[#d57821] disabled:cursor-not-allowed disabled:bg-slate-300">
+      {{ saving() ? 'Guardando...' : 'Guardar preferencias' }}
+    </button>
+  </div>
+  }
+</div>
