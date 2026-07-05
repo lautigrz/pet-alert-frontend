@@ -17,10 +17,10 @@ export class CloseReportModalComponent {
   readonly confirmar = output<boolean>();
 
   readonly motivos: CloseMotivo[] = [
-    { label: 'Mi mascota se reunió conmigo', descripcion: '¡La encontraste! Se cierra como reencuentro.', resolved: true },
-    { label: 'Dejo de buscar por ahora', descripcion: 'Vas a pausar la búsqueda de tu mascota.', resolved: false },
-    { label: 'La publicación tenía un error', descripcion: 'Se publicó con datos incorrectos.', resolved: false },
-    { label: 'Otro motivo', descripcion: 'Cerrás el reporte por otra razón.', resolved: false },
+    { label: '¡La mascota volvió a casa! 🧡', descripcion: 'El caso se resolvió', resolved: true },
+    { label: 'Cierro la publicación por ahora', descripcion: 'Por ahora no vas a seguir con esta publicación', resolved: false },
+    { label: 'La publicación tenía un error', descripcion: 'Se publicó con datos incorrectos', resolved: false },
+    { label: 'Otro motivo', descripcion: 'Cerrás el reporte por otra razón', resolved: false },
   ];
 
   readonly motivoSeleccionado = signal<number | null>(null);
