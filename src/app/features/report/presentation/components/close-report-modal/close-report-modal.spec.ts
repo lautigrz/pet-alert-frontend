@@ -11,7 +11,7 @@ describe('CloseReportModalComponent', () => {
     component = TestBed.createComponent(CloseReportModalComponent).componentInstance;
   });
 
-  it('emite resolved=true al confirmar "Mi mascota se reunió conmigo"', () => {
+  it('emite resolved=true al confirmar "¡La mascota volvió a casa!"', () => {
     let emitido: boolean | undefined;
     component.confirmar.subscribe((v) => (emitido = v));
 
