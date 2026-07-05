@@ -2,12 +2,12 @@ importScripts('https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/12.15.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: 'AIzaSyD-w28-xuqLiiUBLcBgSshDlJDrJyFKF0c',
-  authDomain: 'petfinder-ad209.firebaseapp.com',
-  projectId: 'petfinder-ad209',
-  storageBucket: 'petfinder-ad209.firebasestorage.app',
-  messagingSenderId: '14232690054',
-  appId: '1:14232690054:web:a017ff02c44f4017956007',
+  apiKey: 'AIzaSyDj5FubORs5b2mR-e_rW3Vy2Cuz47JUxsc',
+  authDomain: 'petfinder-32e6a.firebaseapp.com',
+  projectId: 'petfinder-32e6a',
+  storageBucket: 'petfinder-32e6a.firebasestorage.app',
+  messagingSenderId: '865991019769',
+  appId: '1:865991019769:web:5536d0d867b5334cafe628',
 });
 
 firebase.messaging().onBackgroundMessage((payload) => {
