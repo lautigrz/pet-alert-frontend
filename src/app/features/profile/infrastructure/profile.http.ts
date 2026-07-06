@@ -2,7 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import {  MyUserReviews, PaginatedUserReviews,  UserRatingSummary, UserReview,} from '../domain/user-review.model';
+import type { UserExperienceSummary } from '../domain/profile.model';
+import { MyUserReviews, PaginatedUserReviews, UserRatingSummary, UserReview } from '../domain/user-review.model';
 
 export interface UpdateProfileRequest{
   name?: string;
@@ -81,6 +82,10 @@ export class ProfileHttp {
     const formData = new FormData();
     formData.append('photo',file);
     return firstValueFrom(this.http.post<UpdateProfileResponse>(`${this.baseUrl}/users/me/photo`, formData));
+  }
+
+  getUserExperience(): Promise<UserExperienceSummary> {
+    return firstValueFrom(this.http.get<UserExperienceSummary>(`${this.baseUrl}/users/me/xp`));
   }
 
   createUserReview(publicId: string, body: CreateUserReviewRequest): Promise<UserReview> {
