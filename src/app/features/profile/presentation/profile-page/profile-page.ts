@@ -95,17 +95,13 @@ readonly reviewsError = signal<string | null>(null);
       this.reportsLoading.set(false);
     }
   }
-async loadRating(): Promise<void> {
-    const profile = await this.profileService.getProfile();
-
+  async loadRating(): Promise<void> {
     try {
+      const profile = await this.profileService.getProfile();
       const summary = await this.profileService.getUserRating(profile.id);
       this.ratingSummary.set(summary);
     } catch {
-      this.ratingSummary.set({
-        average: 0,
-        count: 0,
-      });
+      this.ratingSummary.set({ average: 0, count: 0 });
     }
   }
 
@@ -125,7 +121,7 @@ async loadRating(): Promise<void> {
       this.reviewsLoading.set(false);
     }
   }
-
+  
   async loadExperience(): Promise<void>{
     this.experienceLoading.set(true);
     this.experienceError.set(null);
