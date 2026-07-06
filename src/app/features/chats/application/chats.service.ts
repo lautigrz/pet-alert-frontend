@@ -75,6 +75,18 @@ export class ChatsService {
     return this.socketService.on<{ message: string }>('message:error');
   }
 
+  getPresence(userPublicId: string): void {
+    this.socketService.emit('presence:get', { userPublicId });
+  }
+
+  onPresenceStatus(): Observable<{ userPublicId: string; online: boolean }> {
+    return this.socketService.on<{ userPublicId: string; online: boolean }>('presence:status');
+  }
+
+  onPresenceChanged(): Observable<{ userPublicId: string; online: boolean }> {
+    return this.socketService.on<{ userPublicId: string; online: boolean }>('presence:changed');
+  }
+
   getConversations(): Observable<ConversationSummaryOutput[]> {
    return this.http.get<ConversationSummaryOutput[]>(`${this.apiUrl}/conversations`);
   }
