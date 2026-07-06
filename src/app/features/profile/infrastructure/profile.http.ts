@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import type { UserExperienceSummary } from '../domain/profile.model';
+import { MyUserReviews, PaginatedUserReviews, UserRatingSummary, UserReview } from '../domain/user-review.model';
 
 export interface UpdateProfileRequest{
   name?: string;
@@ -28,6 +29,7 @@ export interface GetProfileResponse {
   lastname?: string;
   photoUrl?: string;
   role?: string;
+  stats?: ProfileStatsResponse;
 }
 
 export interface PublicProfileResponse {
@@ -36,6 +38,19 @@ export interface PublicProfileResponse {
   name?: string;
   lastname?: string;
   photoUrl?: string;
+  stats?: ProfileStatsResponse;
+}
+
+export interface ProfileStatsResponse{
+  reportsCreated: number;
+  successfulReturns: number;
+  activeDays: number;
+  petsHelped: number;
+}
+
+export interface CreateUserReviewRequest {
+  rating: number;
+  description?: string | null;
 }
 
 @Injectable({ providedIn: 'root'})
@@ -52,14 +67,14 @@ export class ProfileHttp {
   }
 
   getProfile(): Promise<GetProfileResponse> {
-  return firstValueFrom(
-    this.http.get<GetProfileResponse>(`${this.baseUrl}/users/me`),
-  );
-}
+    return firstValueFrom(
+      this.http.get<GetProfileResponse>(`${this.baseUrl}/users/me`),
+    );
+  }
 
   getPublicProfile(publicId: string): Promise<PublicProfileResponse> {
     return firstValueFrom(
-      this.http.get<PublicProfileResponse>(`${this.baseUrl}/users/${publicId}`),
+      this.http.get<PublicProfileResponse>(`${this.baseUrl}/users/${publicId}/profile`),
     );
   }
 
@@ -73,5 +88,30 @@ export class ProfileHttp {
     return firstValueFrom(this.http.get<UserExperienceSummary>(`${this.baseUrl}/users/me/xp`));
   }
 
-}
+  createUserReview(publicId: string, body: CreateUserReviewRequest): Promise<UserReview> {
+    return firstValueFrom(
+      this.http.post<UserReview>(`${this.baseUrl}/users/${publicId}/reviews`, body),
+    );
+  }
 
+  getUserReviews(publicId: string, page = 1, pageSize = 10): Promise<PaginatedUserReviews> {
+    return firstValueFrom(
+      this.http.get<PaginatedUserReviews>(`${this.baseUrl}/users/${publicId}/reviews`, {
+        params: { page, pageSize },
+      }),
+    );
+  }
+
+  getMyReviews(page = 1, pageSize = 10): Promise<MyUserReviews> {
+  return firstValueFrom(
+    this.http.get<MyUserReviews>(`${this.baseUrl}/users/me/reviews`, {
+      params: { page, pageSize },
+    }),
+  );
+}
+  getUserRating(publicId: string): Promise<UserRatingSummary> {
+    return firstValueFrom(
+      this.http.get<UserRatingSummary>(`${this.baseUrl}/users/${publicId}/rating`),
+    );
+  }
+}
