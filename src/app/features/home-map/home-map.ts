@@ -914,7 +914,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       return;
     }
     this.searchMarker = L.marker(latlng, {
-      icon: this.buildPin('#64748b'),
+      icon: this.buildPin('#1D6FA3'),
       zIndexOffset: 1000,
     }).addTo(this.map);
   }
