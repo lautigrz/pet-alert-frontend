@@ -10,7 +10,7 @@ import { AuthService } from '../../../auth/application/auth.service';
 import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
 import { UserRatingSummary, UserReview } from '../../domain/user-review.model';
 
-type ProfileTab = 'reports' | 'reviews';
+type ProfileTab = | 'reports'  | 'missions'  | 'achievements'  | 'reviews';
 
 @Component({
   selector: 'app-public-profile-page',
