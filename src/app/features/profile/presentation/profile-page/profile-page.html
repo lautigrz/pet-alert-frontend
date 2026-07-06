@@ -24,10 +24,20 @@
         </h1>
 
         <div class="flex items-center gap-2 mt-2 text-sm">
-          <span class="text-[#E8842E]">★</span>
-          <span class="font-semibold text-[#12355B]">4.7</span>
-          <span class="text-[#E8842E] font-medium">Leer reseñas</span>
-        </div>
+  <div class="flex text-[#E8842E]">
+    @for (star of ratingStars(); track $index) {
+      <span>{{ star }}</span>
+    }
+  </div>
+
+  <span class="font-semibold text-[#12355B]">
+    {{ ratingSummary().average || 'Sin calificar' }}
+  </span>
+
+  <span class="text-slate-500">
+    ({{ ratingSummary().count }} reseñas)
+  </span>
+</div>
         <div class="flex justify-center items-center gap-2 mt-2">
 
           <a
@@ -62,7 +72,16 @@
           >
             Mis reportes
           </button>
-
+<button
+  type="button"
+  (click)="setTab('reviews')"
+  class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium border-l border-slate-200 transition-colors"
+  [class.bg-[#E8842E]]="activeTab() === 'reviews'"
+  [class.text-white]="activeTab() === 'reviews'"
+  [class.text-[#12355B]]="activeTab() !== 'reviews'"
+>
+  Mis reseñas
+</button>
           <button
             type="button"
             (click)="setTab('missions')"
@@ -117,7 +136,118 @@
             </div>
           }
         }
+@if (activeTab() === 'reviews') {
+  @if (reviewsLoading()) {
+    <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+      Cargando reseñas...
+    </div>
+  } @else if (reviewsError()) {
+    <div
+      role="alert"
+      class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded"
+    >
+      {{ reviewsError() }}
+    </div>
+  } @else {
+    <div class="space-y-6">
+      <section>
+        <h2 class="text-lg font-bold text-[#12355B] mb-3">
+          Reseñas recibidas
+        </h2>
 
+        @if (receivedReviews().length === 0) {
+          <div class="bg-white border border-slate-200 rounded-xl p-6 text-center">
+            <p class="text-sm text-slate-500">
+              Todavía no recibiste reseñas.
+            </p>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (review of receivedReviews(); track review.id) {
+              <article class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="flex items-start gap-3">
+                  <img
+                    [src]="review.reviewer.photoUrl || defaultPhotoUrl"
+                    alt="Foto del usuario que reseñó"
+                    class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200"
+                  />
+
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <h3 class="font-bold text-[#12355B]">
+                        {{ review.reviewer.name || review.reviewer.username }}
+                      </h3>
+
+                      <div class="text-[#E8842E] text-sm" aria-label="Calificación">
+                        @for (star of [1, 2, 3, 4, 5]; track star) {
+                          <span>{{ star <= review.rating ? '★' : '☆' }}</span>
+                        }
+                      </div>
+                    </div>
+
+                    @if (review.description) {
+                      <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">
+                        {{ review.description }}
+                      </p>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-[#12355B] mb-3">
+          Reseñas realizadas
+        </h2>
+
+        @if (givenReviews().length === 0) {
+          <div class="bg-white border border-slate-200 rounded-xl p-6 text-center">
+            <p class="text-sm text-slate-500">
+              Todavía no realizaste reseñas.
+            </p>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (review of givenReviews(); track review.id) {
+              <article class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="flex items-start gap-3">
+                  <img
+                    [src]="review.reviewed.photoUrl || defaultPhotoUrl"
+                    alt="Foto del usuario reseñado"
+                    class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200"
+                  />
+
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <h3 class="font-bold text-[#12355B]">
+                        A {{ review.reviewed.name || review.reviewed.username }}
+                      </h3>
+
+                      <div class="text-[#E8842E] text-sm" aria-label="Calificación">
+                        @for (star of [1, 2, 3, 4, 5]; track star) {
+                          <span>{{ star <= review.rating ? '★' : '☆' }}</span>
+                        }
+                      </div>
+                    </div>
+
+                    @if (review.description) {
+                      <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">
+                        {{ review.description }}
+                      </p>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  }
+}
         @if (activeTab() === 'missions') {
           <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
             <h2 class="text-lg font-bold text-[#12355B] mb-2">
