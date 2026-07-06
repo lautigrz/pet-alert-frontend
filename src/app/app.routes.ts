@@ -74,6 +74,12 @@ export const routes: Routes = [
   },
 
   {
+  path: 'missions/create/:publicId',
+  loadComponent: () =>
+    import('./features/missions/presentation/create-mission/create-mission')
+      .then(m => m.CreateMissionPage),
+},
+  {
     path: '',
     component: AppShellComponent,
     canActivate: [authGuard],
@@ -131,6 +137,13 @@ export const routes: Routes = [
             './features/report/presentation/matches/matches'
           ).then((m) => m.MatchesPage),
       },
+
+      {
+    path: 'missions/:publicId',
+    loadComponent: () =>
+      import('./features/missions/presentation/mission-detail/mission-detail')
+        .then(c => c.MissionDetailPage)
+},
       {
         path: 'reports/:publicId/edit/datos',
         canActivate: [verifiedGuard],

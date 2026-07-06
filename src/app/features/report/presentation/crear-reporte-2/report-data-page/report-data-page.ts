@@ -21,7 +21,8 @@ export class ReportDataPage {
 
   readonly maxPhotos = 4;
   readonly slots = [0, 1, 2, 3];
-  readonly isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
+  
   
   petName = signal('');
   petSpecies = signal<'perro' | 'gato'>('perro');
@@ -35,27 +36,10 @@ export class ReportDataPage {
 
   private readonly catalog = inject(CatalogService);
   readonly colorOptions = signal<string[]>(PET_COLORS);
+  readonly isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   readonly breedOptions = signal<string[]>(DOG_BREEDS);
 
-  constructor() {
-    this.catalog.getColors().then((colors) => this.colorOptions.set(colors));
-    effect(() => {
-      const species = this.petSpecies() === 'gato' ? 'CAT' : 'DOG';
-      this.catalog.getBreeds(species).then((breeds) => this.breedOptions.set(breeds));
-    });
-
-    const pet = this.wizardService.getCurrentReport().pet;
-    if (!pet) return;
-    this.petName.set(pet.name ?? '');
-    this.petSpecies.set(pet.species ?? 'perro');
-    this.petBreed.set(pet.breed ?? '');
-    this.petColor.set(pet.color ?? '');
-    this.petDescription.set(pet.description ?? '');
-    this.petGender.set(pet.gender ?? 'macho');
-    this.petSize.set(pet.size ?? 'mediano');
-    this.hasIdentification.set(pet.hasIdentification ?? 'no');
-    this.photos.set(pet.imageUrls ?? []);
-  }
+  
 
   onFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement;

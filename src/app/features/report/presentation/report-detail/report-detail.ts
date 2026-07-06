@@ -141,6 +141,19 @@ export class ReportDetailPage implements OnInit {
     const r = this.report();
     if (r) this.router.navigate(['/reports', r.publicId, 'edit', 'ubicacion']);
   }
+ 
+ crearMision(): void {
+
+  const r = this.report();
+
+  if (!r) return;
+
+  this.router.navigate([
+    '/missions/create',
+    r.publicId
+  ]);
+
+}
 
   private async cargarEstadoSeguimiento(): Promise<void> {
     const r = this.report();

@@ -104,6 +104,8 @@ export class ChatsPage implements OnInit, OnDestroy {
     .subscribe(err => console.error(err.message));
 }
 
+
+
 selectContact(contact: ConversationSummaryOutput): void {
 
   this.selectedContact.set(contact);

@@ -8,6 +8,7 @@ import { NotificationService } from '../notifications/application/notification.s
 import { ProfileService } from '../profile/application/profile.service';
 import * as L from 'leaflet';
 import { PetIconComponent } from '../../shared/component/pet-icon/pet-icon.component';
+import { MissionService } from '../missions/application/mission.service';
 
 import { InfoTooltipComponent } from '../../shared/component/info-tooltip/info-tooltip.component';
 interface LocationSuggestion {
@@ -53,6 +54,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
   private lugaresLayer = L.layerGroup();
   private markersLayer = L.layerGroup();
+ 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly reportesService = inject(ReportListService);
@@ -60,6 +62,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private readonly zone = inject(NgZone);
   private readonly notifications = inject(NotificationService);
   readonly successReportId = signal<string | null>(null);
+  private readonly missionService = inject(MissionService);
 
   readonly notifBusy = this.notifications.busy;
 
@@ -75,6 +78,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly suggestions = signal<LocationSuggestion[]>([]);
   readonly mostrarFiltros = signal(false);
   readonly reporteSeleccionado = signal<Reporte | null>(null);
+  readonly misiones = signal<any[]>([]);
 
 
   readonly reportes = signal<Reporte[]>([]);
@@ -86,6 +90,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly badgeMisReportes = computed(() => this.formatBadge(this.totalMisReportes()));
   readonly badgeCercanos = computed(() => this.formatBadge(this.totalCercanos()));
   readonly lugares = signal<Lugar[]>([]);
+  readonly misionSeleccionada = signal<any | null>(null);
 
   readonly centrosCargando = signal(false);
   readonly centrosError = signal<string | null>(null);
@@ -327,6 +332,12 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
     this.reportesFiltrados.set(filtrados);
 
+this.missionCircles.forEach(c => this.map.removeLayer(c));
+this.missionMarkers.forEach(m => this.map.removeLayer(m));
+
+this.missionCircles = [];
+this.missionMarkers = [];
+
     this.dibujarMarcadores(filtrados);
   }
 
@@ -340,10 +351,35 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       this.profilePhotoUrl =
         profile.photoUrl ||
         'https://ui-avatars.com/api/?name=Perfil&background=e2e8f0&color=12355B&size=128';
+
+
+        const navigation = this.router.getCurrentNavigation();
+
+if (navigation?.extras.state?.['missionCreated']) {
+  
+  console.log("Misión creada correctamente");
+}
     } catch (error) {
       console.error('Error cargando perfil', error);
     }
+
+
   }
+
+  abrirMision(mission: any): void {
+
+  this.misionSeleccionada.set(null);
+
+  this.router.navigate(
+    ['/missions', mission.public_id],
+    {
+      state: {
+        mission
+      }
+    }
+  );
+
+}
 
   ngAfterViewInit(): void {
     this.initializeMap();
@@ -364,7 +400,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     await this.notifications.enable();
   }
 
-  private initializeMap(): void {
+ private async initializeMap(): Promise<void> {
     this.map = L.map('map').setView([this.DEFAULT_LOCATION.lat, this.DEFAULT_LOCATION.lng], 13);
     this.map.attributionControl.setPrefix(false);
     this.map.attributionControl.setPosition('bottomleft');
@@ -378,14 +414,38 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     }).addTo(this.map);
 
     this.lugaresLayer.addTo(this.map);
+    
     this.markersLayer.addTo(this.map);
     this.addFocusControl();
     this.getUserLocation();
-    this.cargarReportes();
+    await this.cargarReportes();
+    await this.cargarMisiones();
     setTimeout(() => {
       this.map.invalidateSize();
     }, 500);
   }
+
+  readonly mostrarMisiones = signal(true);
+
+toggleMisiones(): void {
+
+  this.mostrarMisiones.update(v => !v);
+
+  if (this.mostrarMisiones()) {
+
+    this.dibujarMisiones(this.misiones());
+
+  } else {
+
+    this.missionCircles.forEach(c => this.map.removeLayer(c));
+    this.missionMarkers.forEach(m => this.map.removeLayer(m));
+
+    this.missionCircles = [];
+    this.missionMarkers = [];
+
+  }
+
+}
 
   private dibujarLugares(): void {
 
@@ -474,6 +534,136 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
     return R * c;
   }
+
+
+  private async cargarMisiones(): Promise<void> {
+
+    
+
+
+  try {
+
+    const misiones =
+    
+      await this.missionService.getMissions();
+    console.log(misiones[0].report);
+     
+
+this.misiones.set(misiones);
+    this.dibujarMisiones(misiones);
+
+  } catch (error) {
+
+    console.error("Error cargando misiones", error);
+
+  }
+
+}
+
+private missionCircles: L.Circle[] = [];
+private missionMarkers: L.Marker[] = [];
+
+private dibujarMisiones(misiones: any[]): void {
+
+  this.missionCircles.forEach(c => this.map.removeLayer(c));
+  this.missionMarkers.forEach(m => this.map.removeLayer(m));
+
+  this.missionCircles = [];
+  this.missionMarkers = [];
+
+  for (const mission of misiones) {
+
+    const report = mission.report;
+
+    const pet = report.lost_report_detail?.pet;
+
+    const image =
+  pet?.petImages?.[0]?.photoUrl ??
+  report.reportImages?.[0]?.photoUrl ??
+  '';
+
+    const circle = L.circle(
+      [mission.latitude, mission.longitude],
+      {
+        radius: mission.radius,
+        color: '#2563eb',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.18,
+        weight: 3
+      }
+    ).addTo(this.map);
+
+    const marker = L.marker(
+      [mission.latitude, mission.longitude],
+      {
+        icon: this.buildMissionIcon(image)
+      }
+    ).addTo(this.map);
+
+    marker.on('click', () => {
+
+  this.zone.run(() => {
+
+    this.reporteSeleccionado.set(null);
+
+    this.misionSeleccionada.set(mission);
+
+  });
+
+});
+    this.missionCircles.push(circle);
+    this.missionMarkers.push(marker);
+
+  }
+
+}
+private buildMissionIcon(imageUrl?: string): L.DivIcon {
+
+  return L.divIcon({
+
+    html: imageUrl
+      ? `
+      <div style="
+          width:52px;
+          height:52px;
+          border-radius:50%;
+          overflow:hidden;
+          border:4px solid white;
+          box-shadow:0 0 10px rgba(37,99,235,.45);
+      ">
+          <img
+              src="${imageUrl}"
+              style="
+                  width:100%;
+                  height:100%;
+                  object-fit:cover;
+              "
+          />
+      </div>
+      `
+      : `
+      <div style="
+          width:52px;
+          height:52px;
+          border-radius:50%;
+          background:#2563eb;
+          border:4px solid white;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          font-size:24px;
+      ">
+          🐾
+      </div>
+      `,
+
+    className: '',
+    iconSize: [52, 52],
+    iconAnchor: [26, 26]
+
+  });
+
+}
 
   private async buscarLugares(
     tipo: 'veterinary' | 'police'
@@ -720,6 +910,20 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   if (!this.userLatLng) return;
 
+  // ==========================
+  // SOLO MISIONES
+  // ==========================
+
+  if (this.tipoFiltro() === 'misiones') {
+
+    this.markersLayer.clearLayers();
+
+    this.dibujarMisiones(this.misiones());
+
+    return;
+
+  }
+
   let filtrados = [...this.reportes()];
 
   // FILTRO TIPO
@@ -752,6 +956,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     });
 
   }
+
+  
 
   if (this.mascotaFiltro() === 'gato') {
 

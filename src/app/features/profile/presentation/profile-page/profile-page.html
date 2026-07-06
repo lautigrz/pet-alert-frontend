@@ -117,18 +117,98 @@
             </div>
           }
         }
+@if (activeTab() === 'missions') {
 
-        @if (activeTab() === 'missions') {
-          <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-            <h2 class="text-lg font-bold text-[#12355B] mb-2">
-              Misiones
-            </h2>
-            <p class="text-sm text-slate-500">
-              Todavía no tenés misiones disponibles.
-            </p>
+  @if (missions().length === 0) {
+
+    <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+
+      <h2 class="text-lg font-bold text-[#12355B] mb-2">
+        Misiones
+      </h2>
+
+      <p class="text-sm text-slate-500">
+        Todavía no realizaste ninguna misión.
+      </p>
+
+    </div>
+
+  } @else {
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      @for (mission of missions(); track mission.title) {
+
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+
+          <div class="p-5">
+
+            <div class="flex items-start justify-between">
+
+              <div>
+
+                <h3 class="text-xl font-bold text-[#12355B]">
+                  🎯 {{ mission.title }}
+                </h3>
+
+                <p class="mt-2 text-slate-600">
+                  📍 {{ mission.address }}
+                </p>
+
+                <p class="mt-1 text-sm text-slate-500">
+                  📅 {{ mission.createdAt }}
+                </p>
+
+              </div>
+
+              @if (mission.status === 'PENDING') {
+
+                <span class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-bold">
+                  Pendiente
+                </span>
+
+              }
+
+              @if (mission.status === 'APPROVED') {
+
+                <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                  Aprobada
+                </span>
+
+              }
+
+              @if (mission.status === 'REJECTED') {
+
+                <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                  Rechazada
+                </span>
+
+              }
+
+            </div>
+
+            <div class="mt-6">
+
+              <button
+                class="w-full bg-[#12355B] hover:bg-[#0f2d4d] text-white font-semibold py-3 rounded-lg transition">
+
+                Ver misión
+
+              </button>
+
+            </div>
+
           </div>
-        }
 
+        </div>
+
+      }
+
+    </div>
+
+  }
+
+}
         @if (activeTab() === 'achievements') {
           <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
             <h2 class="text-lg font-bold text-[#12355B] mb-2">
