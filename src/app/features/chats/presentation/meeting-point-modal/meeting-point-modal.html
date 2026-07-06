@@ -1,0 +1,113 @@
+<div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 px-4 py-6">
+  <div class="relative flex h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+
+    <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+      <div>
+        <h2 class="text-lg font-bold text-[#12355B]">Punto de encuentro</h2>
+        <p class="text-xs text-slate-500">Buscá una zona y elegí un lugar seguro para el reencuentro</p>
+      </div>
+      <button type="button" (click)="close()" aria-label="Cerrar" class="text-slate-400 hover:text-[#12355B]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="px-5 pt-4">
+      <div class="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input type="text" [value]="searchTerm()" (input)="onSearchInput($any($event.target).value)"
+          placeholder="Buscar por localidad" autocomplete="off"
+          class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E] placeholder:text-slate-400" />
+
+        @if (suggestions().length) {
+        <ul
+          class="absolute left-0 right-0 z-[10] mt-1 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden max-h-56 overflow-y-auto">
+          @for (s of suggestions(); track s.displayName) {
+          <li>
+            <button type="button" (click)="selectSuggestion(s)"
+              class="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 border-b border-slate-100 last:border-0">
+              {{ s.displayName }}
+            </button>
+          </li>
+          }
+        </ul>
+        }
+      </div>
+
+      <div class="mt-3 flex gap-2">
+        <button type="button" (click)="selectType('veterinary')"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold border transition"
+          [class]="type() === 'veterinary'
+            ? 'bg-[#E8842E] text-white border-[#E8842E]'
+            : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
+            <path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4" />
+            <circle cx="20" cy="10" r="2" />
+          </svg>
+          <span>Veterinarias</span>
+        </button>
+        <button type="button" (click)="selectType('police')"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold border transition"
+          [class]="type() === 'police'
+            ? 'bg-[#E8842E] text-white border-[#E8842E]'
+            : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+          </svg>
+          <span>Comisarías</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-3 px-5">
+      <div #mapEl class="h-52 w-full overflow-hidden rounded-xl border border-slate-200"></div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-5 py-3">
+      @if (loading()) {
+      <p class="text-sm text-slate-500">Buscando centros...</p>
+      }
+
+      @if (error()) {
+      <p class="text-sm text-red-600">{{ error() }}</p>
+      }
+
+      @if (!loading() && places().length > 0) {
+      <p class="text-xs text-slate-400 mb-2">Tocá un centro para enviarlo al chat</p>
+      <div class="border border-slate-200 rounded-lg overflow-hidden">
+        @for (place of places(); track $index) {
+        <button type="button" (click)="selectPlace(place)"
+          class="w-full text-left px-3 py-3 hover:bg-slate-50 border-b last:border-b-0 transition">
+          <div class="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E8842E] shrink-0" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <span>{{ place.name }}</span>
+            <span class="ml-auto text-xs text-slate-400 shrink-0">{{ place.distance?.toFixed(1) }} km</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E8842E] shrink-0" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 2 11 13" />
+              <path d="M22 2 15 22 11 13 2 9 22 2z" />
+            </svg>
+          </div>
+        </button>
+        }
+      </div>
+      }
+    </div>
+
+  </div>
+</div>
