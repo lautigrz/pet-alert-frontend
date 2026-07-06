@@ -1,52 +1,45 @@
 <main class="flex-1 bg-slate-50 px-4 py-6 sm:px-6 sm:py-10">
   <section class="mx-auto w-full max-w-5xl">
     @if (loading()) {
-      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
-        Cargando perfil...
-      </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+      Cargando perfil...
+    </div>
     } @else if (serverError()) {
-      <div
-        role="alert"
-        class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded"
-      >
-        {{ serverError() }}
-      </div>
+    <div role="alert" class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded">
+      {{ serverError() }}
+    </div>
     } @else {
-      <section class="flex flex-col items-center text-center mb-8">
-        <img
-          [src]="profilePhotoUrl()"
-          alt="Foto de perfil"
-          class="w-28 h-28 rounded-full object-cover border-4 border-slate-200 shadow-sm bg-slate-100 mb-4"
-        />
+    <section class="flex flex-col items-center text-center mb-8">
+      <img [src]="profilePhotoUrl()" alt="Foto de perfil"
+        class="w-28 h-28 rounded-full object-cover border-4 border-slate-200 shadow-sm bg-slate-100 mb-4" />
 
-        <h1 class="text-3xl font-bold text-[#12355B] capitalize">
-          {{ displayName() }}
-        </h1>
+      <h1 class="text-3xl font-bold text-[#12355B] capitalize">
+        {{ displayName() }}
+      </h1>
 
-        <div class="flex items-center gap-2 mt-2 text-sm">
-  <div class="flex text-[#E8842E]">
-    @for (star of ratingStars(); track $index) {
-      <span>{{ star }}</span>
-    }
-  </div>
+      <div class="flex items-center gap-2 mt-2 text-sm">
+        <div class="flex text-[#E8842E]">
+          @for (star of ratingStars(); track $index) {
+          <span>{{ star }}</span>
+          }
+        </div>
 
-  <span class="font-semibold text-[#12355B]">
-    {{ ratingSummary().average || 'Sin calificar' }}
-  </span>
+        <span class="font-semibold text-[#12355B]">
+          {{ ratingSummary().average || 'Sin calificar' }}
+        </span>
 
-  <span class="text-slate-500">
-    ({{ ratingSummary().count }} reseñas)
-  </span>
-</div>
-        <div class="flex justify-center items-center gap-2 mt-2">
+        <span class="text-slate-500">
+          ({{ ratingSummary().count }} reseñas)
+        </span>
+      </div>
 
-          <a
-            [routerLink]="rutaMiPerfil"
-            class="inline-flex items-center gap-1 border border-slate-300 hover:border-[#12355B] text-[#12355B] font-semibold text-sm px-4 py-2 rounded-md bg-white transition-colors">
-            ✎ Editar perfil
-          </a>
+      <div class="flex justify-center items-center gap-2 mt-2">
+        <a [routerLink]="rutaMiPerfil"
+          class="inline-flex items-center gap-1 border border-slate-300 hover:border-[#12355B] text-[#12355B] font-semibold text-sm px-4 py-2 rounded-md bg-white transition-colors">
+          ✎ Editar perfil
+        </a>
 
-<!-- reportar perfil
+        <!-- reportar perfil
           <button
             type="button"
             class="w-10 h-10 inline-flex items-center justify-center border border-red-500 text-red-500 hover:bg-red-100 rounded-lg transition">
@@ -56,220 +49,235 @@
             </svg>
           </button>
           -->
+      </div>
+    </section>
 
-        </div>
-      </section>
+    @if (profile()?.stats; as stats) {
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <div class="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm">
+        <p class="text-2xl font-bold text-[#12355B]">
+          {{ stats.reportsCreated }}
+        </p>
+        <p class="text-xs text-slate-500 mt-1">
+          Reportes creados
+        </p>
+      </div>
 
-      <section class="mb-5">
-        <div class="inline-flex rounded-md overflow-hidden border border-slate-200 bg-white">
-          <button
-            type="button"
-            (click)="setTab('reports')"
-            class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium transition-colors"
-            [class.bg-[#E8842E]]="activeTab() === 'reports'"
-            [class.text-white]="activeTab() === 'reports'"
-            [class.text-[#12355B]]="activeTab() !== 'reports'"
-          >
-            Mis reportes
-          </button>
-<button
-  type="button"
-  (click)="setTab('reviews')"
-  class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium border-l border-slate-200 transition-colors"
-  [class.bg-[#E8842E]]="activeTab() === 'reviews'"
-  [class.text-white]="activeTab() === 'reviews'"
-  [class.text-[#12355B]]="activeTab() !== 'reviews'"
->
-  Mis reseñas
-</button>
-          <button
-            type="button"
-            (click)="setTab('missions')"
-            class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium border-l border-slate-200 transition-colors"
-            [class.bg-[#E8842E]]="activeTab() === 'missions'"
-            [class.text-white]="activeTab() === 'missions'"
-            [class.text-[#12355B]]="activeTab() !== 'missions'"
-          >
-            Misiones
-          </button>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm">
+        <p class="text-2xl font-bold text-[#12355B]">
+          {{ stats.successfulReturns }}
+        </p>
+        <p class="text-xs text-slate-500 mt-1">
+          Devoluciones exitosas
+        </p>
+      </div>
 
-          <button
-            type="button"
-            (click)="setTab('achievements')"
-            class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium border-l border-slate-200 transition-colors"
-            [class.bg-[#E8842E]]="activeTab() === 'achievements'"
-            [class.text-white]="activeTab() === 'achievements'"
-            [class.text-[#12355B]]="activeTab() !== 'achievements'"
-          >
-            Logros
-          </button>
-        </div>
-      </section>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm">
+        <p class="text-2xl font-bold text-[#12355B]">
+          {{ stats.activeDays }}
+        </p>
+        <p class="text-xs text-slate-500 mt-1">
+          Días activo
+        </p>
+      </div>
 
-      <section>
-        @if (activeTab() === 'reports') {
-          @if (reportsLoading()) {
-            <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
-              Cargando reportes...
-            </div>
-          } @else if (reportsError()) {
-            <div
-              role="alert"
-              class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded"
-            >
-              {{ reportsError() }}
-            </div>
-          } @else if (reports().length === 0) {
-            <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-              <h2 class="text-lg font-bold text-[#12355B] mb-2">
-                Mis reportes
-              </h2>
-              <p class="text-sm text-slate-500">
-                Todavía no tenés reportes cargados.
-              </p>
-            </div>
-          } @else {
-            <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-              @for (reporte of reports(); track reporte.publicId) {
-                <app-home-report-card [reporte]="reporte" />
-              }
-            </div>
-          }
-        }
-@if (activeTab() === 'reviews') {
-  @if (reviewsLoading()) {
-    <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
-      Cargando reseñas...
-    </div>
-  } @else if (reviewsError()) {
-    <div
-      role="alert"
-      class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded"
-    >
-      {{ reviewsError() }}
-    </div>
-  } @else {
-    <div class="space-y-6">
-      <section>
-        <h2 class="text-lg font-bold text-[#12355B] mb-3">
-          Reseñas recibidas
+      <div class="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm">
+        <p class="text-2xl font-bold text-[#12355B]">
+          {{ stats.petsHelped }}
+        </p>
+        <p class="text-xs text-slate-500 mt-1">
+          Mascotas ayudadas
+        </p>
+      </div>
+    </section>
+    }
+
+    <section class="mb-5">
+      <div class="inline-flex rounded-md overflow-hidden border border-slate-200 bg-white">
+        <button type="button" (click)="setTab('reports')"
+          class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium transition-colors"
+          [class.bg-[#E8842E]]="activeTab() === 'reports'" [class.text-white]="activeTab() === 'reports'"
+          [class.text-[#12355B]]="activeTab() !== 'reports'">
+          Mis reportes
+        </button>
+
+        <button type="button" (click)="setTab('reviews')"
+          class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium border-l border-slate-200 transition-colors"
+          [class.bg-[#E8842E]]="activeTab() === 'reviews'" [class.text-white]="activeTab() === 'reviews'"
+          [class.text-[#12355B]]="activeTab() !== 'reviews'">
+          Mis reseñas
+        </button>
+
+        <button type="button" (click)="setTab('missions')"
+          class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium border-l border-slate-200 transition-colors"
+          [class.bg-[#E8842E]]="activeTab() === 'missions'" [class.text-white]="activeTab() === 'missions'"
+          [class.text-[#12355B]]="activeTab() !== 'missions'">
+          Misiones
+        </button>
+
+        <button type="button" (click)="setTab('achievements')"
+          class="px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium border-l border-slate-200 transition-colors"
+          [class.bg-[#E8842E]]="activeTab() === 'achievements'" [class.text-white]="activeTab() === 'achievements'"
+          [class.text-[#12355B]]="activeTab() !== 'achievements'">
+          Logros
+        </button>
+      </div>
+    </section>
+
+    <section>
+      @if (activeTab() === 'reports') {
+      @if (reportsLoading()) {
+      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+        Cargando reportes...
+      </div>
+      } @else if (reportsError()) {
+      <div role="alert" class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded">
+        {{ reportsError() }}
+      </div>
+      } @else if (reports().length === 0) {
+      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+        <h2 class="text-lg font-bold text-[#12355B] mb-2">
+          Mis reportes
         </h2>
+        <p class="text-sm text-slate-500">
+          Todavía no tenés reportes cargados.
+        </p>
+      </div>
+      } @else {
+      <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        @for (reporte of reports(); track reporte.publicId) {
+        <app-home-report-card [reporte]="reporte" />
+        }
+      </div>
+      }
+      }
 
-        @if (receivedReviews().length === 0) {
+      @if (activeTab() === 'reviews') {
+      @if (reviewsLoading()) {
+      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+        Cargando reseñas...
+      </div>
+      } @else if (reviewsError()) {
+      <div role="alert" class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded">
+        {{ reviewsError() }}
+      </div>
+      } @else {
+      <div class="space-y-6">
+        <section>
+          <h2 class="text-lg font-bold text-[#12355B] mb-3">
+            Reseñas recibidas
+          </h2>
+
+          @if (receivedReviews().length === 0) {
           <div class="bg-white border border-slate-200 rounded-xl p-6 text-center">
             <p class="text-sm text-slate-500">
               Todavía no recibiste reseñas.
             </p>
           </div>
-        } @else {
+          } @else {
           <div class="space-y-3">
             @for (review of receivedReviews(); track review.id) {
-              <article class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                <div class="flex items-start gap-3">
-                  <img
-                    [src]="review.reviewer.photoUrl || defaultPhotoUrl"
-                    alt="Foto del usuario que reseñó"
-                    class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200"
-                  />
+            <article class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+              <div class="flex items-start gap-3">
+                <img [src]="review.reviewer.photoUrl || defaultPhotoUrl" alt="Foto del usuario que reseñó"
+                  class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200" />
 
-                  <div class="min-w-0 flex-1">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                      <h3 class="font-bold text-[#12355B]">
-                        {{ review.reviewer.name || review.reviewer.username }}
-                      </h3>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h3 class="font-bold text-[#12355B]">
+                      {{ review.reviewer.name || review.reviewer.username }}
+                    </h3>
 
-                      <div class="text-[#E8842E] text-sm" aria-label="Calificación">
-                        @for (star of [1, 2, 3, 4, 5]; track star) {
-                          <span>{{ star <= review.rating ? '★' : '☆' }}</span>
-                        }
-                      </div>
+                    <div class="text-[#E8842E] text-sm" aria-label="Calificación">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                      <span>{{ star <= review.rating ? '★' : '☆' }}</span>
+                      }
                     </div>
-
-                    @if (review.description) {
-                      <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">
-                        {{ review.description }}
-                      </p>
-                    }
                   </div>
+
+                  @if (review.description) {
+                  <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">
+                    {{ review.description }}
+                  </p>
+                  }
                 </div>
-              </article>
+              </div>
+            </article>
             }
           </div>
-        }
-      </section>
+          }
+        </section>
 
-      <section>
-        <h2 class="text-lg font-bold text-[#12355B] mb-3">
-          Reseñas realizadas
-        </h2>
+        <section>
+          <h2 class="text-lg font-bold text-[#12355B] mb-3">
+            Reseñas realizadas
+          </h2>
 
-        @if (givenReviews().length === 0) {
+          @if (givenReviews().length === 0) {
           <div class="bg-white border border-slate-200 rounded-xl p-6 text-center">
             <p class="text-sm text-slate-500">
               Todavía no realizaste reseñas.
             </p>
           </div>
-        } @else {
+          } @else {
           <div class="space-y-3">
             @for (review of givenReviews(); track review.id) {
-              <article class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                <div class="flex items-start gap-3">
-                  <img
-                    [src]="review.reviewed.photoUrl || defaultPhotoUrl"
-                    alt="Foto del usuario reseñado"
-                    class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200"
-                  />
+            <article class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+              <div class="flex items-start gap-3">
+                <img [src]="review.reviewed.photoUrl || defaultPhotoUrl" alt="Foto del usuario reseñado"
+                  class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200" />
 
-                  <div class="min-w-0 flex-1">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                      <h3 class="font-bold text-[#12355B]">
-                        A {{ review.reviewed.name || review.reviewed.username }}
-                      </h3>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h3 class="font-bold text-[#12355B]">
+                      A {{ review.reviewed.name || review.reviewed.username }}
+                    </h3>
 
-                      <div class="text-[#E8842E] text-sm" aria-label="Calificación">
-                        @for (star of [1, 2, 3, 4, 5]; track star) {
-                          <span>{{ star <= review.rating ? '★' : '☆' }}</span>
-                        }
-                      </div>
+                    <div class="text-[#E8842E] text-sm" aria-label="Calificación">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                      <span>{{ star <= review.rating ? '★' : '☆' }}</span>
+                      }
                     </div>
-
-                    @if (review.description) {
-                      <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">
-                        {{ review.description }}
-                      </p>
-                    }
                   </div>
+
+                  @if (review.description) {
+                  <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">
+                    {{ review.description }}
+                  </p>
+                  }
                 </div>
-              </article>
+              </div>
+            </article>
             }
           </div>
-        }
-      </section>
-    </div>
-  }
-}
-        @if (activeTab() === 'missions') {
-          <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-            <h2 class="text-lg font-bold text-[#12355B] mb-2">
-              Misiones
-            </h2>
-            <p class="text-sm text-slate-500">
-              Todavía no tenés misiones disponibles.
-            </p>
-          </div>
-        }
+          }
+        </section>
+      </div>
+      }
+      }
 
-        @if (activeTab() === 'achievements') {
-          <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-            <h2 class="text-lg font-bold text-[#12355B] mb-2">
-              Logros
-            </h2>
-            <p class="text-sm text-slate-500">
-              Todavía no tenés logros obtenidos.
-            </p>
-          </div>
-        }
-      </section>
+      @if (activeTab() === 'missions') {
+      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+        <h2 class="text-lg font-bold text-[#12355B] mb-2">
+          Misiones
+        </h2>
+        <p class="text-sm text-slate-500">
+          Todavía no tenés misiones disponibles.
+        </p>
+      </div>
+      }
+
+      @if (activeTab() === 'achievements') {
+      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+        <h2 class="text-lg font-bold text-[#12355B] mb-2">
+          Logros
+        </h2>
+        <p class="text-sm text-slate-500">
+          Todavía no tenés logros obtenidos.
+        </p>
+      </div>
+      }
+    </section>
     }
   </section>
 </main>

@@ -28,6 +28,7 @@ export interface GetProfileResponse {
   lastname?: string;
   photoUrl?: string;
   role?: string;
+  stats?: ProfileStatsResponse;
 }
 
 export interface PublicProfileResponse {
@@ -36,6 +37,14 @@ export interface PublicProfileResponse {
   name?: string;
   lastname?: string;
   photoUrl?: string;
+  stats?: ProfileStatsResponse;
+}
+
+export interface ProfileStatsResponse{
+  reportsCreated: number;
+  successfulReturns: number;
+  activeDays: number;
+  petsHelped: number;
 }
 
 export interface CreateUserReviewRequest {
@@ -64,7 +73,7 @@ export class ProfileHttp {
 
   getPublicProfile(publicId: string): Promise<PublicProfileResponse> {
     return firstValueFrom(
-      this.http.get<PublicProfileResponse>(`${this.baseUrl}/users/${publicId}`),
+      this.http.get<PublicProfileResponse>(`${this.baseUrl}/users/${publicId}/profile`),
     );
   }
 
