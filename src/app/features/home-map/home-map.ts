@@ -112,8 +112,10 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   readonly radioRadar = signal(5);
   private userLatLng?: L.LatLng;
+  private searchLatLng?: L.LatLng;
   private searchMarker?: L.Marker;
   private searchDebounce?: ReturnType<typeof setTimeout>;
+  private centrosDebounce?: ReturnType<typeof setTimeout>;
   private profilePhotoUrl =
     'https://ui-avatars.com/api/?name=Perfil&background=e2e8f0&color=12355B&size=128';
 
@@ -442,7 +444,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     control.addTo(this.map);
   }
 
-  private getUserLocation(): void {
+  private getUserLocation(reaplicarFiltros = false): void {
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
@@ -452,6 +454,10 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         this.dibujarRadar();
         this.filtrarPorRadar();
         this.map.setView(this.userLatLng, 15);
+        if (reaplicarFiltros && !this.searchLatLng) {
+          this.filtrarPorRadar();
+          this.aplicarFiltroCentros();
+        }
         setTimeout(() => this.map.invalidateSize(), 100);
       },
       () => {
@@ -507,7 +513,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.centrosCargando.set(true);
     this.centrosError.set(null);
 
-    const radioBusqueda = 8000;
+    const radioBusqueda = this.radioRadar() * 1000;
 
     const filtros =
       tipo === 'veterinary'
@@ -660,7 +666,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   private dibujarRadar(): void {
 
-  if (!this.userLatLng) return;
+  const centro = this.centroReferencia();
+  if (!centro) return;
 
   const radioMetros =
     this.radioRadar() * 1000;
@@ -672,14 +679,14 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     );
 
     this.radarCircle.setLatLng(
-      this.userLatLng
+      centro
     );
 
     return;
   }
 
   this.radarCircle = L.circle(
-    this.userLatLng,
+    centro,
     {
       radius: radioMetros,
       color: '#E8842E',
@@ -694,9 +701,14 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private centerOnUser(): void {
     if (this.userLatLng) {
       this.map.setView(this.userLatLng, 16);
+      if (!this.searchLatLng) {
+        this.dibujarRadar();
+        this.filtrarPorRadar();
+        this.aplicarFiltroCentros();
+      }
       return;
     }
-    this.getUserLocation();
+    this.getUserLocation(true);
   }
 
   onSearchInput(value: string): void {
@@ -731,7 +743,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   private filtrarPorRadar(): void {
 
-  if (!this.userLatLng) return;
+  const centro = this.centroReferencia();
+  if (!centro) return;
 
   let filtrados = [...this.reportes()];
 
@@ -787,8 +800,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
       const distancia =
         this.calcularDistancia(
-          this.userLatLng!.lat,
-          this.userLatLng!.lng,
+          centro.lat,
+          centro.lng,
           reporte.location.latitude,
           reporte.location.longitude
         );
@@ -811,8 +824,12 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   selectSuggestion(suggestion: LocationSuggestion): void {
     this.searchTerm.set(suggestion.displayName);
     this.suggestions.set([]);
+    this.searchLatLng = L.latLng(suggestion.lat, suggestion.lng);
     this.map.setView([suggestion.lat, suggestion.lng], 15);
     this.markSearchResult(suggestion.lat, suggestion.lng);
+    this.dibujarRadar();
+    this.filtrarPorRadar();
+    this.aplicarFiltroCentros();
   }
 
   async searchLocation(): Promise<void> {
@@ -827,6 +844,10 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.suggestions.set([]);
     this.searchMarker?.remove();
     this.searchMarker = undefined;
+    this.searchLatLng = undefined;
+    this.dibujarRadar();
+    this.filtrarPorRadar();
+    this.aplicarFiltroCentros();
   }
 
   abrirFiltros(): void {
@@ -871,6 +892,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   this.dibujarRadar();
 
   this.filtrarPorRadar();
+
+  this.reprogramarCentros();
 }
 
   private markSearchResult(lat: number, lng: number): void {
@@ -972,11 +995,21 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   private getCentroBusqueda(): L.LatLng {
-    return this.userLatLng ?? this.map.getCenter();
+    return this.searchLatLng ?? this.userLatLng ?? this.map.getCenter();
   }
 
   private getCacheKey(tipo: 'veterinary' | 'police', centro: L.LatLng): string {
-    return `${tipo}:${centro.lat.toFixed(3)}:${centro.lng.toFixed(3)}`;
+    return `${tipo}:${centro.lat.toFixed(3)}:${centro.lng.toFixed(3)}:${this.radioRadar()}`;
+  }
+
+  private centroReferencia(): L.LatLng | undefined {
+    return this.searchLatLng ?? this.userLatLng;
+  }
+
+  private reprogramarCentros(): void {
+    if (this.centrosFiltro() === 'todos') return;
+    if (this.centrosDebounce) clearTimeout(this.centrosDebounce);
+    this.centrosDebounce = setTimeout(() => this.aplicarFiltroCentros(), 500);
   }
 
 
