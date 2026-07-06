@@ -12,6 +12,12 @@ import { PetIconComponent } from '../../shared/component/pet-icon/pet-icon.compo
 import { InfoTooltipComponent } from '../../shared/component/info-tooltip/info-tooltip.component';
 
 const CENTRO_PIN_COLOR = '#64748b';
+const MUNDO: [number, number][] = [
+  [-90, -180],
+  [90, -180],
+  [90, 180],
+  [-90, 180],
+];
 const COMISARIA_ICON_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>';
 const VETERINARIA_ICON_SVG =
@@ -108,7 +114,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
 
   private userMarker?: L.Marker;
-  private radarCircle?: L.Circle;
+  private radarMask?: L.Polygon;
 
   readonly radioRadar = signal(5);
   private userLatLng?: L.LatLng;
@@ -664,38 +670,44 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   private dibujarRadar(): void {
-
-  const centro = this.centroReferencia();
-  if (!centro) return;
-
-  const radioMetros =
-    this.radioRadar() * 1000;
-
-  if (this.radarCircle) {
-
-    this.radarCircle.setRadius(
-      radioMetros
-    );
-
-    this.radarCircle.setLatLng(
-      centro
-    );
-
-    return;
+    const centro = this.centroReferencia();
+    if (!centro) return;
+    const radioMetros = this.radioRadar() * 1000;
+    this.actualizarMascaraRadar(centro, radioMetros);
   }
 
-  this.radarCircle = L.circle(
-    centro,
-    {
-      radius: radioMetros,
-      color: '#E8842E',
-      weight: 2,
-      fillColor: '#E8842E',
-      fillOpacity: 0.15
+  private actualizarMascaraRadar(centro: L.LatLng, radioMetros: number): void {
+    const anillos = [MUNDO, this.puntosCirculo(centro, radioMetros)];
+    if (this.radarMask) {
+      this.radarMask.setLatLngs(anillos);
+      return;
     }
-  ).addTo(this.map);
+    this.radarMask = L.polygon(anillos, {
+      stroke: false,
+      fillColor: '#12355B',
+      fillOpacity: 0.2,
+      interactive: false,
+    }).addTo(this.map);
+  }
 
-}
+  private puntosCirculo(centro: L.LatLng, radioMetros: number): [number, number][] {
+    const puntos: [number, number][] = [];
+    for (let i = 0; i <= 64; i++) {
+      puntos.push(this.puntoDestino(centro, radioMetros, (i * 360) / 64));
+    }
+    return puntos;
+  }
+
+  private puntoDestino(centro: L.LatLng, radioMetros: number, gradosBearing: number): [number, number] {
+    const radioTierra = 6371000;
+    const delta = radioMetros / radioTierra;
+    const theta = (gradosBearing * Math.PI) / 180;
+    const lat1 = (centro.lat * Math.PI) / 180;
+    const lng1 = (centro.lng * Math.PI) / 180;
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(delta) + Math.cos(lat1) * Math.sin(delta) * Math.cos(theta));
+    const lng2 = lng1 + Math.atan2(Math.sin(theta) * Math.sin(delta) * Math.cos(lat1), Math.cos(delta) - Math.sin(lat1) * Math.sin(lat2));
+    return [(lat2 * 180) / Math.PI, (lng2 * 180) / Math.PI];
+  }
 
   private centerOnUser(): void {
     if (this.userLatLng) {
@@ -902,7 +914,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       return;
     }
     this.searchMarker = L.marker(latlng, {
-      icon: this.buildPin('#64748b'),
+      icon: this.buildPin('#1D6FA3'),
       zIndexOffset: 1000,
     }).addTo(this.map);
   }

@@ -15,6 +15,7 @@ vi.mock('leaflet', () => {
     on: vi.fn().mockReturnThis(),
     closePopup: vi.fn(),
     setLatLng: vi.fn(),
+    setLatLngs: vi.fn(),
     setRadius: vi.fn(),
     remove: vi.fn(),
   });
@@ -53,6 +54,7 @@ vi.mock('leaflet', () => {
     marker: vi.fn().mockReturnValue(createMarkerMock()),
     circle: vi.fn().mockReturnValue(createMarkerMock()),
     circleMarker: vi.fn().mockReturnValue(createMarkerMock()),
+    polygon: vi.fn().mockReturnValue(createMarkerMock()),
     divIcon: vi.fn().mockImplementation((options) => ({
       options,
     })),
