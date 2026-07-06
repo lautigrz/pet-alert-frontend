@@ -10,49 +10,15 @@ import * as L from 'leaflet';
 import { PetIconComponent } from '../../shared/component/pet-icon/pet-icon.component';
 
 import { InfoTooltipComponent } from '../../shared/component/info-tooltip/info-tooltip.component';
+import { PlacesService, LocationSuggestion, Place } from '../../core/services/places.service';
+import { buildPlacePinIcon } from '../../core/utils/place-pin';
 
-const CENTRO_PIN_COLOR = '#64748b';
 const MUNDO: [number, number][] = [
   [-90, -180],
   [90, -180],
   [90, 180],
   [-90, 180],
 ];
-const COMISARIA_ICON_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>';
-const VETERINARIA_ICON_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>';
-
-interface LocationSuggestion {
-  displayName: string;
-  lat: number;
-  lng: number;
-}
-
-interface Lugar {
-  nombre: string;
-  lat: number;
-  lng: number;
-  distancia?: number;
-}
-
-interface OverpassElement {
-  type: 'node' | 'way' | 'relation';
-  id: number;
-  lat?: number;
-  lon?: number;
-  center?: {
-    lat: number;
-    lon: number;
-  };
-  tags?: {
-    name?: string;
-    amenity?: string;
-    healthcare?: string;
-    office?: string;
-    police?: string;
-  };
-}
 
 @Component({
   selector: 'app-home-map',
@@ -72,6 +38,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private readonly profileService = inject(ProfileService);
   private readonly zone = inject(NgZone);
   private readonly notifications = inject(NotificationService);
+  private readonly placesService = inject(PlacesService);
   readonly successReportId = signal<string | null>(null);
 
   readonly notifBusy = this.notifications.busy;
@@ -98,12 +65,13 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly totalCercanos = signal(0);
   readonly badgeMisReportes = computed(() => this.formatBadge(this.totalMisReportes()));
   readonly badgeCercanos = computed(() => this.formatBadge(this.totalCercanos()));
-  readonly lugares = signal<Lugar[]>([]);
+  readonly lugares = signal<Place[]>([]);
 
   readonly centrosCargando = signal(false);
   readonly centrosError = signal<string | null>(null);
 
-  private readonly lugaresCache = new Map<string, Lugar[]>();
+  private readonly lugaresCache = new Map<string, Place[]>();
+  private readonly RADIO_MAX_KM = 20;
   private centrosRequestId = 0;
 
 
@@ -121,7 +89,6 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private searchLatLng?: L.LatLng;
   private searchMarker?: L.Marker;
   private searchDebounce?: ReturnType<typeof setTimeout>;
-  private centrosDebounce?: ReturnType<typeof setTimeout>;
   private profilePhotoUrl =
     'https://ui-avatars.com/api/?name=Perfil&background=e2e8f0&color=12355B&size=128';
 
@@ -133,10 +100,6 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         : '';
 
     return this.pinShell(color, imageHtml);
-  }
-
-  private buildCentroPin(iconSvg: string): L.DivIcon {
-    return this.pinShell(CENTRO_PIN_COLOR, iconSvg);
   }
 
   private pinShell(color: string, innerHtml: string): L.DivIcon {
@@ -419,20 +382,16 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   private dibujarLugares(): void {
     this.lugaresLayer.clearLayers();
-    const icon = this.buildCentroPin(this.iconoCentroActual());
+    const icon = buildPlacePinIcon(
+      this.centrosFiltro() === 'veterinarias' ? 'veterinary' : 'police',
+    );
     this.lugares().forEach(lugar => this.dibujarLugar(lugar, icon));
   }
 
-  private iconoCentroActual(): string {
-    return this.centrosFiltro() === 'veterinarias'
-      ? VETERINARIA_ICON_SVG
-      : COMISARIA_ICON_SVG;
-  }
-
-  private dibujarLugar(lugar: Lugar, icon: L.DivIcon): void {
+  private dibujarLugar(lugar: Place, icon: L.DivIcon): void {
     L.marker([lugar.lat, lugar.lng], { icon })
       .addTo(this.lugaresLayer)
-      .bindPopup(`${lugar.nombre}<br>${lugar.distancia?.toFixed(1)} km`);
+      .bindPopup(`${lugar.name}<br>${lugar.distance?.toFixed(1)} km`);
   }
 
   private addFocusControl(): void {
@@ -508,8 +467,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     const lugaresCacheados = this.lugaresCache.get(cacheKey);
 
     if (lugaresCacheados) {
-      this.lugares.set(lugaresCacheados);
-      this.dibujarLugares();
+      this.showVisiblePlaces(lugaresCacheados);
       return;
     }
 
@@ -518,95 +476,23 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.centrosCargando.set(true);
     this.centrosError.set(null);
 
-    const radioBusqueda = this.radioRadar() * 1000;
-
-    const filtros =
-      tipo === 'veterinary'
-        ? `
-        node["amenity"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        way["amenity"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        relation["amenity"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-
-        node["healthcare"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        way["healthcare"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        relation["healthcare"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-      `
-        : `
-        node["amenity"="police"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        way["amenity"="police"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        relation["amenity"="police"](around:${radioBusqueda},${centro.lat},${centro.lng});
-      `;
-
-    const query = `
-    [out:json][timeout:20];
-    (
-      ${filtros}
-    );
-    out center tags;
-  `;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const radioBusqueda = this.RADIO_MAX_KM * 1000;
 
     try {
-      const response = await fetch(
-        'https://overpass-api.de/api/interpreter',
-        {
-          method: 'POST',
-          body: query,
-          signal: controller.signal,
-        }
+      const lugares = await this.placesService.searchPlaces(
+        tipo,
+        centro.lat,
+        centro.lng,
+        radioBusqueda,
       );
-
-      if (!response.ok) {
-        throw new Error(`Error Overpass: ${response.status}`);
-      }
-
-      const data = await response.json() as { elements: OverpassElement[] };
 
       if (requestId !== this.centrosRequestId) {
         return;
       }
 
-      const lugares: Lugar[] = data.elements
-        .map((l): Lugar | null => {
-          const lat = l.lat ?? l.center?.lat;
-          const lng = l.lon ?? l.center?.lon;
-
-          if (lat === undefined || lng === undefined) {
-            return null;
-          }
-
-          const nombre =
-            l.tags?.name ||
-            (tipo === 'police'
-              ? 'Dependencia policial'
-              : 'Centro veterinario');
-
-          return {
-            nombre,
-            lat,
-            lng,
-            distancia: this.calcularDistancia(
-              centro.lat,
-              centro.lng,
-              lat,
-              lng,
-            ),
-          };
-        })
-        .filter((lugar): lugar is Lugar => lugar !== null)
-        .sort((a, b) => (a.distancia ?? 0) - (b.distancia ?? 0))
-        .slice(0, 15);
-
       this.lugaresCache.set(cacheKey, lugares);
 
-      this.lugares.set(lugares);
-      this.dibujarLugares();
-
-      if (lugares.length === 0) {
-        this.centrosError.set('No se encontraron centros cercanos en OpenStreetMap.');
-      }
+      this.showVisiblePlaces(lugares);
     } catch (error) {
       if (requestId !== this.centrosRequestId) {
         return;
@@ -618,11 +504,25 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       this.lugaresLayer.clearLayers();
       this.centrosError.set('No se pudieron cargar los centros cercanos. Intentá nuevamente.');
     } finally {
-      clearTimeout(timeout);
-
       if (requestId === this.centrosRequestId) {
         this.centrosCargando.set(false);
       }
+    }
+  }
+
+  private showVisiblePlaces(completos: Place[]): void {
+    const radio = this.radioRadar();
+    const visibles = completos.filter((lugar) => (lugar.distance ?? 0) <= radio);
+
+    this.lugares.set(visibles);
+    this.dibujarLugares();
+
+    if (completos.length === 0) {
+      this.centrosError.set('No se encontraron centros cercanos en OpenStreetMap.');
+    } else if (visibles.length === 0) {
+      this.centrosError.set(`No hay centros dentro de ${radio} km. Ampliá la cercanía.`);
+    } else {
+      this.centrosError.set(null);
     }
   }
 
@@ -733,23 +633,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   private async fetchSuggestions(): Promise<void> {
-    const query = this.searchTerm().trim();
-    if (!query) return;
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`,
-      );
-      const data = await res.json();
-      this.suggestions.set(
-        data.map((r: { display_name: string; lat: string; lon: string }) => ({
-          displayName: r.display_name,
-          lat: parseFloat(r.lat),
-          lng: parseFloat(r.lon),
-        })),
-      );
-    } catch {
-      this.suggestions.set([]);
-    }
+    this.suggestions.set(await this.placesService.geocode(this.searchTerm()));
   }
 
   private filtrarPorRadar(): void {
@@ -1010,7 +894,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   private getCacheKey(tipo: 'veterinary' | 'police', centro: L.LatLng): string {
-    return `${tipo}:${centro.lat.toFixed(3)}:${centro.lng.toFixed(3)}:${this.radioRadar()}`;
+    return `${tipo}:${centro.lat.toFixed(3)}:${centro.lng.toFixed(3)}`;
   }
 
   private centroReferencia(): L.LatLng | undefined {
@@ -1019,8 +903,16 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   private reprogramarCentros(): void {
     if (this.centrosFiltro() === 'todos') return;
-    if (this.centrosDebounce) clearTimeout(this.centrosDebounce);
-    this.centrosDebounce = setTimeout(() => this.aplicarFiltroCentros(), 500);
+
+    const tipo = this.centrosFiltro() === 'veterinarias' ? 'veterinary' : 'police';
+    const cached = this.lugaresCache.get(this.getCacheKey(tipo, this.getCentroBusqueda()));
+
+    if (cached) {
+      this.showVisiblePlaces(cached);
+      return;
+    }
+
+    this.aplicarFiltroCentros();
   }
 
 

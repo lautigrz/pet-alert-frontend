@@ -116,10 +116,10 @@ interface LocationSuggestionMock {
 }
 
 interface PlaceMock {
-  nombre: string;
+  name: string;
   lat: number;
   lng: number;
-  distancia?: number;
+  distance?: number;
 }
 
 interface ProfileMock {
@@ -175,8 +175,7 @@ interface HomeMapComponentTest {
   initializeMap: () => void;
   buscarLugares: (tipo: 'veterinary' | 'police') => Promise<void>;
   dibujarLugares: () => void;
-  iconoCentroActual: () => string;
-  buildCentroPin: (iconSvg: string) => PinMock;
+  dibujarLugar: (lugar: unknown, icon: unknown) => void;
   centerOnUser: () => void;
   getUserLocation: () => void;
   placeUserMarker: () => void;
@@ -221,10 +220,10 @@ const mockSuggestion = (
 });
 
 const mockPlace = (overrides: Partial<PlaceMock> = {}): PlaceMock => ({
-  nombre: 'Veterinaria',
+  name: 'Veterinaria',
   lat: -34.6,
   lng: -58.3,
-  distancia: 1.2,
+  distance: 1.2,
   ...overrides,
 });
 
@@ -1117,7 +1116,7 @@ describe('HomeMapComponent', () => {
       await testingComponent().buscarLugares('veterinary');
 
       expect(globalThis.fetch).toHaveBeenCalled();
-      expect(component.lugares()[0]?.nombre).toBe('Veterinaria Central');
+      expect(component.lugares()[0]?.name).toBe('Veterinaria Central');
     });
 
     it('loads nearby veterinary places', async () => {
@@ -1146,10 +1145,10 @@ describe('HomeMapComponent', () => {
 
       expect(component.lugares()).toEqual([
         {
-          nombre: 'Veterinaria Central',
+          name: 'Veterinaria Central',
           lat: -34.604,
           lng: -58.382,
-          distancia: expect.any(Number),
+          distance: expect.any(Number),
         },
       ]);
     });
@@ -1182,10 +1181,10 @@ describe('HomeMapComponent', () => {
 
       expect(component.lugares()).toEqual([
         {
-          nombre: 'Veterinaria de Barrio',
+          name: 'Veterinaria de Barrio',
           lat: -34.605,
           lng: -58.383,
-          distancia: expect.any(Number),
+          distance: expect.any(Number),
         },
       ]);
     });
@@ -1212,7 +1211,7 @@ describe('HomeMapComponent', () => {
 
       await testingComponent().buscarLugares('police');
 
-      expect(component.lugares()[0]?.nombre).toBe('Dependencia policial');
+      expect(component.lugares()[0]?.name).toBe('Dependencia policial');
     });
 
     it('uses default veterinary name when place has no name', async () => {
@@ -1237,7 +1236,7 @@ describe('HomeMapComponent', () => {
 
       await testingComponent().buscarLugares('veterinary');
 
-      expect(component.lugares()[0]?.nombre).toBe('Centro veterinario');
+      expect(component.lugares()[0]?.name).toBe('Centro veterinario');
     });
 
     it('clears places and sets error when nearby places request fails', async () => {
@@ -1413,28 +1412,11 @@ describe('HomeMapComponent', () => {
     it('draws a centro pin for each nearby place', () => {
       testingComponent().lugaresLayer = mockLayer();
       component.lugares.set([mockPlace()]);
-      const buildCentroPinSpy = vi.spyOn(testingComponent(), 'buildCentroPin');
+      const dibujarLugarSpy = vi.spyOn(testingComponent(), 'dibujarLugar');
 
       testingComponent().dibujarLugares();
 
-      expect(buildCentroPinSpy).toHaveBeenCalledOnce();
-    });
-  });
-
-  describe('iconoCentroActual', () => {
-    it('returns the vet icon when veterinarias is selected', () => {
-      component.centrosFiltro.set('veterinarias');
-
-      expect(testingComponent().iconoCentroActual()).toContain('circle');
-    });
-
-    it('returns the police icon otherwise', () => {
-      component.centrosFiltro.set('comisarias');
-
-      const svg = testingComponent().iconoCentroActual();
-
-      expect(svg).toContain('<path');
-      expect(svg).not.toContain('circle');
+      expect(dibujarLugarSpy).toHaveBeenCalledOnce();
     });
   });
 
