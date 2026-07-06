@@ -69,9 +69,7 @@ export class ChatsPage implements OnInit, OnDestroy {
   async insertPlaceInMessage(place: Place) {
     this.showMeetingPoint.set(false);
     const address = place.address || (await this.placesService.reverseGeocode(place.lat, place.lng));
-    const lat = place.lat.toFixed(4);
-    const lng = place.lng.toFixed(4);
-    const mapa = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=18/${lat}/${lng}`;
+    const mapa = `https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lng}#map=18/${place.lat}/${place.lng}`;
     const texto = address
       ? `¿Nos encontramos en ${place.name}? ${address} — ${mapa}`
       : `¿Nos encontramos en ${place.name}? ${mapa}`;
