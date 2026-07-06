@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import {
   ContentReportAdminHttp,
   ContentReportQueueItemResponse,
+  ResolveContentReportResult,
 } from '../infrastructure/content-report-admin.http';
 import {
   ContentReportQueueItem,
   ContentReportStatus,
 } from '../domain/content-report-queue.model';
 
-const BACKEND_STATUSES = ['PENDING', 'REVIEWED', 'DISMISSED'];
+const BACKEND_STATUSES = ['PENDING', 'REVIEWED', 'DISMISSED', 'SUSPENDED'];
 
 @Injectable({ providedIn: 'root' })
 export class ContentReportAdminService {
@@ -21,6 +22,18 @@ export class ContentReportAdminService {
     const items = responses.flat();
     const counts = this.countByTarget(items);
     return items.map((item) => this.toQueueItem(item, counts));
+  }
+
+  resolve(
+    publicId: string,
+    status: ContentReportStatus,
+    suspensionReason?: string,
+  ): Promise<ResolveContentReportResult> {
+    return this.http.resolve(publicId, this.toBackendStatus(status), suspensionReason);
+  }
+
+  private toBackendStatus(status: ContentReportStatus): string {
+    return status === 'APPROVED' ? 'REVIEWED' : status;
   }
 
   private countByTarget(items: ContentReportQueueItemResponse[]): Map<string, number> {
@@ -47,6 +60,7 @@ export class ContentReportAdminService {
       reportCount: item.reportCount ?? counts.get(item.targetPublicId) ?? 1,
       suspensionReason: item.suspensionReason ?? null,
       reportedUser: item.reportedUser ?? null,
+      reportedContent: item.reportedContent ?? null,
       reporter: {
         username: item.reporter.username,
         email: item.reporter.email ?? null,

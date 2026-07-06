@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ProfileHttp } from '../infrastructure/profile.http';
 import { UpdatedProfile } from '../domain/profile.model';
+import { PublicProfile } from '../domain/public-profile';
 import {
   InvalidProfileDataError,
   NetworkError,
@@ -39,6 +40,8 @@ export class ProfileService {
         name: response.name,
         lastname: response.lastname,
         photoUrl: response.photoUrl,
+        role: this.cachedProfile?.role ?? null,
+        stats: this.cachedProfile?.stats ?? null,
       };
       return this.cachedProfile;
     } catch (error) {
@@ -65,8 +68,26 @@ export class ProfileService {
         name: response.name ?? null,
         lastname: response.lastname ?? null,
         photoUrl: response.photoUrl ?? null,
+        role: response.role ?? null,
+        stats: response.stats ?? null,
       };
       return this.cachedProfile;
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async getPublicProfile(publicId: string): Promise<PublicProfile> {
+    try {
+      const response = await this.profileHttp.getPublicProfile(publicId);
+      return {
+        id: response.id,
+        username: response.username,
+        name: response.name ?? null,
+        lastname: response.lastname ?? null,
+        photoUrl: response.photoUrl ?? null,
+        stats: response.stats ?? null,
+      };
     } catch (error) {
       throw this.mapUpdateProfileError(error);
     }
@@ -83,6 +104,8 @@ export class ProfileService {
         name: response.name ?? null,
         lastname: response.lastname ?? null,
         photoUrl: response.photoUrl ?? null,
+        role: this.cachedProfile?.role ?? null,
+        stats: this.cachedProfile?.stats ?? null,
       };
       return this.cachedProfile;
     }catch(error){

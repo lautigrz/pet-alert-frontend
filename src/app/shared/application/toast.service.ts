@@ -21,6 +21,10 @@ export class ToastService {
     this.show('info', message, durationMs);
   }
 
+  brand(message: string, durationMs?: number): void {
+    this.show('brand', message, durationMs);
+  }
+
   dismiss(id: string): void {
     this._toasts.update((arr) =>
       arr.map((t) => (t.id === id ? { ...t, leaving: true } : t)),

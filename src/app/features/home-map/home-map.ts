@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, HostListener, OnInit, NgZone, computed, inject, signal } from '@angular/core';
+import { Component, AfterViewInit, OnInit, NgZone, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReportListService } from '../report/application/report-list.service';
 import { AnimalType, Reporte, SightingDetails } from '../report/domain/report-read.model';
@@ -10,36 +10,15 @@ import * as L from 'leaflet';
 import { PetIconComponent } from '../../shared/component/pet-icon/pet-icon.component';
 
 import { InfoTooltipComponent } from '../../shared/component/info-tooltip/info-tooltip.component';
-interface LocationSuggestion {
-  displayName: string;
-  lat: number;
-  lng: number;
-}
+import { PlacesService, LocationSuggestion, Place } from '../../core/services/places.service';
+import { buildPlacePinIcon } from '../../core/utils/place-pin';
 
-interface Lugar {
-  nombre: string;
-  lat: number;
-  lng: number;
-  distancia?: number;
-}
-
-interface OverpassElement {
-  type: 'node' | 'way' | 'relation';
-  id: number;
-  lat?: number;
-  lon?: number;
-  center?: {
-    lat: number;
-    lon: number;
-  };
-  tags?: {
-    name?: string;
-    amenity?: string;
-    healthcare?: string;
-    office?: string;
-    police?: string;
-  };
-}
+const MUNDO: [number, number][] = [
+  [-90, -180],
+  [90, -180],
+  [90, 180],
+  [-90, 180],
+];
 
 @Component({
   selector: 'app-home-map',
@@ -59,6 +38,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private readonly profileService = inject(ProfileService);
   private readonly zone = inject(NgZone);
   private readonly notifications = inject(NotificationService);
+  private readonly placesService = inject(PlacesService);
   readonly successReportId = signal<string | null>(null);
 
   readonly notifBusy = this.notifications.busy;
@@ -85,17 +65,13 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly totalCercanos = signal(0);
   readonly badgeMisReportes = computed(() => this.formatBadge(this.totalMisReportes()));
   readonly badgeCercanos = computed(() => this.formatBadge(this.totalCercanos()));
-  readonly lugares = signal<Lugar[]>([]);
+  readonly lugares = signal<Place[]>([]);
 
   readonly centrosCargando = signal(false);
   readonly centrosError = signal<string | null>(null);
-  private readonly tooltipCentrosHover = signal(false);
-  private readonly tooltipCentrosClick = signal(false);
-  readonly tooltipCentrosAbierto = computed(
-    () => this.tooltipCentrosHover() || this.tooltipCentrosClick(),
-  );
 
-  private readonly lugaresCache = new Map<string, Lugar[]>();
+  private readonly lugaresCache = new Map<string, Place[]>();
+  private readonly RADIO_MAX_KM = 20;
   private centrosRequestId = 0;
 
 
@@ -106,10 +82,11 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
 
   private userMarker?: L.Marker;
-  private radarCircle?: L.Circle;
+  private radarMask?: L.Polygon;
 
   readonly radioRadar = signal(5);
   private userLatLng?: L.LatLng;
+  private searchLatLng?: L.LatLng;
   private searchMarker?: L.Marker;
   private searchDebounce?: ReturnType<typeof setTimeout>;
   private profilePhotoUrl =
@@ -122,6 +99,10 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         ? `<img src="${fallbackIcon}" alt="" style="width:20px;height:20px;object-fit:contain;display:block;" />`
         : '';
 
+    return this.pinShell(color, imageHtml);
+  }
+
+  private pinShell(color: string, innerHtml: string): L.DivIcon {
     const html = `
     <div style="position:relative;width:44px;height:44px;">
       <div style="
@@ -146,7 +127,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         align-items:center;
         justify-content:center;
       ">
-        ${imageHtml}
+        ${innerHtml}
       </div>
     </div>
   `;
@@ -177,8 +158,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
       const misReportesActivos = misReportes.filter((r) => r.status === 'ACTIVE');
       this.reportes.set(reportes);
-      this.reportesFiltrados.set(reportes);
-      this.dibujarMarcadores(reportes);
+      this.aplicarFiltrosActuales();
       this.totalMisReportes.set(misReportesActivos.length);
       this.misReportes.set(misReportesActivos.slice(0, 3));
       this.totalCercanos.set(reportes.length);
@@ -187,6 +167,19 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       console.error('Error cargando reportes', error);
     }
   };
+
+  private aplicarFiltrosActuales(): void {
+    if (this.userLatLng) {
+      this.filtrarPorRadar();
+      return;
+    }
+    this.mostrarTodos();
+  }
+
+  private mostrarTodos(): void {
+    this.reportesFiltrados.set(this.reportes());
+    this.dibujarMarcadores(this.reportes());
+  }
 
   private formatBadge(n: number): string {
     return n > 10 ? '+10' : String(n);
@@ -388,31 +381,17 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   private dibujarLugares(): void {
-
     this.lugaresLayer.clearLayers();
+    const icon = buildPlacePinIcon(
+      this.centrosFiltro() === 'veterinarias' ? 'veterinary' : 'police',
+    );
+    this.lugares().forEach(lugar => this.dibujarLugar(lugar, icon));
+  }
 
-    this.lugares().forEach(lugar => {
-
-      L.circleMarker(
-        [lugar.lat, lugar.lng],
-        {
-          radius: 10,
-          fillColor:
-            this.centrosFiltro() === 'veterinarias'
-              ? '#22c55e'
-              : '#2563eb',
-          color:
-            this.centrosFiltro() === 'veterinarias'
-              ? '#15803d'
-              : '#1d4ed8',
-          weight: 2,
-          fillOpacity: 0.9
-        }
-      )
-        .addTo(this.lugaresLayer)
-        .bindPopup(`${lugar.nombre}<br>${lugar.distancia?.toFixed(1)} km`);
-    });
-
+  private dibujarLugar(lugar: Place, icon: L.DivIcon): void {
+    L.marker([lugar.lat, lugar.lng], { icon })
+      .addTo(this.lugaresLayer)
+      .bindPopup(`${lugar.name}<br>${lugar.distance?.toFixed(1)} km`);
   }
 
   private addFocusControl(): void {
@@ -430,7 +409,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     control.addTo(this.map);
   }
 
-  private getUserLocation(): void {
+  private getUserLocation(reaplicarFiltros = false): void {
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
@@ -438,7 +417,11 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         this.userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
         this.placeUserMarker();
         this.dibujarRadar();
+        this.filtrarPorRadar();
         this.map.setView(this.userLatLng, 15);
+        if (reaplicarFiltros && !this.searchLatLng) {
+          this.aplicarFiltroCentros();
+        }
         setTimeout(() => this.map.invalidateSize(), 100);
       },
       () => {
@@ -484,8 +467,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     const lugaresCacheados = this.lugaresCache.get(cacheKey);
 
     if (lugaresCacheados) {
-      this.lugares.set(lugaresCacheados);
-      this.dibujarLugares();
+      this.showVisiblePlaces(lugaresCacheados);
       return;
     }
 
@@ -494,95 +476,23 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.centrosCargando.set(true);
     this.centrosError.set(null);
 
-    const radioBusqueda = 8000;
-
-    const filtros =
-      tipo === 'veterinary'
-        ? `
-        node["amenity"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        way["amenity"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        relation["amenity"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-
-        node["healthcare"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        way["healthcare"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        relation["healthcare"="veterinary"](around:${radioBusqueda},${centro.lat},${centro.lng});
-      `
-        : `
-        node["amenity"="police"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        way["amenity"="police"](around:${radioBusqueda},${centro.lat},${centro.lng});
-        relation["amenity"="police"](around:${radioBusqueda},${centro.lat},${centro.lng});
-      `;
-
-    const query = `
-    [out:json][timeout:20];
-    (
-      ${filtros}
-    );
-    out center tags;
-  `;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const radioBusqueda = this.RADIO_MAX_KM * 1000;
 
     try {
-      const response = await fetch(
-        'https://overpass-api.de/api/interpreter',
-        {
-          method: 'POST',
-          body: query,
-          signal: controller.signal,
-        }
+      const lugares = await this.placesService.searchPlaces(
+        tipo,
+        centro.lat,
+        centro.lng,
+        radioBusqueda,
       );
-
-      if (!response.ok) {
-        throw new Error(`Error Overpass: ${response.status}`);
-      }
-
-      const data = await response.json() as { elements: OverpassElement[] };
 
       if (requestId !== this.centrosRequestId) {
         return;
       }
 
-      const lugares: Lugar[] = data.elements
-        .map((l): Lugar | null => {
-          const lat = l.lat ?? l.center?.lat;
-          const lng = l.lon ?? l.center?.lon;
-
-          if (lat === undefined || lng === undefined) {
-            return null;
-          }
-
-          const nombre =
-            l.tags?.name ||
-            (tipo === 'police'
-              ? 'Dependencia policial'
-              : 'Centro veterinario');
-
-          return {
-            nombre,
-            lat,
-            lng,
-            distancia: this.calcularDistancia(
-              centro.lat,
-              centro.lng,
-              lat,
-              lng,
-            ),
-          };
-        })
-        .filter((lugar): lugar is Lugar => lugar !== null)
-        .sort((a, b) => (a.distancia ?? 0) - (b.distancia ?? 0))
-        .slice(0, 15);
-
       this.lugaresCache.set(cacheKey, lugares);
 
-      this.lugares.set(lugares);
-      this.dibujarLugares();
-
-      if (lugares.length === 0) {
-        this.centrosError.set('No se encontraron centros cercanos en OpenStreetMap.');
-      }
+      this.showVisiblePlaces(lugares);
     } catch (error) {
       if (requestId !== this.centrosRequestId) {
         return;
@@ -594,11 +504,25 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       this.lugaresLayer.clearLayers();
       this.centrosError.set('No se pudieron cargar los centros cercanos. Intentá nuevamente.');
     } finally {
-      clearTimeout(timeout);
-
       if (requestId === this.centrosRequestId) {
         this.centrosCargando.set(false);
       }
+    }
+  }
+
+  private showVisiblePlaces(completos: Place[]): void {
+    const radio = this.radioRadar();
+    const visibles = completos.filter((lugar) => (lugar.distance ?? 0) <= radio);
+
+    this.lugares.set(visibles);
+    this.dibujarLugares();
+
+    if (completos.length === 0) {
+      this.centrosError.set('No se encontraron centros cercanos en OpenStreetMap.');
+    } else if (visibles.length === 0) {
+      this.centrosError.set(`No hay centros dentro de ${radio} km. Ampliá la cercanía.`);
+    } else {
+      this.centrosError.set(null);
     }
   }
 
@@ -646,44 +570,56 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   private dibujarRadar(): void {
-
-  if (!this.userLatLng) return;
-
-  const radioMetros =
-    this.radioRadar() * 1000;
-
-  if (this.radarCircle) {
-
-    this.radarCircle.setRadius(
-      radioMetros
-    );
-
-    this.radarCircle.setLatLng(
-      this.userLatLng
-    );
-
-    return;
+    const centro = this.centroReferencia();
+    if (!centro) return;
+    const radioMetros = this.radioRadar() * 1000;
+    this.actualizarMascaraRadar(centro, radioMetros);
   }
 
-  this.radarCircle = L.circle(
-    this.userLatLng,
-    {
-      radius: radioMetros,
-      color: '#E8842E',
-      weight: 2,
-      fillColor: '#E8842E',
-      fillOpacity: 0.15
+  private actualizarMascaraRadar(centro: L.LatLng, radioMetros: number): void {
+    const anillos = [MUNDO, this.puntosCirculo(centro, radioMetros)];
+    if (this.radarMask) {
+      this.radarMask.setLatLngs(anillos);
+      return;
     }
-  ).addTo(this.map);
+    this.radarMask = L.polygon(anillos, {
+      stroke: false,
+      fillColor: '#12355B',
+      fillOpacity: 0.2,
+      interactive: false,
+    }).addTo(this.map);
+  }
 
-}
+  private puntosCirculo(centro: L.LatLng, radioMetros: number): [number, number][] {
+    const puntos: [number, number][] = [];
+    for (let i = 0; i <= 64; i++) {
+      puntos.push(this.puntoDestino(centro, radioMetros, (i * 360) / 64));
+    }
+    return puntos;
+  }
+
+  private puntoDestino(centro: L.LatLng, radioMetros: number, gradosBearing: number): [number, number] {
+    const radioTierra = 6371000;
+    const delta = radioMetros / radioTierra;
+    const theta = (gradosBearing * Math.PI) / 180;
+    const lat1 = (centro.lat * Math.PI) / 180;
+    const lng1 = (centro.lng * Math.PI) / 180;
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(delta) + Math.cos(lat1) * Math.sin(delta) * Math.cos(theta));
+    const lng2 = lng1 + Math.atan2(Math.sin(theta) * Math.sin(delta) * Math.cos(lat1), Math.cos(delta) - Math.sin(lat1) * Math.sin(lat2));
+    return [(lat2 * 180) / Math.PI, (lng2 * 180) / Math.PI];
+  }
 
   private centerOnUser(): void {
     if (this.userLatLng) {
       this.map.setView(this.userLatLng, 16);
+      if (!this.searchLatLng) {
+        this.dibujarRadar();
+        this.filtrarPorRadar();
+        this.aplicarFiltroCentros();
+      }
       return;
     }
-    this.getUserLocation();
+    this.getUserLocation(true);
   }
 
   onSearchInput(value: string): void {
@@ -697,28 +633,13 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   private async fetchSuggestions(): Promise<void> {
-    const query = this.searchTerm().trim();
-    if (!query) return;
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`,
-      );
-      const data = await res.json();
-      this.suggestions.set(
-        data.map((r: { display_name: string; lat: string; lon: string }) => ({
-          displayName: r.display_name,
-          lat: parseFloat(r.lat),
-          lng: parseFloat(r.lon),
-        })),
-      );
-    } catch {
-      this.suggestions.set([]);
-    }
+    this.suggestions.set(await this.placesService.geocode(this.searchTerm()));
   }
 
   private filtrarPorRadar(): void {
 
-  if (!this.userLatLng) return;
+  const centro = this.centroReferencia();
+  if (!centro) return;
 
   let filtrados = [...this.reportes()];
 
@@ -774,8 +695,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
       const distancia =
         this.calcularDistancia(
-          this.userLatLng!.lat,
-          this.userLatLng!.lng,
+          centro.lat,
+          centro.lng,
           reporte.location.latitude,
           reporte.location.longitude
         );
@@ -798,8 +719,12 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   selectSuggestion(suggestion: LocationSuggestion): void {
     this.searchTerm.set(suggestion.displayName);
     this.suggestions.set([]);
+    this.searchLatLng = L.latLng(suggestion.lat, suggestion.lng);
     this.map.setView([suggestion.lat, suggestion.lng], 15);
     this.markSearchResult(suggestion.lat, suggestion.lng);
+    this.dibujarRadar();
+    this.filtrarPorRadar();
+    this.aplicarFiltroCentros();
   }
 
   async searchLocation(): Promise<void> {
@@ -814,6 +739,10 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.suggestions.set([]);
     this.searchMarker?.remove();
     this.searchMarker = undefined;
+    this.searchLatLng = undefined;
+    this.dibujarRadar();
+    this.filtrarPorRadar();
+    this.aplicarFiltroCentros();
   }
 
   abrirFiltros(): void {
@@ -858,25 +787,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   this.dibujarRadar();
 
   this.filtrarPorRadar();
+
+  this.reprogramarCentros();
 }
-
-  toggleTooltipCentros(event: Event): void {
-    event.stopPropagation();
-    this.tooltipCentrosClick.update((abierto) => !abierto);
-  }
-
-  onTooltipPointerEnter(event: PointerEvent): void {
-    if (event.pointerType === 'mouse') this.tooltipCentrosHover.set(true);
-  }
-
-  onTooltipPointerLeave(event: PointerEvent): void {
-    if (event.pointerType === 'mouse') this.tooltipCentrosHover.set(false);
-  }
-
-  @HostListener('document:click')
-  cerrarTooltipCentros(): void {
-    this.tooltipCentrosClick.set(false);
-  }
 
   private markSearchResult(lat: number, lng: number): void {
     const latlng = L.latLng(lat, lng);
@@ -885,7 +798,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       return;
     }
     this.searchMarker = L.marker(latlng, {
-      icon: this.buildPin('#64748b'),
+      icon: this.buildPin('#1D6FA3'),
       zIndexOffset: 1000,
     }).addTo(this.map);
   }
@@ -977,11 +890,29 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   }
 
   private getCentroBusqueda(): L.LatLng {
-    return this.userLatLng ?? this.map.getCenter();
+    return this.searchLatLng ?? this.userLatLng ?? this.map.getCenter();
   }
 
   private getCacheKey(tipo: 'veterinary' | 'police', centro: L.LatLng): string {
     return `${tipo}:${centro.lat.toFixed(3)}:${centro.lng.toFixed(3)}`;
+  }
+
+  private centroReferencia(): L.LatLng | undefined {
+    return this.searchLatLng ?? this.userLatLng;
+  }
+
+  private reprogramarCentros(): void {
+    if (this.centrosFiltro() === 'todos') return;
+
+    const tipo = this.centrosFiltro() === 'veterinarias' ? 'veterinary' : 'police';
+    const cached = this.lugaresCache.get(this.getCacheKey(tipo, this.getCentroBusqueda()));
+
+    if (cached) {
+      this.showVisiblePlaces(cached);
+      return;
+    }
+
+    this.aplicarFiltroCentros();
   }
 
 

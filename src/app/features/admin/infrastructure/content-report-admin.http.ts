@@ -19,7 +19,14 @@ export interface ContentReportQueueItemResponse {
   reportCount?: number;
   suspensionReason?: string | null;
   reportedUser?: { username: string; email: string | null } | null;
+  reportedContent?: { petName: string | null; reportType: 'LOST' | 'SIGHTING' } | null;
   reporter: { publicId: string; username: string; email?: string | null };
+}
+
+export interface ResolveContentReportResult {
+  autoSuspended: boolean;
+  approvedCount: number;
+  suspendedCount: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +38,15 @@ export class ContentReportAdminHttp {
     return firstValueFrom(
       this.http.get<ContentReportQueueItemResponse[]>(`${this.baseUrl}/content-reports`, {
         params: { status },
+      }),
+    );
+  }
+
+  resolve(publicId: string, status: string, suspensionReason?: string): Promise<ResolveContentReportResult> {
+    return firstValueFrom(
+      this.http.patch<ResolveContentReportResult>(`${this.baseUrl}/content-reports/${publicId}`, {
+        status,
+        ...(suspensionReason ? { suspensionReason } : {}),
       }),
     );
   }

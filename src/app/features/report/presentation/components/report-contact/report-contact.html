@@ -1,12 +1,22 @@
 <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5">
   <h3 class="text-base font-bold text-[#12355B] mb-4">Contacto</h3>
 
-  <div class="flex items-center gap-3 mb-4">
-    <img [src]="imagenUsuario()" alt="" class="w-11 h-11 rounded-full object-cover bg-slate-100 shrink-0" />
-    <span class="text-sm font-semibold text-[#E8842E] truncate">
-      <span class="capitalize">{{ username() }}</span>@if (esPropio()) { (tú) }
-    </span>
-  </div>
+  <button
+    type="button"
+    (click)="verPerfil()"
+    [disabled]="esPropio()"
+    class="flex items-center gap-3 mb-4 w-full text-left enabled:cursor-pointer disabled:cursor-default disabled:pointer-events-none"
+  >
+    <img [src]="imagenUsuario()" alt="" class="w-11 h-11 rounded-full object-cover bg-slate-100 shrink-0 transition hover:ring-2 hover:ring-[#E8842E] hover:ring-offset-2" />
+    <div class="min-w-0">
+      <span class="block text-sm font-semibold text-[#E8842E] truncate transition hover:font-bold">
+        <span class="capitalize">{{ username() }}</span>@if (esPropio()) { (tú) }
+      </span>
+      @if (miembroDesde()) {
+        <span class="block text-xs text-slate-400">{{ miembroDesde() }}</span>
+      }
+    </div>
+  </button>
 
   @if (esPropio()) {
     <button

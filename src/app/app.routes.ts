@@ -4,6 +4,8 @@ import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { verifiedGuard } from './core/guards/verified.guard';
 import { wizardStepGuard } from './features/report/guards/wizard-step.guard';
+import { adminGuard, adminGuestGuard } from './features/admin/guards/admin.guard';
+import { AdminLayoutComponent } from './features/admin/presentation/admin-layout/admin-layout';
 import { AppShellComponent } from './shared/component/app-shell/app-shell.component';
 
 export const routes: Routes = [
@@ -47,6 +49,43 @@ export const routes: Routes = [
         './features/auth/presentation/reset-password-page/reset-password-page'
       ).then((m) => m.ResetPasswordPage),
   },
+  {
+    path: 'appeals/new',
+    loadComponent: () =>
+      import(
+        './features/appeal/presentation/appeal-form-page/appeal-form-page'
+      ).then((m) => m.AppealFormPage),
+  },
+
+  {
+    path: 'admin/login',
+    canActivate: [adminGuestGuard],
+    loadComponent: () =>
+      import('./features/admin/presentation/admin-login/admin-login').then(
+        (m) => m.AdminLoginPage,
+      ),
+  },
+  {
+    path: 'admin',
+    component: AdminLayoutComponent,
+    canActivate: [adminGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/admin/presentation/admin-dashboard/admin-dashboard').then(
+            (m) => m.AdminDashboardComponent,
+          ),
+      },
+      {
+        path: 'appeals',
+        loadComponent: () =>
+          import('./features/admin/presentation/admin-appeals/admin-appeals').then(
+            (m) => m.AdminAppealsComponent,
+          ),
+      },
+    ],
+  },
 
   {
     path: '',
@@ -80,16 +119,17 @@ export const routes: Routes = [
           ).then((m) => m.EditProfilePage),
       },
       {
+        path: 'users/:publicId',
+        loadComponent: () =>
+          import(
+            './features/profile/presentation/public-profile-page/public-profile-page'
+          ).then((m) => m.PublicProfilePage),
+      },
+      {
         path: 'chats',
         loadComponent: () =>
           import('./features/chats/presentation/chats-page/chats-page')
           .then(m => m.ChatsPage),
-      },
-      {
-        path: 'admin',
-        loadComponent: () =>
-          import('./features/admin/presentation/admin-dashboard/admin-dashboard')
-          .then((m) => m.AdminDashboardComponent),
       },
       {
         path: 'reports/:publicId',
@@ -104,6 +144,30 @@ export const routes: Routes = [
           import(
             './features/report/presentation/matches/matches'
           ).then((m) => m.MatchesPage),
+      },
+      {
+        path: 'reports/:publicId/destacar/exito',
+        data: { estado: 'exito' },
+        loadComponent: () =>
+          import(
+            './features/report/presentation/destacar-resultado/destacar-resultado'
+          ).then((m) => m.DestacarResultadoPage),
+      },
+      {
+        path: 'reports/:publicId/destacar/pendiente',
+        data: { estado: 'pendiente' },
+        loadComponent: () =>
+          import(
+            './features/report/presentation/destacar-resultado/destacar-resultado'
+          ).then((m) => m.DestacarResultadoPage),
+      },
+      {
+        path: 'reports/:publicId/destacar/error',
+        data: { estado: 'error' },
+        loadComponent: () =>
+          import(
+            './features/report/presentation/destacar-resultado/destacar-resultado'
+          ).then((m) => m.DestacarResultadoPage),
       },
       {
         path: 'reports/:publicId/edit/datos',

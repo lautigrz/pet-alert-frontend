@@ -31,33 +31,19 @@
         </button>
 
         <button type="button" (click)="seleccionarTipo('perdidos')"
-  class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" 
-  [class]="tipoFiltro() === 'perdidos'
-    ? 'bg-[#E8842E] text-white border-[#E8842E]'
-    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-  
-  <img src="Icono-mascota-perdida-negro.png" alt="Perdido" class="w-4 h-4 shrink-0">
-  <span>Perdidos</span>
-
-
-</button>
-
-<button type="button" (click)="seleccionarTipo('avistados')"
-  class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" 
-  [class]="tipoFiltro() === 'avistados'
-    ? 'bg-[#E8842E] text-white border-[#E8842E]'
-    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-  
-  <img src="avistamiento-negro.png" alt="Avistamiento" class="w-4 h-4 shrink-0">
-  <span>Avistados</span>
-
-</button>
-
-        <button type="button" (click)="seleccionarTipo('avistados')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'avistados'
+          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'perdidos'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          Encontrados
+          <img src="Icono-mascota-perdida.png" alt="" class="w-4 h-4 shrink-0 scale-[0.82]" [class.brightness-0]="tipoFiltro() !== 'perdidos'">
+          <span>Perdidos</span>
+        </button>
+
+        <button type="button" (click)="seleccionarTipo('avistados')"
+          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'avistados'
+        ? 'bg-[#E8842E] text-white border-[#E8842E]'
+        : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+          <img src="Icono-mascota-encontrada.png" alt="" class="w-4 h-4 shrink-0" [class.brightness-0]="tipoFiltro() !== 'avistados'">
+          <span>Encontrados</span>
         </button>
 
       </div>
@@ -132,37 +118,29 @@
     </div>
 
     <div>
-      <div class="relative mb-2 w-fit" (pointerenter)="onTooltipPointerEnter($event)"
-        (pointerleave)="onTooltipPointerLeave($event)">
-        <p class="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
-          Centros 
-          <button type="button" (click)="toggleTooltipCentros($event)" aria-label="¿Qué son los centros?"
-            class="w-4 h-4 inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-400 text-[10px] font-bold leading-none hover:border-[#E8842E] hover:text-[#E8842E] transition">
-            ?
-          </button>
-        </p>
+      <div class="mb-2 w-fit flex items-center gap-1.5">
+        <span class="text-xs font-semibold text-slate-500">Centros</span>
+        <app-info-tooltip
+          tooltipTitle="¿Para qué sirven?"
+          [ariaLabel]="'¿Qué son los centros?'"
+        >
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Muestran en el mapa los
+            <span class="font-semibold text-[#12355B]">puntos de ayuda</span>
+            cercanos a la zona que estás viendo.
+          </p>
 
-    <app-info-tooltip
-      tooltipTitle ="¿Para qué sirven?"
-      [ariaLabel]="'¿Qué son los centros?'"
-    >
-      <p class="text-xs text-slate-500 leading-relaxed">
-        Muestran en el mapa los
-        <span class="font-semibold text-[#12355B]">puntos de ayuda</span>
-        cercanos a la zona que estás viendo.
-      </p>
+          <p class="text-xs text-slate-500 leading-relaxed mt-2">
+            También podés coordinarlos como
+            <span class="font-semibold text-[#12355B]">punto de encuentro seguro</span>
+            con otros usuarios para entregar o recuperar una mascota.
+          </p>
 
-      <p class="text-xs text-slate-500 leading-relaxed mt-2">
-        También podés coordinarlos como
-        <span class="font-semibold text-[#12355B]">punto de encuentro seguro</span>
-        con otros usuarios para entregar o recuperar una mascota.
-      </p>
-
-      <p class="text-[11px] text-slate-400 mt-2">
-        Tocá "Ninguno" para ocultarlos del mapa.
-      </p>
-    </app-info-tooltip>
-  </div>
+          <p class="text-[11px] text-slate-400 mt-2">
+            Tocá "Ninguno" para ocultarlos del mapa.
+          </p>
+        </app-info-tooltip>
+      </div>
 
       <div class="flex flex-wrap gap-2">
         <button type="button" (click)="seleccionarCentros('todos')"
@@ -180,10 +158,10 @@
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
-  <img
-    src="comisaria.svg"
-    alt="Comisaría"
-    class="w-4 h-4 shrink-0">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  </svg>
 
   <span>Comisarías</span>
 
@@ -197,10 +175,12 @@
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
-  <img
-    src="veterinaria.svg"
-    alt="Veterinaria"
-    class="w-4 h-4 shrink-0">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
+    <path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4" />
+    <circle cx="20" cy="10" r="2" />
+  </svg>
 
   <span>Veterinarias</span>
 
@@ -250,10 +230,10 @@
 
             </svg>
 
-            <span>{{ lugar.nombre }}</span>
+            <span>{{ lugar.name }}</span>
 
             <span style="margin-left: 12px;">
-              ({{ lugar.distancia?.toFixed(1) }} km)
+              ({{ lugar.distance?.toFixed(1) }} km)
             </span>
           </div>
 

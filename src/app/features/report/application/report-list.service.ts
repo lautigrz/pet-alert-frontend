@@ -37,9 +37,18 @@ export class ReportListService {
   }
 
   
-  async updateToResolved(publicId: string): Promise<void> {
+  async getReportesDeUsuario(publicId: string): Promise<Reporte[]> {
     try {
-      await this.reportesHttp.updateStatus(publicId, 'RESOLVED');
+      return await this.reportesHttp.getReportesDeUsuario(publicId);
+    } catch (error) {
+      throw this.mapError(error);
+    }
+  }
+
+
+  async updateToResolved(publicId: string, resolved: boolean): Promise<void> {
+    try {
+      await this.reportesHttp.updateStatus(publicId, 'RESOLVED', resolved);
     } catch (error) {
       throw this.mapError(error);
     }

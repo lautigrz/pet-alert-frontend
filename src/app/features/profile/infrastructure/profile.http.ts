@@ -27,6 +27,24 @@ export interface GetProfileResponse {
   name?: string;
   lastname?: string;
   photoUrl?: string;
+  role?: string;
+  stats?: ProfileStatsResponse;
+}
+
+export interface PublicProfileResponse {
+  id: string;
+  username: string;
+  name?: string;
+  lastname?: string;
+  photoUrl?: string;
+  stats?: ProfileStatsResponse;
+}
+
+export interface ProfileStatsResponse{
+  reportsCreated: number;
+  successfulReturns: number;
+  activeDays: number;
+  petsHelped: number;
 }
 
 @Injectable({ providedIn: 'root'})
@@ -47,6 +65,12 @@ export class ProfileHttp {
     this.http.get<GetProfileResponse>(`${this.baseUrl}/users/me`),
   );
 }
+
+  getPublicProfile(publicId: string): Promise<PublicProfileResponse> {
+    return firstValueFrom(
+      this.http.get<PublicProfileResponse>(`${this.baseUrl}/users/${publicId}/profile`),
+    );
+  }
 
   uploadProfilePhoto(file: File): Promise<UpdateProfileResponse>{
     const formData = new FormData();

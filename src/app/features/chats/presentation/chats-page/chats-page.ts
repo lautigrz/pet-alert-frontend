@@ -1,17 +1,19 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ChatsService, MessagePayload } from '../../application/chats.service';
 import { ConversationOutput, ConversationSummaryOutput } from '../../domain/chat.models';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../auth/application/auth.service';
 import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
+import { MeetingPointModalComponent } from '../meeting-point-modal/meeting-point-modal';
+import { Place, PlacesService } from '../../../../core/services/places.service';
 
 @Component({
   selector: 'app-chats-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReportModalComponent],
+  imports: [CommonModule, FormsModule, ReportModalComponent, MeetingPointModalComponent, RouterLink],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden bg-[#f4f4f4]' },
   templateUrl: './chats-page.html',
   styleUrl: './chats-page.css',
@@ -19,6 +21,7 @@ import { ReportModalComponent } from '../../../../shared/component/report-modal/
 export class ChatsPage implements OnInit, OnDestroy {
   private readonly chatsService = inject(ChatsService);
   private readonly authService = inject(AuthService);
+  private readonly placesService = inject(PlacesService);
   private readonly route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
 
@@ -37,6 +40,8 @@ export class ChatsPage implements OnInit, OnDestroy {
   activePreviewImageUrl = signal<string | null>(null);
   mostrandoModalDenuncia = signal(false);
   menuOpcionesAbierto = signal(false);
+  contactOnline = signal(false);
+  showMeetingPoint = signal(false);
 
   toggleMenuOpciones(event: Event) {
     event.stopPropagation();
@@ -55,6 +60,23 @@ export class ChatsPage implements OnInit, OnDestroy {
   denunciarDesdeMenu() {
     this.cerrarMenuOpciones();
     this.abrirModalDenuncia();
+  }
+
+  closeMeetingPoint() {
+    this.showMeetingPoint.set(false);
+  }
+
+  async insertPlaceInMessage(place: Place) {
+    this.showMeetingPoint.set(false);
+    const address = place.address || (await this.placesService.reverseGeocode(place.lat, place.lng));
+    const lat = place.lat.toFixed(4);
+    const lng = place.lng.toFixed(4);
+    const mapa = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=18/${lat}/${lng}`;
+    const texto = address
+      ? `¿Nos encontramos en ${place.name}? ${address} — ${mapa}`
+      : `¿Nos encontramos en ${place.name}? ${mapa}`;
+    const actual = this.newMessage().trim();
+    this.newMessage.set(actual ? `${actual} ${texto}` : texto);
   }
 
   cerrarModalDenuncia() {
@@ -102,6 +124,27 @@ export class ChatsPage implements OnInit, OnDestroy {
   this.chatsService.onError()
     .pipe(takeUntil(this.destroy$))
     .subscribe(err => console.error(err.message));
+
+  this.chatsService.onPresenceStatus()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(({ userPublicId, online }) => {
+      if (userPublicId === this.selectedContact()?.otherUser.publicId) {
+        this.contactOnline.set(online);
+      }
+    });
+
+  this.chatsService.onPresenceChanged()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(({ userPublicId, online }) => {
+      if (userPublicId === this.selectedContact()?.otherUser.publicId) {
+        this.contactOnline.set(online);
+      }
+    });
+}
+
+private requestPresence(userPublicId: string): void {
+  this.contactOnline.set(false);
+  this.chatsService.getPresence(userPublicId);
 }
 
 selectContact(contact: ConversationSummaryOutput): void {
@@ -109,6 +152,7 @@ selectContact(contact: ConversationSummaryOutput): void {
   this.selectedContact.set(contact);
   this.conversationId = contact.publicId;
   this.messages = [];
+  this.requestPresence(contact.otherUser.publicId);
 
   this.chatsService.getMessagesForConversation(this.conversationId)
     .pipe(takeUntil(this.destroy$))
@@ -156,6 +200,8 @@ abrirConversacion(conversationId: string): void {
         createdAt: conv.createdAt,
       });
 
+      this.requestPresence(conv.otherUser.publicId);
+
       if (this.messagesNotRead()) {
 
     this.chatsService.readMessage(this.conversationId);
@@ -167,12 +213,17 @@ abrirConversacion(conversationId: string): void {
     });
 }
 
+  get chatSuspendido(): boolean {
+    return this.conversationOutput()?.isSuspended ?? false;
+  }
+
   sendMessage(): void {
     const text = this.newMessage().trim();
     const imageFile = this.selectedImageFile();
     const imagePreview = this.selectedImagePreview();
 
     if ((!text && !imageFile) || !this.conversationId) return;
+    if (this.chatSuspendido) return;
 
     if (imageFile && imagePreview) {
 

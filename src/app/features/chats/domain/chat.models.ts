@@ -56,4 +56,5 @@ export interface ConversationOutput {
     otherUser: UserOutput;
     messages: MessageOutput[];
     createdAt: Date;
+    isSuspended: boolean;
 }
