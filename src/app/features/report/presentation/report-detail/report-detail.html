@@ -137,6 +137,24 @@
           </div>
           }
 
+          @if (esPropio() && r.status === 'ACTIVE') {
+          <div class="mt-2.5">
+            @if (r.featured) {
+            <div
+              class="w-full inline-flex items-center justify-center gap-1.5 bg-[#E8842E]/10 text-[#E8842E] border border-[#E8842E]/30 text-sm font-semibold py-2.5 rounded-lg">
+              <span class="text-base leading-none">★</span>
+              Reporte destacado
+            </div>
+            } @else {
+            <button type="button" (click)="destacarReporte()" [disabled]="destacando()"
+              class="w-full inline-flex items-center justify-center gap-1.5 bg-[#E8842E] text-white hover:bg-[#d1741f] text-sm font-semibold py-2.5 rounded-lg transition disabled:opacity-50">
+              <span class="text-base leading-none">★</span>
+              @if (destacando()) { Redirigiendo a Mercado Pago... } @else { Destacar reporte }
+            </button>
+            }
+          </div>
+          }
+
           @if (!esPropio() && r.status === 'ACTIVE') {
           <button type="button" (click)="abrirModalDenuncia()"
             class="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 border border-red-300 text-red-500 hover:bg-red-50 text-sm font-semibold py-2.5 rounded-lg transition">

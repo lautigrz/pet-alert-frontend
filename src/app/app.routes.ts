@@ -146,6 +146,30 @@ export const routes: Routes = [
           ).then((m) => m.MatchesPage),
       },
       {
+        path: 'reports/:publicId/destacar/exito',
+        data: { estado: 'exito' },
+        loadComponent: () =>
+          import(
+            './features/report/presentation/destacar-resultado/destacar-resultado'
+          ).then((m) => m.DestacarResultadoPage),
+      },
+      {
+        path: 'reports/:publicId/destacar/pendiente',
+        data: { estado: 'pendiente' },
+        loadComponent: () =>
+          import(
+            './features/report/presentation/destacar-resultado/destacar-resultado'
+          ).then((m) => m.DestacarResultadoPage),
+      },
+      {
+        path: 'reports/:publicId/destacar/error',
+        data: { estado: 'error' },
+        loadComponent: () =>
+          import(
+            './features/report/presentation/destacar-resultado/destacar-resultado'
+          ).then((m) => m.DestacarResultadoPage),
+      },
+      {
         path: 'reports/:publicId/edit/datos',
         canActivate: [verifiedGuard],
         loadComponent: () =>

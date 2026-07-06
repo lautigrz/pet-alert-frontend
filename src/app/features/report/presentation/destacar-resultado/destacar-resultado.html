@@ -1,0 +1,47 @@
+<div class="flex-1 bg-[#f3f4f6]">
+  <div class="max-w-[520px] mx-auto px-4 py-16">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 text-center">
+      @if (estado === 'exito') {
+      <div class="w-14 h-14 mx-auto rounded-full bg-green-50 text-green-600 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      </div>
+      <h1 class="text-xl font-extrabold text-[#12355B] mt-4">¡Pago aprobado!</h1>
+      <p class="text-sm text-slate-500 mt-2">
+        Tu reporte va a aparecer destacado en unos instantes, apenas confirmemos el pago.
+      </p>
+      } @else if (estado === 'pendiente') {
+      <div class="w-14 h-14 mx-auto rounded-full bg-[#E8842E]/10 text-[#E8842E] flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      </div>
+      <h1 class="text-xl font-extrabold text-[#12355B] mt-4">Pago pendiente</h1>
+      <p class="text-sm text-slate-500 mt-2">
+        Tu pago está pendiente de confirmación. Cuando se acredite, tu reporte va a quedar destacado.
+      </p>
+      } @else {
+      <div class="w-14 h-14 mx-auto rounded-full bg-red-50 text-red-500 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </div>
+      <h1 class="text-xl font-extrabold text-[#12355B] mt-4">No se pudo completar el pago</h1>
+      <p class="text-sm text-slate-500 mt-2">
+        El pago no se realizó. Podés intentar destacar tu reporte de nuevo cuando quieras.
+      </p>
+      }
+
+      <a [routerLink]="['/reports', publicId]"
+        class="mt-6 inline-flex items-center justify-center gap-1.5 bg-[#1D6FA3] text-white hover:bg-[#175a85] text-sm font-semibold py-2.5 px-6 rounded-lg transition">
+        Volver al reporte
+      </a>
+    </div>
+  </div>
+</div>
