@@ -5,8 +5,9 @@ import { UpdatedProfile } from '../../domain/profile.model';
 import { ReportListService } from '../../../report/application/report-list.service';
 import { Reporte } from '../../../report/domain/report-read.model';
 import { HomeReportCardComponent } from '../../../home-map/components/home-report-card/home-report-card';
-
-type ProfileTab = 'reports' | 'missions' | 'achievements';
+import { GivenUserReview, UserRatingSummary,  UserReview,
+} from '../../domain/user-review.model';
+type ProfileTab = 'reports' | 'reviews'| 'missions' | 'achievements';
 
 @Component({
   selector: 'app-profile-page',
@@ -30,11 +31,26 @@ export class ProfilePage implements OnInit  {
   readonly reports = signal<Reporte[]>([]);
   readonly reportsLoading = signal(true);
   readonly reportsError = signal<string | null>(null);
+  readonly ratingSummary = signal<UserRatingSummary>({
+  average: 0,
+  count: 0,
+});
+
+readonly receivedReviews = signal<UserReview[]>([]);
+readonly givenReviews = signal<GivenUserReview[]>([]);
+readonly reviewsLoading = signal(true);
+readonly reviewsError = signal<string | null>(null);
+  
 
   readonly defaultPhotoUrl = 'https://ui-avatars.com/api/?name=Perfil&background=e2e8f0&color=12355B&size=128';
 
   async ngOnInit(): Promise<void>{
-    await Promise.all([this.loadProfile(), this.loadReports()]);
+    await Promise.all([
+  this.loadProfile(),
+  this.loadReports(),
+  this.loadRating(),
+  this.loadReviews(),
+]);
   }
 
   async loadProfile(): Promise<void>{
@@ -64,7 +80,38 @@ export class ProfilePage implements OnInit  {
       this.reportsLoading.set(false);
     }
   }
+async loadRating(): Promise<void> {
+  const profile = await this.profileService.getProfile();
 
+  try {
+    const summary = await this.profileService.getUserRating(profile.id);
+    this.ratingSummary.set(summary);
+  } catch {
+    this.ratingSummary.set({
+      average: 0,
+      count: 0,
+    });
+  }
+}
+
+async loadReviews(): Promise<void> {
+  this.reviewsLoading.set(true);
+  this.reviewsError.set(null);
+
+  try {
+    const reviews = await this.profileService.getMyReviews();
+    this.receivedReviews.set(reviews.received.items);
+    this.givenReviews.set(reviews.given.items);
+  } catch (error) {
+    this.reviewsError.set(
+      error instanceof Error
+        ? error.message
+        : 'No se pudieron cargar las reseñas',
+    );
+  } finally {
+    this.reviewsLoading.set(false);
+  }
+}
   profilePhotoUrl(): string{
     return this.profile()?.photoUrl || this.defaultPhotoUrl;
   }
@@ -82,4 +129,11 @@ export class ProfilePage implements OnInit  {
     this.activeTab.set(tab);
   }
 
+ratingStars(): string[] {
+  const average = Math.round(this.ratingSummary().average);
+
+  return [1, 2, 3, 4, 5].map((star) =>
+    star <= average ? '★' : '☆',
+  );
+}
 }

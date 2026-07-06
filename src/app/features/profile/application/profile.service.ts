@@ -3,12 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { ProfileHttp } from '../infrastructure/profile.http';
 import { UpdatedProfile } from '../domain/profile.model';
 import { PublicProfile } from '../domain/public-profile';
-import {
-  InvalidProfileDataError,
-  NetworkError,
-  UnexpectedProfileError,
-  UserNotFoundError,
-} from '../domain/profile.errors';
+import { CreateUserReviewCommand, MyUserReviews,  PaginatedUserReviews,  UserRatingSummary,  UserReview,} from '../domain/user-review.model';import { InvalidProfileDataError,  NetworkError,  UnexpectedProfileError,  UserNotFoundError,} from '../domain/profile.errors';
 export interface UpdateProfileCommand{
   name?: string;
   lastname?: string;
@@ -85,6 +80,40 @@ export class ProfileService {
         lastname: response.lastname ?? null,
         photoUrl: response.photoUrl ?? null,
       };
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async createUserReview(command: CreateUserReviewCommand): Promise<UserReview> {
+    try {
+      return await this.profileHttp.createUserReview(command.reviewedUserId, {
+        rating: command.rating,
+        description: command.description?.trim() || null,
+      });
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async getUserReviews(publicId: string, page = 1, pageSize = 10): Promise<PaginatedUserReviews> {
+    try {
+      return await this.profileHttp.getUserReviews(publicId, page, pageSize);
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async getMyReviews(page = 1, pageSize = 10): Promise<MyUserReviews> {
+  try {
+    return await this.profileHttp.getMyReviews(page, pageSize);
+  } catch (error) {
+    throw this.mapUpdateProfileError(error);
+  }
+}
+  async getUserRating(publicId: string): Promise<UserRatingSummary> {
+    try {
+      return await this.profileHttp.getUserRating(publicId);
     } catch (error) {
       throw this.mapUpdateProfileError(error);
     }
