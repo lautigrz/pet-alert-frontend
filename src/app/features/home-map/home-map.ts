@@ -455,7 +455,6 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         this.filtrarPorRadar();
         this.map.setView(this.userLatLng, 15);
         if (reaplicarFiltros && !this.searchLatLng) {
-          this.filtrarPorRadar();
           this.aplicarFiltroCentros();
         }
         setTimeout(() => this.map.invalidateSize(), 100);
