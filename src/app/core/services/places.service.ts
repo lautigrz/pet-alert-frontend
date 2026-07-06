@@ -6,14 +6,15 @@ export interface LocationSuggestion {
   lng: number;
 }
 
-export interface Lugar {
-  nombre: string;
+export interface Place {
+  name: string;
   lat: number;
   lng: number;
-  distancia?: number;
+  distance?: number;
+  address?: string;
 }
 
-export type CentroTipo = 'veterinary' | 'police';
+export type PlaceType = 'veterinary' | 'police';
 
 interface OverpassElement {
   type: 'node' | 'way' | 'relation';
@@ -30,6 +31,9 @@ interface OverpassElement {
     healthcare?: string;
     office?: string;
     police?: string;
+    'addr:street'?: string;
+    'addr:housenumber'?: string;
+    'addr:city'?: string;
   };
 }
 
@@ -54,14 +58,32 @@ export class PlacesService {
     }
   }
 
-  async searchCentros(
-    tipo: CentroTipo,
+  async reverseGeocode(lat: number, lng: number): Promise<string> {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+      );
+      const data = await res.json();
+      const address = data.address ?? {};
+      const street = [address.road, address.house_number].filter(Boolean).join(' ');
+      const neighborhood = address.suburb || address.neighbourhood || address.city_district;
+      const city = address.city || address.town || address.village;
+      const state = address.state;
+      const parts = [street, neighborhood, city, state].filter(Boolean);
+      return parts.length ? parts.join(', ') : (data.display_name ?? '');
+    } catch {
+      return '';
+    }
+  }
+
+  async searchPlaces(
+    type: PlaceType,
     lat: number,
     lng: number,
     radiusMeters: number,
-  ): Promise<Lugar[]> {
-    const filtros =
-      tipo === 'veterinary'
+  ): Promise<Place[]> {
+    const filters =
+      type === 'veterinary'
         ? `
         node["amenity"="veterinary"](around:${radiusMeters},${lat},${lng});
         way["amenity"="veterinary"](around:${radiusMeters},${lat},${lng});
@@ -80,7 +102,7 @@ export class PlacesService {
     const query = `
     [out:json][timeout:20];
     (
-      ${filtros}
+      ${filters}
     );
     out center tags;
   `;
@@ -102,27 +124,33 @@ export class PlacesService {
       const data = (await response.json()) as { elements: OverpassElement[] };
 
       return data.elements
-        .map((l): Lugar | null => {
-          const lugarLat = l.lat ?? l.center?.lat;
-          const lugarLng = l.lon ?? l.center?.lon;
+        .map((element): Place | null => {
+          const placeLat = element.lat ?? element.center?.lat;
+          const placeLng = element.lon ?? element.center?.lon;
 
-          if (lugarLat === undefined || lugarLng === undefined) {
+          if (placeLat === undefined || placeLng === undefined) {
             return null;
           }
 
-          const nombre =
-            l.tags?.name ||
-            (tipo === 'police' ? 'Dependencia policial' : 'Centro veterinario');
+          const name =
+            element.tags?.name ||
+            (type === 'police' ? 'Dependencia policial' : 'Centro veterinario');
+
+          const street = [element.tags?.['addr:street'], element.tags?.['addr:housenumber']]
+            .filter(Boolean)
+            .join(' ');
+          const address = [street, element.tags?.['addr:city']].filter(Boolean).join(', ') || undefined;
 
           return {
-            nombre,
-            lat: lugarLat,
-            lng: lugarLng,
-            distancia: this.distanceKm(lat, lng, lugarLat, lugarLng),
+            name,
+            lat: placeLat,
+            lng: placeLng,
+            distance: this.distanceKm(lat, lng, placeLat, placeLng),
+            address,
           };
         })
-        .filter((lugar): lugar is Lugar => lugar !== null)
-        .sort((a, b) => (a.distancia ?? 0) - (b.distancia ?? 0))
+        .filter((place): place is Place => place !== null)
+        .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0))
         .slice(0, 15);
     } finally {
       clearTimeout(timeout);
