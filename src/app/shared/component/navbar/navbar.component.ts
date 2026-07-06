@@ -37,14 +37,9 @@ export class NavbarComponent implements OnInit {
 
 
   async ngOnInit(): Promise<void> {
-    
+    this.chatsService.refreshUnreadChats();
 
-  this.chatsService.unreadChats$
-    .subscribe(v => console.log("NAVBAR:", v));
-
-  this.chatsService.refreshUnreadChats();
-    
-     try { const perfil = await this.profileService.getProfile(); 
+     try { const perfil = await this.profileService.getProfile();
       this.nombreUsuario.set(perfil.name?.trim() || perfil.username); 
       this.fotoUsuario.set(perfil.photoUrl ?? null); }
        catch { this.nombreUsuario.set(''); } }
