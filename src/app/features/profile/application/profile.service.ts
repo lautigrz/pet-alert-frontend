@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ProfileHttp } from '../infrastructure/profile.http';
-import { UpdatedProfile } from '../domain/profile.model';
+import { UpdatedProfile, UserExperienceSummary } from '../domain/profile.model';
 import { PublicProfile } from '../domain/public-profile';
 import {
   InvalidProfileDataError,
@@ -85,6 +85,14 @@ export class ProfileService {
         lastname: response.lastname ?? null,
         photoUrl: response.photoUrl ?? null,
       };
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async getUserExperience(): Promise<UserExperienceSummary> {
+    try {
+      return await this.profileHttp.getUserExperience();
     } catch (error) {
       throw this.mapUpdateProfileError(error);
     }

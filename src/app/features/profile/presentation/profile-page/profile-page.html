@@ -50,6 +50,73 @@
         </div>
       </section>
 
+      @if (showExperienceWidget()) {
+      <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        @if (experienceLoading()) {
+          <div class="text-sm text-slate-500">Cargando tu progreso...</div>
+        } @else if (experienceError()) {
+          <div class="text-sm text-amber-600">{{ experienceError() }}</div>
+        } @else if (experience()) {
+          <div class="flex flex-col gap-4" [class.level-up-pulse]="levelUpPulse()">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-wide text-[#E8842E]">Mi progreso</p>
+                <h2 class="text-xl font-bold text-[#12355B]">Nivel {{ experience()?.level ?? 1 }}</h2>
+                <p class="text-sm text-slate-500">{{ totalXp() }} XP acumulados</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="text-right text-xs text-slate-500">
+                  <p class="font-semibold text-[#12355B]">{{ unlockedCount() }} / {{ achievements().length }}</p>
+                  <p>logros</p>
+                </div>
+                <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#12355B] text-lg font-bold text-white">
+                  {{ experience()?.level ?? 1 }}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="mb-2 flex items-center justify-between text-sm text-slate-500">
+                <span>Progreso al siguiente nivel</span>
+                <span>{{ xpToNextLevel() }} XP faltantes</span>
+              </div>
+              <div class="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  class="h-2 rounded-full bg-gradient-to-r from-[#E8842E] to-[#F7AC57] transition-all duration-500"
+                  [style.width.%]="levelProgressPercent()"
+                ></div>
+              </div>
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-2">
+              @for (achievement of achievements(); track achievement.code) {
+                <article
+                  class="rounded-lg border p-3 transition"
+                  [class.border-emerald-200]="achievement.unlocked ?? true"
+                  [class.bg-emerald-50]="achievement.unlocked ?? true"
+                  [class.border-slate-200]="!(achievement.unlocked ?? true)"
+                  [class.bg-slate-50]="!(achievement.unlocked ?? true)"
+                  [class.opacity-75]="!(achievement.unlocked ?? true)"
+                >
+                  <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-sm font-semibold text-[#12355B]">{{ achievement.name }}</h3>
+                    <span
+                      class="rounded-full bg-white px-2 py-1 text-[11px] font-semibold"
+                      [class.text-emerald-700]="achievement.unlocked ?? true"
+                      [class.text-slate-500]="!(achievement.unlocked ?? true)"
+                    >
+                      {{ (achievement.unlocked ?? true) ? 'Desbloqueado' : 'Bloqueado' }}
+                    </span>
+                  </div>
+                  <p class="mt-2 text-sm text-slate-600">{{ achievement.description }}</p>
+                  <p class="mt-2 text-xs font-medium text-slate-500">Requiere {{ achievement.requiredXp }} XP</p>
+                </article>
+              }
+            </div>
+          </div>
+        }
+      </section>
+
       <section class="mb-5">
         <div class="inline-flex rounded-md overflow-hidden border border-slate-200 bg-white">
           <button
@@ -130,16 +197,45 @@
         }
 
         @if (activeTab() === 'achievements') {
-          <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-            <h2 class="text-lg font-bold text-[#12355B] mb-2">
-              Logros
-            </h2>
-            <p class="text-sm text-slate-500">
-              Todavía no tenés logros obtenidos.
-            </p>
-          </div>
+          @if (experienceLoading()) {
+            <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+              Cargando logros...
+            </div>
+          } @else if ((experience()?.unlockedAchievements?.length ?? 0) === 0) {
+            <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+              <h2 class="text-lg font-bold text-[#12355B] mb-2">
+                Logros
+              </h2>
+              <p class="text-sm text-slate-500">
+                Todavía no tenés logros obtenidos.
+              </p>
+            </div>
+          } @else {
+            <div class="grid gap-3 md:grid-cols-2">
+              @for (achievement of experience()?.unlockedAchievements ?? []; track achievement.code) {
+                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 class="font-semibold text-[#12355B]">{{ achievement.name }}</h3>
+                      <p class="mt-1 text-sm text-slate-600">{{ achievement.description }}</p>
+                    </div>
+                    <span class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700">✓</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
         }
       </section>
+    }
+    }
+
+    @if (showLevelUpToast()) {
+      <div class="fixed inset-x-4 bottom-6 z-50 flex justify-center">
+        <div class="level-up-toast rounded-full bg-[#12355B] px-4 py-3 text-sm font-semibold text-white shadow-lg">
+          ¡Subiste de nivel! Tu progreso quedó actualizado.
+        </div>
+      </div>
     }
   </section>
 </main>
