@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContentReportAdminService } from '../../application/content-report-admin.service';
+import { AdminEstadisticasComponent } from '../admin-estadisticas/admin-estadisticas';
 import { ToastService } from '../../../../shared/application/toast.service';
 import {
   ContentReportQueueItem,
@@ -13,7 +14,7 @@ import {
   ContentReportTargetType,
 } from '../../../content-report/domain/content-report.models';
 
-type AdminSection = 'posts' | 'chats' | 'profiles';
+type AdminSection = 'posts' | 'chats' | 'profiles' | 'estadisticas';
 
 type ConfirmableAction = 'delete';
 
@@ -77,7 +78,7 @@ const STATUS_BADGE_CLASSES: Record<ContentReportStatus, string> = {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, AdminEstadisticasComponent],
   host: { class: 'flex flex-1 min-h-0' },
   templateUrl: './admin-dashboard.html',
 })
