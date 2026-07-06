@@ -46,3 +46,10 @@ export class NetworkError extends ReportError {
     this.name = 'NetworkError';
   }
 }
+
+export class PaymentError extends ReportError {
+  constructor(message = 'No se pudo iniciar el pago') {
+    super(message);
+    this.name = 'PaymentError';
+  }
+}

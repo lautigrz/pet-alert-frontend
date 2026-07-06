@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReportService } from '../../application/report.service';
 import { ReportListService } from '../../application/report-list.service';
+import { PaymentService } from '../../application/payment.service';
 import { ReportDetail } from '../../infrastructure/report.http';
 import { ReportGalleryComponent } from '../components/report-gallery/report-gallery';
 import { ReportInfoComponent } from '../components/report-info/report-info';
@@ -34,6 +35,7 @@ export class ReportDetailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly reportService = inject(ReportService);
   private readonly reportesService = inject(ReportListService);
+  private readonly paymentService = inject(PaymentService);
   private readonly toastService = inject(ToastService);
   private readonly profileService = inject(ProfileService);
   private readonly USUARIO_BAJA_VALORACION_PUBLIC_ID = '70867c26-8c5c-40d2-b3df-08036823ff16';
@@ -43,6 +45,7 @@ export class ReportDetailPage implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   actualizando = signal(false);
+  destacando = signal(false);
   confirmandoResolucion = signal(false);
   usuarioId = signal<string | null>(null);
   mostrandoModalDenuncia = signal(false);
@@ -118,6 +121,21 @@ export class ReportDetailPage implements OnInit {
       this.toastService.error(msg);
     } finally {
       this.actualizando.set(false);
+    }
+  }
+
+  async destacarReporte(): Promise<void> {
+    const r = this.report();
+    if (!r || !this.esPropio() || r.featured) return;
+
+    this.destacando.set(true);
+    try {
+      const initPoint = await this.paymentService.iniciarDestacado(r.publicId);
+      window.location.href = initPoint;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'No se pudo iniciar el pago';
+      this.toastService.error(msg);
+      this.destacando.set(false);
     }
   }
 

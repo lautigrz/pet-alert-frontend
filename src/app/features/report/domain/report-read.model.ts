@@ -43,6 +43,7 @@ export interface Reporte {
   details: SightingDetails | LostDetails;
   occurredAt: string;
   createdAt: string;
+  featured?: boolean;
 }
 
 export interface ReporteFiltros {
