@@ -41,6 +41,7 @@ export class ProfileService {
         lastname: response.lastname,
         photoUrl: response.photoUrl,
         role: this.cachedProfile?.role ?? null,
+        stats: this.cachedProfile?.stats ?? null,
       };
       return this.cachedProfile;
     } catch (error) {
@@ -68,6 +69,7 @@ export class ProfileService {
         lastname: response.lastname ?? null,
         photoUrl: response.photoUrl ?? null,
         role: response.role ?? null,
+        stats: response.stats ?? null,
       };
       return this.cachedProfile;
     } catch (error) {
@@ -84,6 +86,7 @@ export class ProfileService {
         name: response.name ?? null,
         lastname: response.lastname ?? null,
         photoUrl: response.photoUrl ?? null,
+        stats: response.stats ?? null,
       };
     } catch (error) {
       throw this.mapUpdateProfileError(error);
@@ -102,6 +105,7 @@ export class ProfileService {
         lastname: response.lastname ?? null,
         photoUrl: response.photoUrl ?? null,
         role: this.cachedProfile?.role ?? null,
+        stats: this.cachedProfile?.stats ?? null,
       };
       return this.cachedProfile;
     }catch(error){
