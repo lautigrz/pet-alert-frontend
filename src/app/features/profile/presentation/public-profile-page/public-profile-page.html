@@ -236,9 +236,20 @@
   </section>
 
   @if (reviewSheetOpen() && profile()) {
-  <div class="fixed inset-0 z-[1200] flex items-end justify-center bg-black/40 px-3" (click)="cerrarReviewSheet()">
-    <section class="w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:mb-6 sm:rounded-3xl"
-      (click)="$event.stopPropagation()">
+  <div
+    class="fixed inset-0 z-[1200] flex items-end justify-center bg-black/40 px-3"
+    (click)="cerrarReviewSheet()"
+    (keyup.escape)="cerrarReviewSheet()"
+    tabindex="-1"
+    role="button"
+    aria-label="Cerrar reseña"
+  >
+    <section
+      class="w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:mb-6 sm:rounded-3xl"
+      (click)="$event.stopPropagation()"
+      (keyup)="$event.stopPropagation()"
+      role="presentation"
+    >
       <div class="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-200"></div>
       <h2 class="text-xl font-bold text-[#12355B]">Dejar reseña</h2>
 
