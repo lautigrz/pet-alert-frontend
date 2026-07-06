@@ -1,0 +1,55 @@
+<div class="min-h-screen flex flex-col bg-[#eef1f4]">
+  <header class="h-[75px] shrink-0 bg-white border-b border-slate-200 flex items-center px-6 lg:px-8">
+    <img src="nuevologo.png" alt="PetFinder" class="h-12 w-auto" />
+  </header>
+  <div class="flex-1 flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-md border border-[#e6e8eb] overflow-hidden">
+    <div class="h-1.5 bg-[#E8842E]"></div>
+    <div class="p-8">
+
+      @if (tokenAusente()) {
+        <h1 class="text-xl font-extrabold text-[#12355B]">Enlace inválido</h1>
+        <p class="mt-3 text-[#2b2b2b]">
+          El enlace de apelación no es válido o expiró. Revisá el correo que te enviamos.
+        </p>
+        <a routerLink="/login" class="mt-6 inline-block font-semibold text-[#1D6FA3]">Ir a iniciar sesión</a>
+      } @else if (exito()) {
+        <h1 class="text-xl font-extrabold text-[#12355B]">Apelación enviada</h1>
+        <p class="mt-3 text-[#2b2b2b]">
+          Recibimos tu apelación. Un administrador va a revisar el caso y te vamos a avisar por correo la decisión.
+        </p>
+        <a routerLink="/login" class="mt-6 inline-block font-semibold text-[#1D6FA3]">Ir a iniciar sesión</a>
+      } @else {
+        <h1 class="text-xl font-extrabold text-[#12355B]">Apelar la decisión</h1>
+        <p class="mt-2 text-sm text-[#6b7280]">
+          Contanos por qué creés que la decisión fue un error. Un administrador va a revisar tu caso.
+        </p>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="mt-6">
+          <label for="message" class="block text-sm font-semibold text-[#12355B]">Tu defensa</label>
+          <textarea
+            id="message"
+            formControlName="message"
+            rows="6"
+            maxlength="1000"
+            placeholder="Escribí acá tu apelación..."
+            class="mt-2 w-full rounded-lg border border-[#e6e8eb] p-3 text-[#2b2b2b] focus:border-[#1D6FA3] focus:outline-none"
+          ></textarea>
+          @if (hasError('message', 'required')) {
+            <p class="mt-1 text-sm text-red-600">Escribí tu defensa para poder apelar.</p>
+          }
+
+          <button
+            type="submit"
+            [disabled]="submitting()"
+            class="mt-6 w-full rounded-lg bg-[#E8842E] py-3 font-extrabold text-white disabled:opacity-60"
+          >
+            {{ submitting() ? 'Enviando...' : 'Enviar apelación' }}
+          </button>
+        </form>
+      }
+
+    </div>
+    </div>
+  </div>
+</div>

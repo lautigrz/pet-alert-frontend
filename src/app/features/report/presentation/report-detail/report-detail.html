@@ -126,7 +126,6 @@
         <app-report-contact [report]="r" [esPropio]="esPropio()">
           @if (esPropio() && r.status === 'ACTIVE') {
           <div class="mt-2.5">
-            @if (!confirmandoResolucion()) {
             <button type="button" (click)="abrirConfirmacion()" [disabled]="actualizando()"
               class="w-full inline-flex items-center justify-center gap-1.5 border border-[#1D6FA3] text-[#1D6FA3] hover:bg-[#1D6FA3]/5 text-sm font-semibold py-2.5 rounded-lg transition disabled:opacity-50">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
@@ -135,19 +134,6 @@
               </svg>
               Cerrar reporte
             </button>
-            } @else {
-            <div class="flex flex-col gap-2">
-              <p class="text-sm text-slate-500 text-center">¿Cerrar el reporte?</p>
-              <div class="flex gap-2">
-                <button type="button" (click)="resolverReporte()" [disabled]="actualizando()"
-                  class="flex-1 bg-[#1D6FA3] text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50">
-                  @if (actualizando()) { … } @else { Sí }
-                </button>
-                <button type="button" (click)="cancelarConfirmacion()" [disabled]="actualizando()"
-                  class="flex-1 bg-slate-100 text-slate-600 text-sm font-semibold py-2 rounded-lg">No</button>
-              </div>
-            </div>
-            }
           </div>
           }
 
@@ -188,5 +174,10 @@
   <!-- Modal Denuncia -->
   @if (mostrandoModalDenuncia() && report()) {
   <app-report-modal tipo="reporte" [targetPublicId]="report()!.publicId" (cerrar)="cerrarModalDenuncia()" />
+  }
+
+  <!-- Modal Cerrar reporte -->
+  @if (confirmandoResolucion() && report()) {
+  <app-close-report-modal [enviando]="actualizando()" (cerrar)="cancelarConfirmacion()" (confirmar)="resolverReporte($event)" />
   }
 </div>

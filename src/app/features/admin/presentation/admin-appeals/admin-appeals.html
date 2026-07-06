@@ -1,0 +1,174 @@
+<div class="flex flex-1 min-h-0 bg-[#f3f4f6]">
+  <aside class="hidden sm:flex w-60 shrink-0 bg-[#12355B] text-white flex-col">
+    <nav class="flex-1 px-3 py-5 space-y-1">
+      @for (section of sections; track section.value) {
+        <button type="button" (click)="selectStatus(section.value)"
+          class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition"
+          [class]="status() === section.value ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10'">
+          <span class="whitespace-nowrap">{{ section.label }}</span>
+          @if (section.value === 'PENDING' && pendingCount() > 0) {
+            <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingCount() }}</span>
+          }
+        </button>
+      }
+    </nav>
+    <div class="px-5 py-4 border-t border-white/10">
+      <p class="text-xs text-white/60">Sesión de administrador</p>
+    </div>
+  </aside>
+
+  <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+    <header class="bg-white border-b border-slate-200 px-5 sm:px-6 py-4">
+      <h1 class="text-xl font-extrabold text-[#12355B]">Apelaciones</h1>
+      <p class="text-sm text-slate-500">Revisá las apelaciones de los usuarios sobre las sentencias de moderación.</p>
+    </header>
+
+    <main class="flex-1 overflow-y-auto px-5 sm:px-6 py-6 [scrollbar-gutter:stable]">
+      <div class="max-w-[1100px] mx-auto">
+
+        <div class="sm:hidden flex gap-2 mb-5">
+          @for (section of sections; track section.value) {
+            <button type="button" (click)="selectStatus(section.value)"
+              class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition"
+              [class]="status() === section.value ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
+              {{ section.label }}
+            </button>
+          }
+        </div>
+
+        @if (loading()) {
+          <p class="py-12 text-center text-slate-400 text-sm">Cargando apelaciones…</p>
+        } @else if (appeals().length === 0) {
+          <p class="py-12 text-center text-slate-400 text-sm bg-white border border-dashed border-slate-200 rounded-2xl">
+            No hay apelaciones en esta vista.
+          </p>
+        } @else {
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            @for (appeal of appeals(); track appeal.publicId) {
+              <article class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 transition hover:border-[#1D6FA3]">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-white"
+                      [class]="appeal.targetType === 'POST' ? 'bg-[#1D6FA3]' : 'bg-[#12355B]'">
+                      {{ targetLabel(appeal.targetType) }}
+                    </span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold"
+                      [class]="appeal.status === 'PENDING' ? 'bg-[#E8842E]/10 text-[#E8842E]' : appeal.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'">
+                      {{ statusLabel(appeal.status) }}
+                    </span>
+                    @if (appeal.case.reportCount > 1) {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#12355B]/10 text-[#12355B]">
+                        {{ appeal.case.reportCount }} denuncias
+                      </span>
+                    }
+                  </div>
+                  <span class="shrink-0 text-xs text-slate-400">{{ appeal.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+
+                <p class="text-sm text-slate-500">
+                  Apelación de <strong class="text-[#12355B]">{{ appeal.appellant.username }}</strong>
+                </p>
+
+                <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+                  <p class="text-[11px] font-bold uppercase tracking-wide text-[#E8842E]">El caso — motivo de la denuncia</p>
+                  <p class="text-sm text-[#12355B]">{{ reasonLabel(appeal.case.reason) }}</p>
+                  @if (appeal.case.reportedContent; as content) {
+                    <p class="mt-1 text-xs text-slate-500">
+                      {{ reportTypeLabel(content.reportType) }}@if (content.petName) { · {{ content.petName }} }
+                    </p>
+                  }
+                </div>
+
+                @if (appeal.targetType === 'POST') {
+                  <button type="button" (click)="openReport(appeal)" [disabled]="reportLoading()"
+                    class="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-[#1D6FA3] transition hover:bg-slate-100 disabled:opacity-60">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" />
+                    </svg>
+                    {{ reportLoading() ? 'Cargando…' : 'Ver la publicación denunciada' }}
+                  </button>
+                } @else {
+                  <a [href]="profileLink(appeal)" target="_blank" rel="noopener"
+                    class="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-[#1D6FA3] transition hover:bg-slate-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    </svg>
+                    Ver el perfil denunciado
+                  </a>
+                }
+
+                <div class="rounded-lg bg-[#1D6FA3]/5 border border-[#1D6FA3]/20 px-3 py-2">
+                  <p class="text-[11px] font-bold uppercase tracking-wide text-[#1D6FA3]">La defensa apelada</p>
+                  <p class="text-sm text-[#12355B] whitespace-pre-line">{{ appeal.message }}</p>
+                </div>
+
+                @if (appeal.status === 'PENDING') {
+                  <div class="flex flex-wrap gap-2">
+                    <button type="button" (click)="resolve(appeal.publicId, true)" [disabled]="resolvingId() === appeal.publicId"
+                      class="flex-1 min-w-24 rounded-lg bg-[#1D6FA3] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#17597f] disabled:opacity-60">
+                      Aceptar
+                    </button>
+                    <button type="button" (click)="resolve(appeal.publicId, false)" [disabled]="resolvingId() === appeal.publicId"
+                      class="flex-1 min-w-24 rounded-lg bg-[#E8842E] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#cf7325] disabled:opacity-60">
+                      Rechazar
+                    </button>
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        }
+      </div>
+    </main>
+  </div>
+
+  @if (selectedReport(); as report) {
+    <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
+      <div class="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h2 class="text-lg font-extrabold text-[#12355B]">Publicación denunciada · {{ reportTypeLabel(report.type) }}</h2>
+          <button type="button" (click)="closeReport()" aria-label="Cerrar" class="text-slate-400 transition hover:text-[#12355B]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          @if (report.images.length > 0) {
+            <div class="grid grid-cols-2 gap-2">
+              @for (img of report.images; track img) {
+                <img [src]="img" alt="" class="h-32 w-full rounded-lg object-cover border border-slate-200" />
+              }
+            </div>
+          } @else {
+            <p class="text-sm text-slate-400 italic">Sin fotos.</p>
+          }
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Mascota</p>
+              <p class="text-sm font-semibold text-[#12355B]">{{ report.petName ?? '—' }}</p>
+            </div>
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Animal / Color</p>
+              <p class="text-sm font-semibold text-[#12355B]">{{ report.animalType }} · {{ report.color }}</p>
+            </div>
+          </div>
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Descripción</p>
+            <p class="text-sm text-slate-600 whitespace-pre-line">{{ report.description || '—' }}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Ubicación</p>
+              <p class="text-sm text-[#12355B]">{{ report.address || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Fecha del hecho</p>
+              <p class="text-sm text-[#12355B]">{{ report.occurredAt | date: 'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -49,6 +49,13 @@ export const routes: Routes = [
         './features/auth/presentation/reset-password-page/reset-password-page'
       ).then((m) => m.ResetPasswordPage),
   },
+  {
+    path: 'appeals/new',
+    loadComponent: () =>
+      import(
+        './features/appeal/presentation/appeal-form-page/appeal-form-page'
+      ).then((m) => m.AppealFormPage),
+  },
 
   {
     path: 'admin/login',
@@ -68,6 +75,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/presentation/admin-dashboard/admin-dashboard').then(
             (m) => m.AdminDashboardComponent,
+          ),
+      },
+      {
+        path: 'appeals',
+        loadComponent: () =>
+          import('./features/admin/presentation/admin-appeals/admin-appeals').then(
+            (m) => m.AdminAppealsComponent,
           ),
       },
     ],

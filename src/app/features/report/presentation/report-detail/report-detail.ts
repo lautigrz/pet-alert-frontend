@@ -13,6 +13,7 @@ import { ToastService } from '../../../../shared/application/toast.service';
 import { ProfileService } from '../../../profile/application/profile.service';
 import { ReportTimelineComponent } from '../components/report-timeline/report-timeline';
 import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
+import { CloseReportModalComponent } from '../components/close-report-modal/close-report-modal';
 
 @Component({
   selector: 'app-report-detail',
@@ -25,7 +26,8 @@ import { ReportModalComponent } from '../../../../shared/component/report-modal/
     ReportLocationComponent,
     ReportContactComponent,
     ReportTimelineComponent,
-    ReportModalComponent
+    ReportModalComponent,
+    CloseReportModalComponent
   ],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './report-detail.html',
@@ -103,13 +105,13 @@ export class ReportDetailPage implements OnInit {
     this.mostrandoModalDenuncia.set(false);
   }
 
-  async resolverReporte(): Promise<void> {
+  async resolverReporte(resolved: boolean): Promise<void> {
     const r = this.report();
     if (!r || !this.esPropio()) return;
 
     this.actualizando.set(true);
     try {
-      await this.reportesService.updateToResolved(r.publicId);
+      await this.reportesService.updateToResolved(r.publicId, resolved);
 
       this.report.update((current) =>
         current ? { ...current, status: 'RESOLVED' } : null,

@@ -15,6 +15,7 @@ vi.mock('leaflet', () => {
     on: vi.fn().mockReturnThis(),
     closePopup: vi.fn(),
     setLatLng: vi.fn(),
+    setLatLngs: vi.fn(),
     setRadius: vi.fn(),
     remove: vi.fn(),
   });
@@ -53,6 +54,7 @@ vi.mock('leaflet', () => {
     marker: vi.fn().mockReturnValue(createMarkerMock()),
     circle: vi.fn().mockReturnValue(createMarkerMock()),
     circleMarker: vi.fn().mockReturnValue(createMarkerMock()),
+    polygon: vi.fn().mockReturnValue(createMarkerMock()),
     divIcon: vi.fn().mockImplementation((options) => ({
       options,
     })),
@@ -173,6 +175,8 @@ interface HomeMapComponentTest {
   initializeMap: () => void;
   buscarLugares: (tipo: 'veterinary' | 'police') => Promise<void>;
   dibujarLugares: () => void;
+  iconoCentroActual: () => string;
+  buildCentroPin: (iconSvg: string) => PinMock;
   centerOnUser: () => void;
   getUserLocation: () => void;
   placeUserMarker: () => void;
@@ -1007,6 +1011,39 @@ describe('HomeMapComponent', () => {
       expect(component.reportesCercanos()).toHaveLength(2);
     });
 
+    it('shows only reports within the radar radius when the user location is known', async () => {
+      reportListService.getGenerales.mockResolvedValue([
+        mockReporte({
+          publicId: 'near',
+          location: {
+            address: 'Cerca',
+            latitude: -34.6037,
+            longitude: -58.3816,
+          },
+        }),
+        mockReporte({
+          publicId: 'far',
+          location: {
+            address: 'Lejos',
+            latitude: -35.6037,
+            longitude: -59.3816,
+          },
+        }),
+      ]);
+      reportListService.getMisReportes.mockResolvedValue([]);
+
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
+      mockDibujarMarcadores();
+
+      await testingComponent().cargarReportes();
+
+      expect(component.reportesFiltrados()).toHaveLength(1);
+      expect(component.reportesFiltrados()[0]?.publicId).toBe('near');
+    });
+
     it('does not throw when report loading fails', async () => {
       reportListService.getGenerales.mockRejectedValue(
         new Error('Backend error'),
@@ -1371,6 +1408,33 @@ describe('HomeMapComponent', () => {
       testingComponent().dibujarLugares();
 
       expect(testingComponent().lugaresLayer.clearLayers).toHaveBeenCalled();
+    });
+
+    it('draws a centro pin for each nearby place', () => {
+      testingComponent().lugaresLayer = mockLayer();
+      component.lugares.set([mockPlace()]);
+      const buildCentroPinSpy = vi.spyOn(testingComponent(), 'buildCentroPin');
+
+      testingComponent().dibujarLugares();
+
+      expect(buildCentroPinSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('iconoCentroActual', () => {
+    it('returns the vet icon when veterinarias is selected', () => {
+      component.centrosFiltro.set('veterinarias');
+
+      expect(testingComponent().iconoCentroActual()).toContain('circle');
+    });
+
+    it('returns the police icon otherwise', () => {
+      component.centrosFiltro.set('comisarias');
+
+      const svg = testingComponent().iconoCentroActual();
+
+      expect(svg).toContain('<path');
+      expect(svg).not.toContain('circle');
     });
   });
 

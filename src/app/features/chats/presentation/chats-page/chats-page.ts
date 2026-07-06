@@ -37,6 +37,7 @@ export class ChatsPage implements OnInit, OnDestroy {
   activePreviewImageUrl = signal<string | null>(null);
   mostrandoModalDenuncia = signal(false);
   menuOpcionesAbierto = signal(false);
+  contactOnline = signal(false);
 
   toggleMenuOpciones(event: Event) {
     event.stopPropagation();
@@ -102,6 +103,27 @@ export class ChatsPage implements OnInit, OnDestroy {
   this.chatsService.onError()
     .pipe(takeUntil(this.destroy$))
     .subscribe(err => console.error(err.message));
+
+  this.chatsService.onPresenceStatus()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(({ userPublicId, online }) => {
+      if (userPublicId === this.selectedContact()?.otherUser.publicId) {
+        this.contactOnline.set(online);
+      }
+    });
+
+  this.chatsService.onPresenceChanged()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(({ userPublicId, online }) => {
+      if (userPublicId === this.selectedContact()?.otherUser.publicId) {
+        this.contactOnline.set(online);
+      }
+    });
+}
+
+private requestPresence(userPublicId: string): void {
+  this.contactOnline.set(false);
+  this.chatsService.getPresence(userPublicId);
 }
 
 selectContact(contact: ConversationSummaryOutput): void {
@@ -109,6 +131,7 @@ selectContact(contact: ConversationSummaryOutput): void {
   this.selectedContact.set(contact);
   this.conversationId = contact.publicId;
   this.messages = [];
+  this.requestPresence(contact.otherUser.publicId);
 
   this.chatsService.getMessagesForConversation(this.conversationId)
     .pipe(takeUntil(this.destroy$))
@@ -156,6 +179,8 @@ abrirConversacion(conversationId: string): void {
         createdAt: conv.createdAt,
       });
 
+      this.requestPresence(conv.otherUser.publicId);
+
       if (this.messagesNotRead()) {
 
     this.chatsService.readMessage(this.conversationId);
@@ -167,12 +192,17 @@ abrirConversacion(conversationId: string): void {
     });
 }
 
+  get chatSuspendido(): boolean {
+    return this.conversationOutput()?.isSuspended ?? false;
+  }
+
   sendMessage(): void {
     const text = this.newMessage().trim();
     const imageFile = this.selectedImageFile();
     const imagePreview = this.selectedImagePreview();
 
     if ((!text && !imageFile) || !this.conversationId) return;
+    if (this.chatSuspendido) return;
 
     if (imageFile && imagePreview) {
 
