@@ -19,6 +19,9 @@ describe('ChatsPage', () => {
     readMessage: ReturnType<typeof vi.fn>;
     sendMessage: ReturnType<typeof vi.fn>;
     sendImage: ReturnType<typeof vi.fn>;
+    onPresenceStatus: ReturnType<typeof vi.fn>;
+    onPresenceChanged: ReturnType<typeof vi.fn>;
+    getPresence: ReturnType<typeof vi.fn>;
   };
   let authServiceMock: {
     getCurrentUserId: ReturnType<typeof vi.fn>;
@@ -27,6 +30,8 @@ describe('ChatsPage', () => {
   let messageReceivedSubject: Subject<MessagePayload>;
   let messageReadSubject: Subject<{ conversationId: string }>;
   let errorSubject: Subject<{ message: string }>;
+  let presenceStatusSubject: Subject<{ userPublicId: string; online: boolean }>;
+  let presenceChangedSubject: Subject<{ userPublicId: string; online: boolean }>;
 
   let queryParam: string | null;
 
@@ -35,6 +40,8 @@ describe('ChatsPage', () => {
     messageReceivedSubject = new Subject<MessagePayload>();
     messageReadSubject = new Subject<{ conversationId: string }>();
     errorSubject = new Subject<{ message: string }>();
+    presenceStatusSubject = new Subject<{ userPublicId: string; online: boolean }>();
+    presenceChangedSubject = new Subject<{ userPublicId: string; online: boolean }>();
 
     chatsServiceMock = {
       getConversations: vi.fn().mockReturnValue(of([])),
@@ -49,6 +56,9 @@ describe('ChatsPage', () => {
       readMessage: vi.fn(),
       sendMessage: vi.fn(),
       sendImage: vi.fn().mockReturnValue(of({})),
+      onPresenceStatus: vi.fn().mockReturnValue(presenceStatusSubject.asObservable()),
+      onPresenceChanged: vi.fn().mockReturnValue(presenceChangedSubject.asObservable()),
+      getPresence: vi.fn(),
     };
 
     authServiceMock = {
@@ -230,6 +240,52 @@ describe('ChatsPage', () => {
       await new Promise(resolve => setTimeout(resolve, 150));
 
       expect(chatsServiceMock.readMessage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('presence', () => {
+    it('requests presence and resets state when selecting a contact', () => {
+      fixture.detectChanges();
+      const mockContact: ConversationSummaryOutput = {
+        publicId: 'c1',
+        otherUser: { publicId: 'u-other', username: 'user_other', photoUrl: null },
+        lastMessage: null,
+        createdAt: new Date(),
+      };
+
+      component.contactOnline.set(true);
+      component.selectContact(mockContact);
+
+      expect(chatsServiceMock.getPresence).toHaveBeenCalledWith('u-other');
+      expect(component.contactOnline()).toBe(false);
+    });
+
+    it('marks the contact online when presence:status matches the open contact', () => {
+      fixture.detectChanges();
+      component.selectedContact.set({
+        publicId: 'c1',
+        otherUser: { publicId: 'u-other', username: 'user_other', photoUrl: null },
+        lastMessage: null,
+        createdAt: new Date(),
+      });
+
+      presenceStatusSubject.next({ userPublicId: 'u-other', online: true });
+
+      expect(component.contactOnline()).toBe(true);
+    });
+
+    it('ignores presence changes from a different user', () => {
+      fixture.detectChanges();
+      component.selectedContact.set({
+        publicId: 'c1',
+        otherUser: { publicId: 'u-other', username: 'user_other', photoUrl: null },
+        lastMessage: null,
+        createdAt: new Date(),
+      });
+
+      presenceChangedSubject.next({ userPublicId: 'someone-else', online: true });
+
+      expect(component.contactOnline()).toBe(false);
     });
   });
 
