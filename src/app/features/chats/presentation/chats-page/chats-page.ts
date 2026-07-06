@@ -7,11 +7,13 @@ import { ConversationOutput, ConversationSummaryOutput } from '../../domain/chat
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../auth/application/auth.service';
 import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
+import { MeetingPointModalComponent } from '../meeting-point-modal/meeting-point-modal';
+import { Place, PlacesService } from '../../../../core/services/places.service';
 
 @Component({
   selector: 'app-chats-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReportModalComponent, RouterLink],
+  imports: [CommonModule, FormsModule, ReportModalComponent, MeetingPointModalComponent, RouterLink],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden bg-[#f4f4f4]' },
   templateUrl: './chats-page.html',
   styleUrl: './chats-page.css',
@@ -19,6 +21,7 @@ import { ReportModalComponent } from '../../../../shared/component/report-modal/
 export class ChatsPage implements OnInit, OnDestroy {
   private readonly chatsService = inject(ChatsService);
   private readonly authService = inject(AuthService);
+  private readonly placesService = inject(PlacesService);
   private readonly route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
 
@@ -38,6 +41,7 @@ export class ChatsPage implements OnInit, OnDestroy {
   mostrandoModalDenuncia = signal(false);
   menuOpcionesAbierto = signal(false);
   contactOnline = signal(false);
+  showMeetingPoint = signal(false);
 
   toggleMenuOpciones(event: Event) {
     event.stopPropagation();
@@ -56,6 +60,21 @@ export class ChatsPage implements OnInit, OnDestroy {
   denunciarDesdeMenu() {
     this.cerrarMenuOpciones();
     this.abrirModalDenuncia();
+  }
+
+  closeMeetingPoint() {
+    this.showMeetingPoint.set(false);
+  }
+
+  async insertPlaceInMessage(place: Place) {
+    this.showMeetingPoint.set(false);
+    const address = place.address || (await this.placesService.reverseGeocode(place.lat, place.lng));
+    const mapa = `https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lng}#map=18/${place.lat}/${place.lng}`;
+    const texto = address
+      ? `¿Nos encontramos en ${place.name}? ${address} — ${mapa}`
+      : `¿Nos encontramos en ${place.name}? ${mapa}`;
+    const actual = this.newMessage().trim();
+    this.newMessage.set(actual ? `${actual} ${texto}` : texto);
   }
 
   cerrarModalDenuncia() {
