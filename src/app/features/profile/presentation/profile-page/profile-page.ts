@@ -208,7 +208,7 @@ readonly reviewsError = signal<string | null>(null);
     this.activeTab.set(tab);
   }
 
-private currentXp(experience: UserExperienceSummary): number {
+  private currentXp(experience: UserExperienceSummary): number {
     const totalXp = experience.totalXp ?? experience.xp;
     return typeof totalXp === 'number' && Number.isFinite(totalXp) ? totalXp : 0;
   }
@@ -231,5 +231,24 @@ private currentXp(experience: UserExperienceSummary): number {
     return [1, 2, 3, 4, 5].map((star) =>
       star <= average ? '★' : '☆',
     );
+  }
+
+  unlockedAchievementsList(): (UserExperienceAchievement & { progressLabel: string })[] {
+    return this.achievements()
+      .filter((a) => a.unlocked ?? true)
+      .map((a) => ({ ...a, progressLabel: '' }));
+  }
+
+  lockedAchievementsList(): (UserExperienceAchievement & { progressLabel: string })[] {
+    return this.achievements()
+      .filter((a) => !(a.unlocked ?? true))
+      .map((a) => ({
+        ...a,
+        progressLabel: `${Math.min(this.totalXp(), a.requiredXp)} / ${a.requiredXp}`,
+      }));
+  }
+
+  achievementIcon(achievement: UserExperienceAchievement): string {
+    return achievement.icon ?? '⭐';
   }
 }
