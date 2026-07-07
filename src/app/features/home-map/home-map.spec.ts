@@ -172,6 +172,7 @@ interface HomeMapComponentTest {
   fallbackIconFor: (reporte: Reporte) => string;
   buildPopup: (reporte: Reporte) => string;
   cargarReportes: () => Promise<void>;
+  actualizarDestacados: () => void;
   initializeMap: () => void;
   buscarLugares: (tipo: 'veterinary' | 'police') => Promise<void>;
   dibujarLugares: () => void;
@@ -1051,6 +1052,91 @@ describe('HomeMapComponent', () => {
       const action = testingComponent().cargarReportes();
 
       await expect(action).resolves.toBeUndefined();
+    });
+
+    it('keeps only featured reports in the highlighted section', async () => {
+      reportListService.getGenerales.mockResolvedValue([
+        mockReporte({ publicId: 'f1', featured: true }),
+        mockReporte({ publicId: 'n1', featured: false }),
+        mockReporte({ publicId: 'f2', featured: true }),
+      ]);
+      reportListService.getMisReportes.mockResolvedValue([]);
+      mockDibujarMarcadores();
+
+      await testingComponent().cargarReportes();
+
+      expect(component.totalDestacados()).toBe(2);
+      expect(component.reportesDestacados().map((r) => r.publicId)).toEqual([
+        'f1',
+        'f2',
+      ]);
+    });
+  });
+
+  describe('actualizarDestacados', () => {
+    it('filters only featured reports', () => {
+      component.reportes.set([
+        mockReporte({ publicId: '1', featured: true }),
+        mockReporte({ publicId: '2', featured: false }),
+        mockReporte({ publicId: '3', featured: true }),
+      ]);
+
+      testingComponent().actualizarDestacados();
+
+      expect(component.reportesDestacados()).toHaveLength(2);
+      expect(component.reportesDestacados().map((r) => r.publicId)).toEqual([
+        '1',
+        '3',
+      ]);
+      expect(component.totalDestacados()).toBe(2);
+    });
+
+    it('orders featured reports by proximity when the user location is known', () => {
+      component.reportes.set([
+        mockReporte({
+          publicId: 'far',
+          featured: true,
+          location: {
+            address: 'Lejos',
+            latitude: -35.6037,
+            longitude: -59.3816,
+          },
+        }),
+        mockReporte({
+          publicId: 'near',
+          featured: true,
+          location: {
+            address: 'Cerca',
+            latitude: -34.6037,
+            longitude: -58.3816,
+          },
+        }),
+      ]);
+
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
+
+      testingComponent().actualizarDestacados();
+
+      expect(component.reportesDestacados().map((r) => r.publicId)).toEqual([
+        'near',
+        'far',
+      ]);
+    });
+
+    it('shows at most three featured reports', () => {
+      component.reportes.set(
+        Array.from({ length: 6 }, (_, index) =>
+          mockReporte({ publicId: `d${index}`, featured: true }),
+        ),
+      );
+
+      testingComponent().actualizarDestacados();
+
+      expect(component.reportesDestacados()).toHaveLength(3);
+      expect(component.totalDestacados()).toBe(6);
     });
   });
 

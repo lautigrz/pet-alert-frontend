@@ -19,6 +19,8 @@ export class HomeReportCardComponent {
 
   readonly data = computed(() => this._reporte());
 
+  readonly destacado = computed(() => this.data()?.featured === true);
+
   readonly esPerdida = computed(() => this.data()?.type === 'LOST');
 
   readonly enTransito = computed(() => {

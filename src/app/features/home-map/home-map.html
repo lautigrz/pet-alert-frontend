@@ -270,6 +270,40 @@
 
   <div class="hidden lg:block px-5 py-4 border-t border-slate-200">
     <div class="flex items-center justify-between">
+      <div class="flex items-center gap-1.5">
+        <h3 class="text-base font-bold text-[#12355B]">Reportes destacados</h3>
+        <app-info-tooltip
+          align="center"
+          tooltipTitle="¿Qué es destacar?"
+          [ariaLabel]="'¿Qué es destacar un reporte?'"
+        >
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Destacar tu reporte lo muestra
+            <span class="font-semibold text-[#12355B]">priorizado</span>:
+            aparece primero en los listados y con más visibilidad para que más gente lo vea.
+          </p>
+
+          <p class="text-xs text-slate-500 leading-relaxed mt-2">
+            <span class="font-semibold text-[#12355B]">¿Cómo?</span>
+            Entrá al detalle de tu reporte y tocá
+            <span class="font-semibold text-[#12355B]">★ Destacar reporte</span>.
+            Se abona una sola vez y queda destacado mientras el reporte siga activo.
+          </p>
+        </app-info-tooltip>
+      </div>
+      <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
+        {{ badgeDestacados() }}
+      </span>
+    </div>
+    @for (r of reportesDestacados(); track r.publicId) {
+    <div class="home-card mt-3">
+      <app-home-report-card [reporte]="r"></app-home-report-card>
+    </div>
+    }
+  </div>
+
+  <div class="hidden lg:block px-5 py-4 border-t border-slate-200">
+    <div class="flex items-center justify-between">
       <h3 class="text-base font-bold text-[#12355B]">Reportes cercanos</h3>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
         {{ badgeCercanos() }}
