@@ -57,11 +57,11 @@ export class ReportListHttp {
   }
 
 
-  updateStatus(publicId: string, status: 'RESOLVED'): Promise<void> {
+  updateStatus(publicId: string, status: 'RESOLVED', resolved?: boolean): Promise<void> {
     return firstValueFrom(
       this.http.patch<void>(
         `${this.baseUrl}/reports/status/${publicId}`,
-        { status }
+        { status, resolved }
       ),
     );
   }

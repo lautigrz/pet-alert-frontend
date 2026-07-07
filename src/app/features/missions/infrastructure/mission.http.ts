@@ -1,16 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { CreateMissionDTO, CreateMissionResponse, MissionCardOutput, MissionOutput } from './models/mission.model';
 
-export interface CreateMissionRequest {
-  reportPublicId: string;
-  latitude: number;
-  longitude: number;
-  radius: number;
-  title: string;
-  description: string;
-}
+
 
 @Injectable({
   providedIn: 'root'
@@ -20,25 +14,42 @@ export class MissionHttp {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
 
-  createMission(body: CreateMissionRequest): Promise<void> {
+  createMission(body: CreateMissionDTO): Observable<CreateMissionResponse> {
 
-    return firstValueFrom(
-      this.http.post<void>(
-        `${this.baseUrl}/missions`,
-        body
-      )
+    return this.http.post<CreateMissionResponse>(
+      `${this.baseUrl}/missions`,
+      body
     );
-
   }
 
-  getMissions(): Promise<any[]> {
+  getMissions(): Observable<MissionCardOutput[]> {
+    return this.http.get<MissionCardOutput[]>(`${this.baseUrl}/missions`);
+  }
 
-  return firstValueFrom(
-    this.http.get<any[]>(
-      `${this.baseUrl}/missions`
-    )
-  );
+  getMissionDetail(publicId: string): Observable<MissionOutput> {
+    return this.http.get<MissionOutput>(`${this.baseUrl}/missions/${publicId}`);
+  }
 
-}
+  joinMission(publicId: string): Observable<{ status: string; message: string }> {
+    return this.http.post<{ status: string; message: string }>(
+      `${this.baseUrl}/missions/${publicId}/join`,
+      {},
+    );
+  }
+
+  leaveMission(publicId: string): Observable<{ status: string; message: string }> {
+    return this.http.post<{ status: string; message: string }>(
+      `${this.baseUrl}/missions/${publicId}/leave`,
+      {}
+    );
+  }
+
+  cancelMission(publicId: string): Observable<{ status: string; message: string }> {
+
+    return this.http.post<{ status: string; message: string }>(
+      `${this.baseUrl}/missions/${publicId}/cancel`,
+      {},
+    );
+  }
 
 }

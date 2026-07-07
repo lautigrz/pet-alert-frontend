@@ -15,6 +15,7 @@ vi.mock('leaflet', () => {
     on: vi.fn().mockReturnThis(),
     closePopup: vi.fn(),
     setLatLng: vi.fn(),
+    setLatLngs: vi.fn(),
     setRadius: vi.fn(),
     remove: vi.fn(),
   });
@@ -53,6 +54,7 @@ vi.mock('leaflet', () => {
     marker: vi.fn().mockReturnValue(createMarkerMock()),
     circle: vi.fn().mockReturnValue(createMarkerMock()),
     circleMarker: vi.fn().mockReturnValue(createMarkerMock()),
+    polygon: vi.fn().mockReturnValue(createMarkerMock()),
     divIcon: vi.fn().mockImplementation((options) => ({
       options,
     })),
@@ -114,10 +116,10 @@ interface LocationSuggestionMock {
 }
 
 interface PlaceMock {
-  nombre: string;
+  name: string;
   lat: number;
   lng: number;
-  distancia?: number;
+  distance?: number;
 }
 
 interface ProfileMock {
@@ -173,6 +175,7 @@ interface HomeMapComponentTest {
   initializeMap: () => void;
   buscarLugares: (tipo: 'veterinary' | 'police') => Promise<void>;
   dibujarLugares: () => void;
+  dibujarLugar: (lugar: unknown, icon: unknown) => void;
   centerOnUser: () => void;
   getUserLocation: () => void;
   placeUserMarker: () => void;
@@ -217,10 +220,10 @@ const mockSuggestion = (
 });
 
 const mockPlace = (overrides: Partial<PlaceMock> = {}): PlaceMock => ({
-  nombre: 'Veterinaria',
+  name: 'Veterinaria',
   lat: -34.6,
   lng: -58.3,
-  distancia: 1.2,
+  distance: 1.2,
   ...overrides,
 });
 
@@ -1007,6 +1010,39 @@ describe('HomeMapComponent', () => {
       expect(component.reportesCercanos()).toHaveLength(2);
     });
 
+    it('shows only reports within the radar radius when the user location is known', async () => {
+      reportListService.getGenerales.mockResolvedValue([
+        mockReporte({
+          publicId: 'near',
+          location: {
+            address: 'Cerca',
+            latitude: -34.6037,
+            longitude: -58.3816,
+          },
+        }),
+        mockReporte({
+          publicId: 'far',
+          location: {
+            address: 'Lejos',
+            latitude: -35.6037,
+            longitude: -59.3816,
+          },
+        }),
+      ]);
+      reportListService.getMisReportes.mockResolvedValue([]);
+
+      testingComponent().userLatLng = {
+        lat: -34.6037,
+        lng: -58.3816,
+      };
+      mockDibujarMarcadores();
+
+      await testingComponent().cargarReportes();
+
+      expect(component.reportesFiltrados()).toHaveLength(1);
+      expect(component.reportesFiltrados()[0]?.publicId).toBe('near');
+    });
+
     it('does not throw when report loading fails', async () => {
       reportListService.getGenerales.mockRejectedValue(
         new Error('Backend error'),
@@ -1080,7 +1116,7 @@ describe('HomeMapComponent', () => {
       await testingComponent().buscarLugares('veterinary');
 
       expect(globalThis.fetch).toHaveBeenCalled();
-      expect(component.lugares()[0]?.nombre).toBe('Veterinaria Central');
+      expect(component.lugares()[0]?.name).toBe('Veterinaria Central');
     });
 
     it('loads nearby veterinary places', async () => {
@@ -1109,10 +1145,10 @@ describe('HomeMapComponent', () => {
 
       expect(component.lugares()).toEqual([
         {
-          nombre: 'Veterinaria Central',
+          name: 'Veterinaria Central',
           lat: -34.604,
           lng: -58.382,
-          distancia: expect.any(Number),
+          distance: expect.any(Number),
         },
       ]);
     });
@@ -1145,10 +1181,10 @@ describe('HomeMapComponent', () => {
 
       expect(component.lugares()).toEqual([
         {
-          nombre: 'Veterinaria de Barrio',
+          name: 'Veterinaria de Barrio',
           lat: -34.605,
           lng: -58.383,
-          distancia: expect.any(Number),
+          distance: expect.any(Number),
         },
       ]);
     });
@@ -1175,7 +1211,7 @@ describe('HomeMapComponent', () => {
 
       await testingComponent().buscarLugares('police');
 
-      expect(component.lugares()[0]?.nombre).toBe('Dependencia policial');
+      expect(component.lugares()[0]?.name).toBe('Dependencia policial');
     });
 
     it('uses default veterinary name when place has no name', async () => {
@@ -1200,7 +1236,7 @@ describe('HomeMapComponent', () => {
 
       await testingComponent().buscarLugares('veterinary');
 
-      expect(component.lugares()[0]?.nombre).toBe('Centro veterinario');
+      expect(component.lugares()[0]?.name).toBe('Centro veterinario');
     });
 
     it('clears places and sets error when nearby places request fails', async () => {
@@ -1371,6 +1407,16 @@ describe('HomeMapComponent', () => {
       testingComponent().dibujarLugares();
 
       expect(testingComponent().lugaresLayer.clearLayers).toHaveBeenCalled();
+    });
+
+    it('draws a centro pin for each nearby place', () => {
+      testingComponent().lugaresLayer = mockLayer();
+      component.lugares.set([mockPlace()]);
+      const dibujarLugarSpy = vi.spyOn(testingComponent(), 'dibujarLugar');
+
+      testingComponent().dibujarLugares();
+
+      expect(dibujarLugarSpy).toHaveBeenCalledOnce();
     });
   });
 

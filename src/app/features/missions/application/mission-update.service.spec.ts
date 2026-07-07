@@ -1,0 +1,88 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError, firstValueFrom } from 'rxjs';
+import { describe, beforeEach, it, expect, vi } from 'vitest';
+import { MissionUpdateService } from './mission-update.service';
+import { MissionUpdateHttp } from '../infrastructure/mission-update.http';
+
+describe('MissionUpdateService', () => {
+  let service: MissionUpdateService;
+  let mockUpdateHttp: any;
+
+  beforeEach(() => {
+    mockUpdateHttp = {
+      getUpdates: vi.fn(),
+      createUpdate: vi.fn()
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        MissionUpdateService,
+        { provide: MissionUpdateHttp, useValue: mockUpdateHttp }
+      ]
+    });
+
+    service = TestBed.inject(MissionUpdateService);
+  });
+
+  it('debería crear el servicio', () => {
+    expect(service).toBeTruthy();
+  });
+
+  describe('getUpdates', () => {
+    it('debería llamar a la API y retornar las actualizaciones', async () => {
+      const updates = [{ publicId: 'u1', comment: 'test' }] as any;
+      mockUpdateHttp.getUpdates.mockReturnValue(of(updates));
+
+      const res = await firstValueFrom(service.getUpdates('m1'));
+      expect(mockUpdateHttp.getUpdates).toHaveBeenCalledWith('m1');
+      expect(res).toEqual(updates);
+    });
+
+    it('debería mapear el mensaje del backend ante un HttpErrorResponse al obtener actualizaciones', async () => {
+      const errorResponse = new HttpErrorResponse({
+        error: { message: 'Error al obtener actualizaciones' },
+        status: 500
+      });
+      mockUpdateHttp.getUpdates.mockReturnValue(throwError(() => errorResponse));
+
+      try {
+        await firstValueFrom(service.getUpdates('m1'));
+        expect.fail('Debería haber fallado');
+      } catch (err: any) {
+        expect(err.message).toBe('Error al obtener actualizaciones');
+      }
+    });
+  });
+
+  describe('createUpdate', () => {
+    const dto = {
+      missionPublicId: 'm1',
+      comment: 'nueva actualización'
+    };
+
+    it('debería llamar a la API y retornar la respuesta', async () => {
+      const response = { updateId: 1, publicId: 'u1' };
+      mockUpdateHttp.createUpdate.mockReturnValue(of(response));
+
+      const res = await firstValueFrom(service.createUpdate(dto));
+      expect(mockUpdateHttp.createUpdate).toHaveBeenCalledWith(dto);
+      expect(res).toEqual(response);
+    });
+
+    it('debería mapear el mensaje del backend ante un HttpErrorResponse al crear actualización', async () => {
+      const errorResponse = new HttpErrorResponse({
+        error: { message: 'Error al crear actualización' },
+        status: 400
+      });
+      mockUpdateHttp.createUpdate.mockReturnValue(throwError(() => errorResponse));
+
+      try {
+        await firstValueFrom(service.createUpdate(dto));
+        expect.fail('Debería haber fallado');
+      } catch (err: any) {
+        expect(err.message).toBe('Error al crear actualización');
+      }
+    });
+  });
+});

@@ -25,6 +25,8 @@ export interface ContentReportQueueItemResponse {
 
 export interface ResolveContentReportResult {
   autoSuspended: boolean;
+  approvedCount: number;
+  suspendedCount: number;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -55,6 +55,7 @@ export interface ReportDetail {
   createdAt: string;
   occurredAt: string;
   updatedAt: string | null;
+  featured?: boolean;
   location: {
     address: string;
     latitude: number;

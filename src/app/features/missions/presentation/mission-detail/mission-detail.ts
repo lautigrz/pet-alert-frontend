@@ -1,8 +1,18 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import * as L from 'leaflet';
 
-import { MissionResponseService } from '../../application/mission-response.service';
+import { MissionService } from '../../application/mission.service';
+import { MissionUpdateService } from '../../application/mission-update.service';
+import { AuthService } from '../../../auth/application/auth.service';
+import { ReportService } from '../../../report/application/report.service';
+import { MissionUpdateOutput } from '../../infrastructure/mission-update.http';
+import { ToastService } from '../../../../shared/application/toast.service';
+import { ChatsService } from '../../../chats/application/chats.service';
+import { MissionOutput } from '../../infrastructure/models/mission.model';
 
 @Component({
   selector: 'app-mission-detail',
@@ -14,74 +24,255 @@ import { MissionResponseService } from '../../application/mission-response.servi
   templateUrl: './mission-detail.html',
   styleUrl: './mission-detail.css'
 })
-export class MissionDetailPage implements OnInit {
+export class MissionDetailPage implements OnInit, OnDestroy {
 
-  private readonly missionResponseService =
-    inject(MissionResponseService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly missionService = inject(MissionService);
+  private readonly missionUpdateService = inject(MissionUpdateService);
+  private readonly authService = inject(AuthService);
+  private readonly reportService = inject(ReportService);
+  private readonly toastService = inject(ToastService);
+  private readonly chatsService = inject(ChatsService);
 
-  readonly mission = signal<any | null>(null);
+  readonly mission = signal<MissionOutput | null>(null);
+  readonly responses = signal<MissionUpdateOutput[]>([]);
+  readonly currentUserId = signal<string | null>(null);
+  readonly isVolunteer = signal<boolean>(false);
+  readonly isOwner = signal<boolean>(false);
+  readonly ownerId = signal<string | null>(null);
+  readonly owner = signal<any | null>(null);
 
-  readonly responses = signal<any[]>([]);
+  readonly tiempoTranscurrido = computed(() => {
+    const m = this.mission();
+    if (!m) return '';
+    if (m.status === 'CLOSED') return 'Cerrada';
+
+    const createdDate = new Date(m.createdAt);
+    const now = new Date();
+    const diffTime = now.getTime() - createdDate.getTime();
+    if (diffTime < 0) return 'Activa hace unos instantes';
+
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+
+    if (diffDays > 0) {
+      return `Activa hace ${diffDays} ${diffDays === 1 ? 'día' : 'días'}`;
+    } else if (diffHours > 0) {
+      return `Activa hace ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
+    } else {
+      return `Activa hace ${diffMinutes > 0 ? diffMinutes : 1} ${diffMinutes === 1 ? 'minuto' : 'minutos'}`;
+    }
+  });
+
+  private map?: L.Map;
+  private circle?: L.Circle;
+  private marker?: L.Marker;
 
   comentario = '';
-
   imagen?: File;
 
   async ngOnInit(): Promise<void> {
+    const publicId = this.route.snapshot.paramMap.get('publicId') || '';
+    if (publicId) {
+      await this.cargarMision(publicId);
+      await this.cargarRespuestas(publicId);
+    }
+  }
 
-    this.mission.set(history.state.mission);
-    await this.cargarRespuestas();
+  async cargarMision(publicId: string): Promise<void> {
+    try {
+      const m = await firstValueFrom(this.missionService.getMissionDetail(publicId));
+      this.mission.set(m);
 
-    console.log(this.mission());
 
+      console.log("Mision", m);
+
+      const userId = this.authService.getCurrentUserId();
+      this.currentUserId.set(userId);
+
+      const volunteers = m.volunteers || [];
+      this.isVolunteer.set(volunteers.some(v => v.publicId === userId));
+
+      const reportDetail = await this.reportService.getReportByPublicId(m.report.publicId);
+      this.owner.set(reportDetail.user);
+      this.ownerId.set(reportDetail.user.publicId);
+      this.isOwner.set(reportDetail.user.publicId === userId);
+
+      this.inicializarMapa(m);
+    } catch (error) {
+      console.error('Error loading mission details:', error);
+    }
+  }
+
+  async cargarRespuestas(publicId: string): Promise<void> {
+    try {
+      const data = await firstValueFrom(this.missionUpdateService.getUpdates(publicId));
+      this.responses.set(data);
+    } catch (error) {
+      console.error('Error loading mission updates:', error);
+    }
   }
 
   seleccionarImagen(event: Event): void {
-
-  const input = event.target as HTMLInputElement;
-
-  if (input.files?.length) {
-
-    this.imagen = input.files[0];
-
+    const input = event.target as HTMLInputElement;
+    if (input.files?.length) {
+      this.imagen = input.files[0];
+    }
   }
 
-}
+  async unirse(): Promise<void> {
+    const m = this.mission();
+    if (!m) return;
 
-async enviarMision(): Promise<void> {
-
-  if (!this.comentario.trim()) {
-
-    alert("Escribí un comentario");
-
-    return;
-
+    try {
+      await firstValueFrom(this.missionService.joinMission(m.publicId));
+      this.toastService.success("Te uniste a la misión con éxito");
+      await this.cargarMision(m.publicId);
+    } catch (error) {
+      this.toastService.error("No se pudo unir a la misión");
+    }
   }
 
-  await this.missionResponseService.create({
+  async abandonar(): Promise<void> {
+    const m = this.mission();
+    if (!m) return;
 
-    missionPublicId: this.mission()!.public_id,
+    try {
+      await firstValueFrom(this.missionService.leaveMission(m.publicId));
+      this.toastService.success("Abandonaste la misión");
+      await this.cargarMision(m.publicId);
+    } catch (error) {
+      console.error(error);
+      this.toastService.error(error instanceof Error ? error.message : "No se pudo abandonar la misión");
+    }
+  }
 
-    comment: this.comentario,
+  async cancelar(): Promise<void> {
+    const m = this.mission();
+    if (!m) return;
 
-    photoUrl: null
+    if (!confirm("¿Estás seguro de que deseas cerrar/cancelar esta misión?")) return;
 
-  });
+    try {
+      await firstValueFrom(this.missionService.cancelMission(m.publicId));
+      this.toastService.success("Misión cancelada con éxito");
+      await this.cargarMision(m.publicId);
+    } catch (error) {
+      console.error(error);
+      this.toastService.error(error instanceof Error ? error.message : "No se pudo cancelar la misión");
+    }
+  }
 
-  alert("Misión enviada correctamente");
+  async enviarMision(): Promise<void> {
+    const m = this.mission();
+    if (!m) return;
 
-}
+    if (!this.comentario.trim()) {
+      this.toastService.error("Escribí un comentario");
+      return;
+    }
 
-async cargarRespuestas(): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.missionUpdateService.createUpdate({
+          missionPublicId: m.publicId,
+          comment: this.comentario,
+          photoUrl: undefined
+        })
+      );
+      this.comentario = '';
+      this.imagen = undefined;
+      this.toastService.success("Actualización enviada correctamente");
+      await this.cargarRespuestas(m.publicId);
+    } catch (error) {
+      console.error(error);
+      this.toastService.error(error instanceof Error ? error.message : "No se pudo enviar la actualización");
+    }
+  }
 
-  const data = await this.missionResponseService.getResponses(
+  ngOnDestroy(): void {
+    if (this.map) {
+      this.map.remove();
+    }
+  }
 
-    this.mission()!.public_id
+  inicializarMapa(m: MissionOutput): void {
+    const lat = m.searchArea.latitude;
+    const lng = m.searchArea.longitude;
+    const radius = m.searchArea.radius;
 
-  );
+    setTimeout(() => {
+      if (this.map) {
+        this.map.remove();
+      }
 
-  this.responses.set(data);
+      this.map = L.map('detailMap', {
+        zoomControl: true,
+        attributionControl: false
+      }).setView([lat, lng], 15);
 
-}
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+
+      this.circle = L.circle([lat, lng], {
+        radius: radius,
+        color: '#2563eb',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.15,
+        weight: 2
+      }).addTo(this.map);
+
+      const image = m.report.photoUrl ?? m.report.petDetails?.photoUrl ?? '';
+
+      this.marker = L.marker([lat, lng], {
+        icon: this.buildMissionIcon(image)
+      }).addTo(this.map);
+
+      this.map.fitBounds(this.circle.getBounds(), { padding: [20, 20] });
+    }, 100);
+  }
+
+  private buildMissionIcon(imageUrl: string): L.DivIcon {
+    return L.divIcon({
+      html: `
+        <div class="relative w-11 h-11 rounded-full border-3 border-[#2563eb] bg-white shadow-md overflow-hidden flex items-center justify-center">
+          ${imageUrl
+          ? `<img src="${imageUrl}" class="w-full h-full object-cover">`
+          : `<span class="text-sm font-bold text-[#2563eb]">🎯</span>`
+        }
+        </div>
+      `,
+      className: 'custom-mission-pin',
+      iconSize: [44, 44],
+      iconAnchor: [22, 22],
+    });
+  }
+
+  readonly puntuaciones = signal<Record<string, number>>({});
+
+  puntuar(updatePublicId: string, puntos: number): void {
+    this.puntuaciones.update(prev => ({
+      ...prev,
+      [updatePublicId]: puntos
+    }));
+    this.toastService.success(`¡Valoración enviada! Se otorgaron +${puntos} XP`);
+  }
+
+  obtienePuntos(updatePublicId: string): number {
+    return this.puntuaciones()[updatePublicId] || 0;
+  }
+
+  async contactarDueno(): Promise<void> {
+    const ow = this.owner();
+    if (!ow) return;
+
+    try {
+      const conversationId = await this.chatsService.getOrCreateConversation(ow.publicId);
+      this.router.navigate(['/chats'], { queryParams: { conversation: conversationId } });
+    } catch {
+      this.toastService.error('No se pudo abrir el chat');
+    }
+  }
 
 }

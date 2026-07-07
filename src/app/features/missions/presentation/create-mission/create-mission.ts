@@ -7,6 +7,8 @@ import { ReportDetail } from '../../../report/infrastructure/report.http';
 import { Router } from '@angular/router';
 import { MissionService } from '../../application/mission.service';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
+import { ToastService } from '../../../../shared/application/toast.service';
 
 @Component({
   selector: 'app-create-mission',
@@ -24,6 +26,7 @@ export class CreateMissionPage implements OnInit, AfterViewInit {
   private readonly reportService = inject(ReportService);
   private readonly router = inject(Router);
   private readonly missionService = inject(MissionService);
+  private readonly toastService = inject(ToastService);
   private missionCircle?: L.Circle;
   private missionMarker?: L.Marker;
 
@@ -65,6 +68,7 @@ volver(): void {
 ngAfterViewInit(): void {
 
   setTimeout(() => {
+    if (!this.missionMap) return;
 
     const lat = this.report?.location.latitude ?? -34.6037;
     const lng = this.report?.location.longitude ?? -58.3816;
@@ -81,6 +85,16 @@ ngAfterViewInit(): void {
       }
     ).addTo(this.map);
 
+    this.map.on('click', (event: L.LeafletMouseEvent) => {
+      const posicion = event.latlng;
+      if (this.missionMarker) {
+        this.missionMarker.setLatLng(posicion);
+      }
+      if (this.missionCircle) {
+        this.missionCircle.setLatLng(posicion);
+      }
+    });
+
     this.mostrarMision();
 
     this.map.invalidateSize();
@@ -96,6 +110,8 @@ private inicializarMapa(): void {
     return;
   }
 
+  if (!this.missionMap) return;
+
   const lat = this.report?.location.latitude ?? -34.6037;
   const lng = this.report?.location.longitude ?? -58.3816;
 
@@ -110,6 +126,16 @@ private inicializarMapa(): void {
       attribution: '&copy; OpenStreetMap'
     }
   ).addTo(this.map);
+
+  this.map.on('click', (event: L.LeafletMouseEvent) => {
+    const posicion = event.latlng;
+    if (this.missionMarker) {
+      this.missionMarker.setLatLng(posicion);
+    }
+    if (this.missionCircle) {
+      this.missionCircle.setLatLng(posicion);
+    }
+  });
 
   this.mostrarMision();
 
@@ -231,7 +257,7 @@ async guardarMision(): Promise<void> {
   try {
 
     console.log("TITLE:", this.titulo);
-console.log("DESCRIPTION:", this.descripcion);
+    console.log("DESCRIPTION:", this.descripcion);
 
     console.log({
       reportPublicId: this.reportId,
@@ -242,21 +268,23 @@ console.log("DESCRIPTION:", this.descripcion);
       description: this.descripcion
     });
 
-    await this.missionService.createMission({
+    await firstValueFrom(
+      this.missionService.createMission({
 
-      reportPublicId: this.reportId,
+        reportPublicId: this.reportId,
 
-      latitude: posicion.lat,
+        latitude: posicion.lat,
 
-      longitude: posicion.lng,
+        longitude: posicion.lng,
 
-      radius: this.radio,
+        radius: this.radio,
 
-      title: this.titulo,
+        title: this.titulo,
 
-      description: this.descripcion
+        description: this.descripcion
 
-    });
+      })
+    );
 
     await this.router.navigate(['/home'], {
       state: {
@@ -268,7 +296,7 @@ console.log("DESCRIPTION:", this.descripcion);
 
     console.error(error);
 
-    alert("No se pudo crear la misión");
+    this.toastService.error("No se pudo crear la misión");
 
   }
 
@@ -278,7 +306,7 @@ continuar(): void {
 
   if (!this.titulo.trim()) {
 
-    alert('Ingresá un título para la misión');
+    this.toastService.error('Ingresá un título para la misión');
 
     return;
 
@@ -286,7 +314,7 @@ continuar(): void {
 
   if (!this.descripcion.trim()) {
 
-    alert('Ingresá una descripción');
+    this.toastService.error('Ingresá una descripción');
 
     return;
 

@@ -10,14 +10,14 @@
    <a
   routerLink="/chats"
   routerLinkActive="text-[#E8842E]"
-  class="flex items-center gap-1.5 hover:text-[#E8842E] transition-colors">
+  class="relative hover:text-[#E8842E] transition-colors">
 
   Chats
 
-  <span
-    class="flex items-center justify-center bg-[#E8842E] text-white text-xs font-bold min-w-[18px] h-[18px] px-1 rounded-full">
-    {{ unreadChats() }}
-  </span>
+  @if (unreadChats() > 0) {
+  <span aria-label="Tenés chats sin leer"
+    class="absolute -top-1 -right-2.5 w-2 h-2 rounded-full bg-[#E8842E]"></span>
+  }
 
 </a>
     <a [routerLink]="[rutaMiPerfil]" routerLinkActive="text-[#E8842E]" class="hover:text-[#E8842E] transition-colors">Perfil</a>

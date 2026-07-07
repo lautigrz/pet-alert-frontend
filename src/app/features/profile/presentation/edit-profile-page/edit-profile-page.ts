@@ -2,11 +2,12 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileService } from '../../application/profile.service';
 import { NotificationToggle } from '../../../notifications/presentation/notification-toggle/notification-toggle';
+import { NotificationPreferencesCard } from '../../../notifications/presentation/notification-preferences-card/notification-preferences-card';
 
 @Component({
   selector: 'app-edit-profile-page',
   standalone: true,
-  imports: [ReactiveFormsModule, NotificationToggle],
+  imports: [ReactiveFormsModule, NotificationToggle, NotificationPreferencesCard],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './edit-profile-page.html',
   styleUrl: './edit-profile-page.css',

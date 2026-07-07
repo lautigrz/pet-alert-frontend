@@ -1,0 +1,51 @@
+<div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
+  <div class="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+
+    <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
+      <h2 class="text-lg font-extrabold text-[#12355B]">Cerrar reporte</h2>
+      <button type="button" (click)="cerrar.emit()" aria-label="Cerrar"
+        class="text-slate-400 transition hover:text-[#12355B]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+      <p class="text-[13px] text-slate-500">Contanos por qué cerrás este reporte.</p>
+
+      <div class="space-y-2">
+        @for (m of motivos; track m.label; let i = $index) {
+          <button type="button" (click)="seleccionar(i)"
+            class="flex w-full items-start gap-3 rounded-xl border p-3 text-left transition"
+            [class]="motivoSeleccionado() === i
+              ? 'border-[#E8842E] bg-[#E8842E]/5'
+              : 'border-slate-200 hover:border-slate-300'">
+            <span class="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border-2"
+              [class]="motivoSeleccionado() === i ? 'border-[#E8842E]' : 'border-slate-300'">
+              @if (motivoSeleccionado() === i) {
+                <span class="h-2 w-2 rounded-full bg-[#E8842E]"></span>
+              }
+            </span>
+            <span class="min-w-0">
+              <span class="block text-sm font-bold text-[#12355B]">{{ m.label }}</span>
+              <span class="mt-0.5 block text-xs text-slate-500">{{ m.descripcion }}</span>
+            </span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 bg-white px-6 py-4 sm:flex-row">
+      <button type="button" (click)="cerrar.emit()" [disabled]="enviando()"
+        class="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-[#12355B] disabled:opacity-60">
+        Cancelar
+      </button>
+      <button type="button" (click)="onConfirmar()" [disabled]="enviando() || motivoSeleccionado() === null"
+        class="flex-1 rounded-lg bg-[#E8842E] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#d6761f] disabled:opacity-60">
+        {{ enviando() ? 'Cerrando…' : 'Cerrar reporte' }}
+      </button>
+    </div>
+  </div>
+</div>

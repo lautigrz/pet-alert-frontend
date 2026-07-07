@@ -1,105 +1,265 @@
 @if (mission(); as m) {
 
-<div class="min-h-screen bg-slate-100 py-8">
+<div class="min-h-screen bg-slate-100 py-8 px-4">
 
   <div class="max-w-3xl mx-auto">
 
     <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
 
-      
-      <img
-        [src]="
-          m.report.lost_report_detail?.pet?.petImages?.[0]?.photoUrl ??
-          m.report.reportImages?.[0]?.photoUrl ??
+      <img [src]="
+          m.report.photoUrl ??
+          m.report.petDetails?.photoUrl ??
           'assets/default-pet.png'
-        "
-        class="w-full h-72 object-cover"
-      >
+        " class="w-full h-80 object-cover">
 
-   
       <div class="p-8">
 
-        <span
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2563eb] text-white text-sm font-bold">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2563eb] text-white text-sm font-bold shadow-sm">
+            Misión de Búsqueda
+          </span>
 
-          🎯 Misión
+          <div class="flex items-center gap-2 text-xs font-semibold">
+            @if (m.status === 'OPEN') {
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-100 text-green-800">
+              ● Abierta
+            </span>
+            } @else if (m.status === 'IN_PROGRESS') {
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 text-blue-800">
+              ● En progreso
+            </span>
+            } @else {
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-800">
+              ● Cerrada / Cancelada
+            </span>
+            }
 
-        </span>
+            @if (m.status !== 'CLOSED' && tiempoTranscurrido()) {
+            <span
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+              {{ tiempoTranscurrido() }}
+            </span>
+            }
+          </div>
+        </div>
 
         <h1 class="mt-5 text-3xl font-bold text-[#12355B]">
-
           {{ m.title }}
-
         </h1>
 
         <p class="mt-4 text-slate-600 leading-7 whitespace-pre-line">
-
           {{ m.description }}
-
         </p>
 
         <div class="mt-6 flex items-center gap-2 text-slate-500">
 
-          📍
-
-          <span>
-
-            {{ m.report.location_address }}
-
+          <span class="text-sm font-medium">
+            {{ m.report.location.address || 'Sin dirección especificada' }}
           </span>
-
         </div>
 
-        <div class="mt-3 text-slate-600">
-
-          Radio:
-          <b>{{ m.radius }} m</b>
-
+        <div class="mt-3 text-slate-600 text-sm">
+          Radio de búsqueda:
+          <b class="text-[#12355B] font-semibold">{{ m.searchArea.radius }} m</b>
         </div>
 
-        <hr class="my-8">
+        <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200 shadow-sm relative z-0">
+          <div id="detailMap" class="w-full h-64 sm:h-72"></div>
+        </div>
 
-        <h2 class="text-xl font-bold text-[#12355B]">
+        @if (!isOwner() && owner(); as ow) {
+        <div class="mt-6 bg-slate-50 border border-slate-200 rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <img
+              [src]="ow.photoUrl || 'https://ui-avatars.com/api/?name=' + ow.username + '&background=e8842e&color=fff'"
+              alt="" class="w-12 h-12 rounded-full object-cover bg-slate-100 shrink-0" />
+            <div class="min-w-0">
+              <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Dueño de la
+                Mascota</span>
+              <span class="block text-base font-bold text-[#12355B] truncate capitalize">
+                {{ ow.name ? ow.name + ' ' + (ow.lastname || '') : ow.username }}
+              </span>
+            </div>
+          </div>
+          <button type="button" (click)="contactarDueno()"
+            class="bg-[#12355B] hover:bg-[#0e2a4a] text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shrink-0 shadow-sm">
+            Contactar Dueño
+          </button>
+        </div>
+        }
 
-          ¿Cómo te fue?
+        @if (m.status !== 'CLOSED') {
+        <div class="mt-6 border-t border-slate-100 pt-6">
+          @if (isOwner()) {
+          <button type="button" (click)="cancelar()"
+            class="w-full sm:w-auto rounded-xl bg-red-600 hover:bg-red-700 text-white py-3 px-6 font-bold shadow transition flex items-center justify-center gap-2">
+            Cancelar Misión
+          </button>
+          } @else {
+          @if (isVolunteer()) {
+          <button type="button" (click)="abandonar()"
+            class="w-full sm:w-auto rounded-xl bg-orange-600 hover:bg-orange-700 text-white py-3 px-6 font-bold shadow transition flex items-center justify-center gap-2">
+            Abandonar Misión
+          </button>
+          } @else {
+          <button type="button" (click)="unirse()"
+            class="w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 font-bold shadow transition flex items-center justify-center gap-2">
+            Unirse como Voluntario
+          </button>
+          }
+          }
+        </div>
+        }
 
-        </h2>
+        <!-- Voluntarios Activos -->
+        <div class="mt-8 border-t border-slate-100 pt-6">
+          <h3 class="text-lg font-bold text-[#12355B] mb-3">Voluntarios Activos ({{ m.volunteers.length }})</h3>
+          @if (m.volunteers.length === 0) {
+          <p class="text-sm text-slate-500 bg-slate-50 rounded-xl p-3 border border-slate-100">
+            Todavía nadie se ha unido como voluntario. ¡Sé el primero en colaborar!
+          </p>
+          } @else {
+          <div class="flex flex-wrap gap-2">
+            @for (v of m.volunteers; track v.publicId) {
+            <div
+              class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5 text-xs text-slate-700 font-semibold shadow-sm">
+              <img
+                [src]="v.photoUrl || 'https://ui-avatars.com/api/?name=' + v.username + '&background=2563eb&color=fff'"
+                class="w-6 h-6 rounded-full object-cover">
+              <span>{{ v.name ? v.name + ' ' + (v.lastname || '') : v.username }}</span>
+            </div>
+            }
+          </div>
+          }
+        </div>
 
-        <p class="text-sm text-slate-500 mt-1">
+        <!-- Enviar nueva actualización -->
+        @if (m.status !== 'CLOSED') {
+        @if (isVolunteer() || isOwner()) {
+        <div class="mt-8 bg-slate-50 rounded-2xl p-6 border border-slate-200/60">
+          <h2 class="text-xl font-bold text-[#12355B] mb-1">
+            {{ isOwner() ? 'Dejar comentario destacado' : '¿Cómo te fue?' }}
+          </h2>
+          <p class="text-sm text-slate-500 mb-4">
+            {{ isOwner() ? 'Publicá una actualización oficial destacada para todos los voluntarios.' : 'Contale al dueño
+            qué revisaste y compartí cualquier pista de la mascota.' }}
+          </p>
 
-          Contale al dueño qué revisaste y adjuntá una foto como evidencia.
+          <textarea rows="4" [(ngModel)]="comentario"
+            [placeholder]="isOwner() ? 'Escribí una novedad o instrucción destacada...' : 'Escribí un comentario...'"
+            class="w-full rounded-xl border border-slate-300 p-4 outline-none focus:border-[#2563eb] text-sm resize-none"></textarea>
 
-        </p>
+          <button type="button" (click)="enviarMision()"
+            class="mt-4 w-full bg-[#12355B] hover:bg-[#0f2d4d] text-white font-bold py-3.5 rounded-xl transition shadow-md">
+            {{ isOwner() ? 'Publicar comentario destacado' : 'Enviar actualización' }}
+          </button>
+        </div>
+        } @else {
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-6 text-center text-blue-800">
+          <p class="text-sm font-semibold">Debes unirte como voluntario para aportar novedades en esta misión.</p>
+        </div>
+        }
+        }
 
-     
+        <!-- Listado de Actualizaciones -->
+        <div class="mt-8 border-t border-slate-200 pt-8">
+          <h3 class="text-xl font-bold text-[#12355B] mb-4">Novedades y Comentarios de la Búsqueda</h3>
+          @if (responses().length === 0) {
+          <div class="text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <p class="text-sm">No hay comentarios ni pistas registradas en esta misión todavía.</p>
+          </div>
+          } @else {
+          <div class="space-y-4">
+            @for (r of responses(); track r.publicId) {
+            <div class="border rounded-2xl p-5 shadow-sm transition duration-200 relative overflow-hidden" [class]="r.user.publicId === ownerId() 
+                    ? 'border-amber-300 bg-amber-50/40 shadow-amber-100/50' 
+                    : 'bg-white border-slate-200 hover:shadow'">
 
-        <textarea
-  rows="5"
-  [(ngModel)]="comentario"
-  placeholder="Escribí un comentario..."
-  class="mt-4 w-full rounded-xl border border-slate-300 p-4 outline-none focus:border-[#2563eb]">
-</textarea>
+              @if (r.user.publicId === ownerId()) {
+              <div
+                class="absolute top-0 right-0 bg-amber-500 text-white text-[9px] font-extrabold px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm flex items-center gap-1">
+                Novedad del Creador
+              </div>
+              }
 
-
-        <div class="mt-6">
-
-          <label class="block text-sm font-semibold mb-2">
-
-            📷 Subir evidencia
-
-          </label>
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <img
+                    [src]="r.user.photoUrl || 'https://ui-avatars.com/api/?name=' + r.user.username + '&background=2563eb&color=fff'"
+                    class="w-8 h-8 rounded-full object-cover">
+                  <div>
+                    <p class="text-xs font-bold text-[#12355B]">
+                      {{ r.user.name ? r.user.name + ' ' + (r.user.lastname || '') : '@' + r.user.username }}
+                      @if (r.user.publicId === ownerId()) {
+                      <span
+                        class="ml-1 text-[10px] text-amber-600 bg-amber-100/80 px-1.5 py-0.5 rounded font-bold">Dueño</span>
+                      }
+                    </p>
+                    <p class="text-[10px] text-slate-400">
+                      {{ r.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                    </p>
                   </div>
+                </div>
 
-
-           <button
-          type="button"
-          (click)="enviarMision()"
-          class="mt-8 w-full bg-[#12355B] hover:bg-[#0f2d4d] text-white font-bold py-4 rounded-xl transition">
-
-          Enviar misión
-
-        </button>
-        
+                @if (r.user.publicId !== ownerId()) {
+                <div>
+                  @if (r.status === 'APPROVED') {
+                  <span class="px-2 py-0.5 rounded bg-green-100 text-green-800 text-[10px] font-bold">Aprobado</span>
+                  } @else if (r.status === 'REJECTED') {
+                  <span class="px-2 py-0.5 rounded bg-red-100 text-red-800 text-[10px] font-bold">Rechazado</span>
+                  } @else {
+                  @if (isOwner()) {
+                  <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2 py-1">
+                    <span class="text-[9px] text-slate-400 font-bold uppercase mr-1">Puntuar:</span>
+                    <button type="button" (click)="puntuar(r.publicId, 10)"
+                      [class]="obtienePuntos(r.publicId) === 10 ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
+                      class="border px-2 py-0.5 rounded-lg text-[9px] font-bold transition shadow-xs">
+                      +10 XP
+                    </button>
+                    <button type="button" (click)="puntuar(r.publicId, 25)"
+                      [class]="obtienePuntos(r.publicId) === 25 ? 'bg-indigo-100 text-indigo-800 border-indigo-300' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
+                      class="border px-2 py-0.5 rounded-lg text-[9px] font-bold transition shadow-xs">
+                      +25 XP
+                    </button>
+                    <button type="button" (click)="puntuar(r.publicId, 50)"
+                      [class]="obtienePuntos(r.publicId) === 50 ? 'bg-purple-100 text-purple-800 border-purple-300' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
+                      class="border px-2 py-0.5 rounded-lg text-[9px] font-bold transition shadow-xs">
+                      +50 XP
+                    </button>
+                  </div>
+                  } @else {
+                  @if (obtienePuntos(r.publicId) > 0) {
+                  <span
+                    class="px-2 py-0.5 rounded bg-green-50 border border-green-200 text-green-700 text-[10px] font-bold">Valorado:
+                    +{{ obtienePuntos(r.publicId) }} XP</span>
+                  } @else {
+                  <span
+                    class="px-2 py-0.5 rounded bg-yellow-50 border border-yellow-200 text-yellow-700 text-[10px] font-bold">Pendiente
+                    de valoración</span>
+                  }
+                  }
+                  }
+                </div>
+                }
+              </div>
+              <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                {{ r.comment }}
+              </p>
+              @if (obtienePuntos(r.publicId) > 0) {
+              <div
+                class="mt-3 pt-2.5 border-t border-dashed border-slate-100 flex items-center gap-1.5 text-xs text-green-600 font-semibold">
+                Esta pista fue valorada por el dueño. ¡El voluntario recibió +{{ obtienePuntos(r.publicId) }} XP!
+              </div>
+              }
+              @if (r.photoUrl) {
+              <img [src]="r.photoUrl" class="mt-4 rounded-xl max-h-60 w-full object-cover border border-slate-100">
+              }
+            </div>
+            }
+          </div>
+          }
+        </div>
 
       </div>
 
