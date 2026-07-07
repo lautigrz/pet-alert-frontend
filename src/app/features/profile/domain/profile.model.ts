@@ -20,6 +20,7 @@ export interface UserExperienceAchievement {
   name: string;
   description: string;
   requiredXp: number;
+  icon?: string;
   unlocked?: boolean;
 }
 
