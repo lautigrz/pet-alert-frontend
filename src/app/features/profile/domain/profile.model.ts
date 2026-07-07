@@ -14,3 +14,27 @@ export interface UpdatedProfile{
   role: string | null;
   stats: ProfileStats | null;
 }
+
+export interface UserExperienceAchievement {
+  code: string;
+  name: string;
+  description: string;
+  requiredXp: number;
+  icon?: string;
+  unlocked?: boolean;
+}
+
+export interface UserExperienceEvent {
+  action: string;
+  amount: number;
+  occurredAt: string;
+}
+
+export interface UserExperienceSummary {
+  xp: number;
+  totalXp?: number;
+  level: number;
+  achievements?: UserExperienceAchievement[];
+  unlockedAchievements: UserExperienceAchievement[];
+  recentEvents?: UserExperienceEvent[];
+}

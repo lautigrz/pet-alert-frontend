@@ -14,6 +14,7 @@ import { ProfileService } from '../../../profile/application/profile.service';
 import { ReportTimelineComponent } from '../components/report-timeline/report-timeline';
 import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
 import { CloseReportModalComponent } from '../components/close-report-modal/close-report-modal';
+import {InfoTooltipComponent} from "../../../../shared/component/info-tooltip/info-tooltip.component";
 
 @Component({
   selector: 'app-report-detail',
@@ -27,7 +28,8 @@ import { CloseReportModalComponent } from '../components/close-report-modal/clos
     ReportContactComponent,
     ReportTimelineComponent,
     ReportModalComponent,
-    CloseReportModalComponent
+    CloseReportModalComponent,
+    InfoTooltipComponent
   ],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './report-detail.html',
@@ -40,7 +42,6 @@ export class ReportDetailPage implements OnInit {
   private readonly paymentService = inject(PaymentService);
   private readonly toastService = inject(ToastService);
   private readonly profileService = inject(ProfileService);
-  private readonly USUARIO_BAJA_VALORACION_PUBLIC_ID = '70867c26-8c5c-40d2-b3df-08036823ff16';
 
 
   report = signal<ReportDetail | null>(null);
@@ -54,6 +55,8 @@ export class ReportDetailPage implements OnInit {
   siguiendoHistoria = signal(false);
   cargandoSeguimiento = signal(false);
   actualizandoSeguimiento = signal(false);
+  userRatingAverage = signal(0);
+  userRatingCount = signal(0);
 
   esPropio = computed(() => {
     const r = this.report();
@@ -70,10 +73,12 @@ export class ReportDetailPage implements OnInit {
     const publicId = this.route.snapshot.paramMap.get('publicId')!;
 
     try {
-      this.report.set(await this.reportService.getReportByPublicId(publicId));
-    } catch {
-      this.error.set('No se pudo cargar el reporte');
-    }
+    const report = await this.reportService.getReportByPublicId(publicId);
+    this.report.set(report);
+    await this.cargarRatingUsuario(report.user.publicId);
+  } catch {
+    this.error.set('No se pudo cargar el reporte');
+  }
 
     try {
       const perfil = await this.profileService.getProfile();
@@ -141,16 +146,32 @@ export class ReportDetailPage implements OnInit {
     }
   }
 
-  esUsuarioBajaValoracion(report: ReportDetail): boolean {
-    return report.user.publicId === this.USUARIO_BAJA_VALORACION_PUBLIC_ID;
-    //ACA IRIA LA LOGICA REAL
+
+  private async cargarRatingUsuario(userPublicId: string): Promise<void> {
+  try {
+    const rating = await this.profileService.getUserRating(userPublicId);
+    this.userRatingAverage.set(rating.average);
+    this.userRatingCount.set(rating.count);
+  } catch {
+    this.userRatingAverage.set(0);
+    this.userRatingCount.set(0);
+  }
+}
+sinValoraciones(): boolean {
+  return this.userRatingCount() === 0;
+}
+
+esUsuarioBajaValoracion(): boolean {
+  return !this.sinValoraciones() && this.userRatingAverage() < 3;
+}
+
+valoracionUsuario(): string {
+  if (this.sinValoraciones()) {
+    return 'Sin calificar';
   }
 
-  valoracionUsuario(report: ReportDetail): string {
-    return this.esUsuarioBajaValoracion(report) ? '2.0' : '5.0';
-    //ACA IRIA LA LOGICA REAL
-  }
-
+  return this.userRatingAverage().toFixed(1);
+}
   private readonly router = inject(Router);
   irAEditarDatos(): void {
     const r = this.report();

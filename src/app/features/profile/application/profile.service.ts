@@ -1,14 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ProfileHttp } from '../infrastructure/profile.http';
-import { UpdatedProfile } from '../domain/profile.model';
+import { UpdatedProfile, UserExperienceSummary } from '../domain/profile.model';
 import { PublicProfile } from '../domain/public-profile';
-import {
-  InvalidProfileDataError,
-  NetworkError,
-  UnexpectedProfileError,
-  UserNotFoundError,
-} from '../domain/profile.errors';
+import { CreateUserReviewCommand, MyUserReviews,  PaginatedUserReviews,  UserRatingSummary,  UserReview,} from '../domain/user-review.model';import { InvalidProfileDataError,  NetworkError,  UnexpectedProfileError,  UserNotFoundError,} from '../domain/profile.errors';
 export interface UpdateProfileCommand{
   name?: string;
   lastname?: string;
@@ -88,6 +83,49 @@ export class ProfileService {
         photoUrl: response.photoUrl ?? null,
         stats: response.stats ?? null,
       };
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async getUserExperience(): Promise<UserExperienceSummary> {
+    try {
+      return await this.profileHttp.getUserExperience();
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async createUserReview(command: CreateUserReviewCommand): Promise<UserReview> {
+    try {
+      return await this.profileHttp.createUserReview(command.reviewedUserId, {
+        rating: command.rating,
+        description: command.description?.trim() || null,
+      });
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async getUserReviews(publicId: string, page = 1, pageSize = 10): Promise<PaginatedUserReviews> {
+    try {
+      return await this.profileHttp.getUserReviews(publicId, page, pageSize);
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async getMyReviews(page = 1, pageSize = 10): Promise<MyUserReviews> {
+    try {
+      return await this.profileHttp.getMyReviews(page, pageSize);
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
+  async getUserRating(publicId: string): Promise<UserRatingSummary> {
+    try {
+      return await this.profileHttp.getUserRating(publicId);
     } catch (error) {
       throw this.mapUpdateProfileError(error);
     }
