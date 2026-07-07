@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://pet-alertapi-production.up.railway.app/api',
+  apiUrl: 'https://api.petfinderapp.com.ar/api',
   firebase: {
     apiKey: "AIzaSyDj5FubORs5b2mR-e_rW3Vy2Cuz47JUxsc",
     authDomain: "petfinder-32e6a.firebaseapp.com",
