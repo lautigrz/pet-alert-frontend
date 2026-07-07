@@ -14,6 +14,7 @@ import { ProfileService } from '../../../profile/application/profile.service';
 import { ReportTimelineComponent } from '../components/report-timeline/report-timeline';
 import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
 import { CloseReportModalComponent } from '../components/close-report-modal/close-report-modal';
+import {InfoTooltipComponent} from "../../../../shared/component/info-tooltip/info-tooltip.component";
 
 @Component({
   selector: 'app-report-detail',
@@ -27,7 +28,8 @@ import { CloseReportModalComponent } from '../components/close-report-modal/clos
     ReportContactComponent,
     ReportTimelineComponent,
     ReportModalComponent,
-    CloseReportModalComponent
+    CloseReportModalComponent,
+    InfoTooltipComponent
   ],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './report-detail.html',
@@ -40,7 +42,7 @@ export class ReportDetailPage implements OnInit {
   private readonly paymentService = inject(PaymentService);
   private readonly toastService = inject(ToastService);
   private readonly profileService = inject(ProfileService);
-  
+
 
   report = signal<ReportDetail | null>(null);
   loading = signal(true);
@@ -144,7 +146,7 @@ export class ReportDetailPage implements OnInit {
     }
   }
 
- 
+
   private async cargarRatingUsuario(userPublicId: string): Promise<void> {
   try {
     const rating = await this.profileService.getUserRating(userPublicId);
