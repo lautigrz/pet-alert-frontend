@@ -13,8 +13,16 @@
   </button>
 
   @if (isOpen()) {
+    <button
+      type="button"
+      aria-label="Cerrar"
+      (click)="closeTooltip()"
+      class="fixed inset-0 z-[1190] cursor-default sm:hidden"
+    ></button>
+
     <div
-      class="absolute left-0 top-[calc(100%+6px)] z-[1200] w-72 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-left"
+      class="z-[1200] w-72 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-left fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 sm:absolute sm:top-[calc(100%+6px)] sm:translate-y-0"
+      [class]="positionClasses()"
     >
       <p class="text-xs font-bold text-[#12355B] mb-1.5">
         {{ tooltipTitle () }}

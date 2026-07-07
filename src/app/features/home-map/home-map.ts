@@ -61,10 +61,13 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly reportesFiltrados = signal<Reporte[]>([]);
   readonly misReportes = signal<Reporte[]>([]);
   readonly reportesCercanos = signal<Reporte[]>([]);
+  readonly reportesDestacados = signal<Reporte[]>([]);
   readonly totalMisReportes = signal(0);
   readonly totalCercanos = signal(0);
+  readonly totalDestacados = signal(0);
   readonly badgeMisReportes = computed(() => this.formatBadge(this.totalMisReportes()));
   readonly badgeCercanos = computed(() => this.formatBadge(this.totalCercanos()));
+  readonly badgeDestacados = computed(() => this.formatBadge(this.totalDestacados()));
   readonly lugares = signal<Place[]>([]);
 
   readonly centrosCargando = signal(false);
@@ -163,10 +166,28 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       this.misReportes.set(misReportesActivos.slice(0, 3));
       this.totalCercanos.set(reportes.length);
       this.reportesCercanos.set(reportes.slice(0, 5));
+      this.actualizarDestacados();
     } catch (error) {
       console.error('Error cargando reportes', error);
     }
   };
+
+  private actualizarDestacados(): void {
+    const destacados = this.reportes().filter((reporte) => reporte.featured);
+    this.totalDestacados.set(destacados.length);
+    this.reportesDestacados.set(this.ordenarPorCercania(destacados).slice(0, 3));
+  }
+
+  private ordenarPorCercania(reportes: Reporte[]): Reporte[] {
+    const centro = this.userLatLng;
+    if (!centro) return reportes;
+
+    return [...reportes].sort(
+      (a, b) =>
+        this.calcularDistancia(centro.lat, centro.lng, a.location.latitude, a.location.longitude) -
+        this.calcularDistancia(centro.lat, centro.lng, b.location.latitude, b.location.longitude),
+    );
+  }
 
   private aplicarFiltrosActuales(): void {
     if (this.userLatLng) {
@@ -422,6 +443,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         if (reaplicarFiltros && !this.searchLatLng) {
           this.aplicarFiltroCentros();
         }
+        this.actualizarDestacados();
         setTimeout(() => this.map.invalidateSize(), 100);
       },
       () => {
