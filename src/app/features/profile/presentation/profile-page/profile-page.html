@@ -91,31 +91,6 @@
     </section>
     }
     
-    @if (showExperienceWidget() && experience()) {
-    <section class="mb-6 rounded-2xl bg-[#12355B] px-5 py-4 text-white shadow-sm" [class.level-up-pulse]="levelUpPulse()">
-      <div class="flex items-center gap-3">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8842E] text-lg">
-          ⚡
-        </div>
-        <div class="min-w-0 flex-1">
-          <p class="text-sm font-semibold">Nivel {{ experience()?.level ?? 1 }}</p>
-          <p class="text-xs text-slate-300">{{ totalXp() }} XP · {{ xpToNextLevel() }} XP para el siguiente nivel</p>
-        </div>
-        <p class="shrink-0 text-xs text-slate-300">{{ levelProgressPercent() }}% completado</p>
-      </div>
-      <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-        <div
-          class="h-1.5 rounded-full bg-[#E8842E] transition-all duration-500"
-          [style.width.%]="levelProgressPercent()"
-        ></div>
-      </div>
-    </section>
-    } @else if (showExperienceWidget() && experienceLoading()) {
-    <section class="mb-6 rounded-2xl bg-[#12355B] px-5 py-4 text-white shadow-sm">
-      <p class="text-sm text-slate-300">Cargando tu progreso...</p>
-    </section>
-    }
-
     <section class="mb-5">
       <div class="inline-flex rounded-md overflow-hidden border border-slate-200 bg-white">
         <button type="button" (click)="setTab('reports')"
@@ -280,6 +255,30 @@
       }
 
       @if (activeTab() === 'missions') {
+      @if (showExperienceWidget() && experience()) {
+      <section class="mb-6 rounded-2xl bg-[#12355B] px-5 py-4 text-white shadow-sm" [class.level-up-pulse]="levelUpPulse()">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8842E] text-lg">
+            ⚡
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold">Nivel {{ experience()?.level ?? 1 }}</p>
+            <p class="text-xs text-slate-300">{{ totalXp() }} XP · {{ xpToNextLevel() }} XP para el siguiente nivel</p>
+          </div>
+          <p class="shrink-0 text-xs text-slate-300">{{ levelProgressPercent() }}% completado</p>
+        </div>
+        <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+          <div
+            class="h-1.5 rounded-full bg-[#E8842E] transition-all duration-500"
+            [style.width.%]="levelProgressPercent()"
+          ></div>
+        </div>
+      </section>
+      } @else if (showExperienceWidget() && experienceLoading()) {
+      <section class="mb-6 rounded-2xl bg-[#12355B] px-5 py-4 text-white shadow-sm">
+        <p class="text-sm text-slate-300">Cargando tu progreso...</p>
+      </section>
+      }
       <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
         <h2 class="text-lg font-bold text-[#12355B] mb-2">
           Misiones
