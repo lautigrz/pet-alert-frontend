@@ -83,7 +83,7 @@ describe('ReportService', () => {
 
     it('pasa sightingDetails al http', async () => {
       const cmd = makeUpdateCommand({
-        sightingDetails: { petName: 'Rex', color: 'blanco', hasIdCollar: true, isInTransit: false },
+        sightingDetails: { petName: 'Rex', color: 'blanco', hasIdCollar: true },
       });
 
       await service.updateReport(cmd);
