@@ -190,7 +190,7 @@
       <div class="space-y-6">
         <section>
           <h2 class="text-lg font-bold text-[#12355B] mb-3">
-            Reseñas recibidas
+            Opiniones de la comunidad
           </h2>
 
           @if (receivedReviews().length === 0) {
@@ -200,33 +200,32 @@
             </p>
           </div>
           } @else {
-          <div class="space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @for (review of receivedReviews(); track review.id) {
             <article class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-              <div class="flex items-start gap-3">
-                <img [src]="review.reviewer.photoUrl || defaultPhotoUrl" alt="Foto del usuario que reseñó"
-                  class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200" />
-
-                <div class="min-w-0 flex-1">
-                  <div class="flex flex-wrap items-center justify-between gap-2">
-                    <h3 class="font-bold text-[#12355B]">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <img [src]="review.reviewer.photoUrl || defaultPhotoUrl" alt="Foto del usuario que reseñó"
+                    class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200 shrink-0" />
+                  <div class="min-w-0">
+                    <h3 class="font-bold text-[#12355B] truncate">
                       {{ review.reviewer.name || review.reviewer.username }}
                     </h3>
-
-                    <div class="text-[#E8842E] text-sm" aria-label="Calificación">
+                    <div class="text-[#E8842E] text-sm leading-none" aria-label="Calificación">
                       @for (star of [1, 2, 3, 4, 5]; track star) {
                       <span>{{ star <= review.rating ? '★' : '☆' }}</span>
                       }
                     </div>
                   </div>
-
-                  @if (review.description) {
-                  <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">
-                    {{ review.description }}
-                  </p>
-                  }
                 </div>
+                <span class="text-xs text-slate-400 whitespace-nowrap shrink-0">{{ timeAgo(review.createdAt) }}</span>
               </div>
+
+              @if (review.description) {
+              <p class="mt-3 text-sm text-slate-600 whitespace-pre-line">
+                {{ review.description }}
+              </p>
+              }
             </article>
             }
           </div>
@@ -245,33 +244,32 @@
             </p>
           </div>
           } @else {
-          <div class="space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @for (review of givenReviews(); track review.id) {
             <article class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-              <div class="flex items-start gap-3">
-                <img [src]="review.reviewed.photoUrl || defaultPhotoUrl" alt="Foto del usuario reseñado"
-                  class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200" />
-
-                <div class="min-w-0 flex-1">
-                  <div class="flex flex-wrap items-center justify-between gap-2">
-                    <h3 class="font-bold text-[#12355B]">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <img [src]="review.reviewed.photoUrl || defaultPhotoUrl" alt="Foto del usuario reseñado"
+                    class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200 shrink-0" />
+                  <div class="min-w-0">
+                    <h3 class="font-bold text-[#12355B] truncate">
                       A {{ review.reviewed.name || review.reviewed.username }}
                     </h3>
-
-                    <div class="text-[#E8842E] text-sm" aria-label="Calificación">
+                    <div class="text-[#E8842E] text-sm leading-none" aria-label="Calificación">
                       @for (star of [1, 2, 3, 4, 5]; track star) {
                       <span>{{ star <= review.rating ? '★' : '☆' }}</span>
                       }
                     </div>
                   </div>
-
-                  @if (review.description) {
-                  <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">
-                    {{ review.description }}
-                  </p>
-                  }
                 </div>
+                <span class="text-xs text-slate-400 whitespace-nowrap shrink-0">{{ timeAgo(review.createdAt) }}</span>
               </div>
+
+              @if (review.description) {
+              <p class="mt-3 text-sm text-slate-600 whitespace-pre-line">
+                {{ review.description }}
+              </p>
+              }
             </article>
             }
           </div>
