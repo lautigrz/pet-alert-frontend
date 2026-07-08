@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError, forkJoin, of, } from 'rxjs';
+import { catchError, map, switchMap, } from 'rxjs/operators';
 
 import {
   MissionHttp,
@@ -110,4 +110,37 @@ export class MissionService {
     );
   }
 
+  getJoinedMissionsByUser(userPublicId: string): Observable<MissionOutput[]> {
+    return this.getMissions().pipe(
+      switchMap((missions) => {
+        if (missions.length === 0) {
+          return of([]);
+        }
+
+        return forkJoin(
+          missions.map((mission) => this.getMissionDetail(mission.publicId)),
+        );
+      }),
+      map((missions) =>
+        missions.filter((mission) =>
+          mission.volunteers.some(
+            (volunteer) => volunteer.publicId === userPublicId,
+          ),
+        ),
+      ),
+      catchError((error) => {
+        if (error instanceof HttpErrorResponse) {
+          return throwError(
+            () =>
+              new Error(
+                error.error?.message ??
+                'No se pudieron obtener las misiones del usuario',
+              ),
+          );
+        }
+
+        return throwError(() => error);
+      }),
+    );
+  }
 }

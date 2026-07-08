@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
 
 import { ProfilePage } from './profile-page';
 import { ProfileService } from '../../application/profile.service';
@@ -8,6 +9,10 @@ import { UserNotFoundError } from '../../domain/profile.errors';
 import { ReportListService } from '../../../report/application/report-list.service';
 import { Reporte } from '../../../report/domain/report-read.model';
 import type { UserExperienceSummary } from '../../domain/profile.model';
+import { MissionService } from '../../../missions/application/mission.service';
+import { MissionOutput } from '../../../missions/infrastructure/models/mission.model';
+import { ToastService } from '../../../../shared/application/toast.service';
+import { NotificationService } from '../../../notifications/application/notification.service';
 
 const mockReporte = (overrides: Partial<Reporte> = {}): Reporte =>
   ({
@@ -23,26 +28,86 @@ const mockReporte = (overrides: Partial<Reporte> = {}): Reporte =>
     ...overrides,
   }) as unknown as Reporte;
 
+const mockMission = (overrides: Partial<MissionOutput> = {}): MissionOutput =>
+  ({
+    publicId: 'mission-1',
+    title: 'Buscar a Milo',
+    description: 'Búsqueda comunitaria',
+    status: 'IN_PROGRESS',
+    createdAt: new Date('2026-07-08T10:00:00.000Z'),
+    updatedAt: null,
+    searchArea: {
+      latitude: -34.6,
+      longitude: -58.4,
+      radius: 1000,
+    },
+    report: {
+      publicId: 'report-1',
+      description: 'Perro perdido',
+      location: {
+        address: 'San Justo',
+        latitude: -34.6,
+        longitude: -58.4,
+      },
+      photoUrl: null,
+      title: 'Milo',
+      type: 'LOST',
+      status: 'ACTIVE',
+    },
+    volunteers: [],
+    ...overrides,
+  }) as MissionOutput;
+
 describe('ProfilePage', () => {
   let profileService: {
     getProfile: ReturnType<typeof vi.fn>;
     getUserExperience: ReturnType<typeof vi.fn>;
+    getUserRating: ReturnType<typeof vi.fn>;
+    getMyReviews: ReturnType<typeof vi.fn>;
   };
 
   let reportListService: {
     getMyReports: ReturnType<typeof vi.fn>;
   };
 
+  let missionService: {
+    getJoinedMissionsByUser: ReturnType<typeof vi.fn>;
+  };
+
+  let toastService: {
+    brand: ReturnType<typeof vi.fn>;
+  };
+
+  let notificationService: {
+    showLocal: ReturnType<typeof vi.fn>;
+  };
+
   let component: ProfilePage;
 
   beforeEach(() => {
+    localStorage.clear();
+
     profileService = {
       getProfile: vi.fn(),
       getUserExperience: vi.fn(),
+      getUserRating: vi.fn(),
+      getMyReviews: vi.fn(),
     };
 
     reportListService = {
       getMyReports: vi.fn(),
+    };
+
+    missionService = {
+      getJoinedMissionsByUser: vi.fn().mockReturnValue(of([])),
+    };
+
+    toastService = {
+      brand: vi.fn(),
+    };
+
+    notificationService = {
+      showLocal: vi.fn(),
     };
 
     profileService.getProfile.mockResolvedValue({
@@ -52,6 +117,17 @@ describe('ProfilePage', () => {
       name: 'Facundo',
       lastname: 'Pereira',
       photoUrl: null,
+      stats: null,
+    });
+
+    profileService.getUserRating.mockResolvedValue({
+      average: 0,
+      count: 0,
+    });
+
+    profileService.getMyReviews.mockResolvedValue({
+      received: { items: [] },
+      given: { items: [] },
     });
 
     profileService.getUserExperience.mockResolvedValue({
@@ -81,6 +157,18 @@ describe('ProfilePage', () => {
           provide: ReportListService,
           useValue: reportListService,
         },
+        {
+          provide: MissionService,
+          useValue: missionService,
+        },
+        {
+          provide: ToastService,
+          useValue: toastService,
+        },
+        {
+          provide: NotificationService,
+          useValue: notificationService,
+        },
       ],
     });
 
@@ -90,10 +178,8 @@ describe('ProfilePage', () => {
 
   describe('profile loading', () => {
     it('loads the current user profile', async () => {
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(profileService.getProfile).toHaveBeenCalled();
 
       expect(component.profile()).toEqual({
@@ -103,6 +189,7 @@ describe('ProfilePage', () => {
         name: 'Facundo',
         lastname: 'Pereira',
         photoUrl: null,
+        stats: null,
       });
 
       expect(component.loading()).toBe(false);
@@ -110,15 +197,12 @@ describe('ProfilePage', () => {
     });
 
     it('shows an error when profile loading fails', async () => {
-      // Given
       profileService.getProfile.mockRejectedValue(
         new UserNotFoundError(),
       );
 
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(component.serverError()).toBe('Usuario no encontrado');
       expect(component.loading()).toBe(false);
       expect(component.profile()).toBeNull();
@@ -127,15 +211,12 @@ describe('ProfilePage', () => {
 
   describe('profile photo', () => {
     it('returns default photo when user has no photoUrl', async () => {
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(component.profilePhotoUrl()).toBe(component.defaultPhotoUrl);
     });
 
     it('returns user photoUrl when profile has photoUrl', async () => {
-      // Given
       profileService.getProfile.mockResolvedValue({
         id: 'user-123',
         email: 'facundo@example.com',
@@ -143,12 +224,11 @@ describe('ProfilePage', () => {
         name: 'Facundo',
         lastname: 'Pereira',
         photoUrl: 'https://res.cloudinary.com/demo/profile.jpg',
+        stats: null,
       });
 
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(component.profilePhotoUrl()).toBe(
         'https://res.cloudinary.com/demo/profile.jpg',
       );
@@ -157,15 +237,12 @@ describe('ProfilePage', () => {
 
   describe('displayName', () => {
     it('returns full name when name and lastname exist', async () => {
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(component.displayName()).toBe('Facundo Pereira');
     });
 
     it('returns username when name and lastname are missing', async () => {
-      // Given
       profileService.getProfile.mockResolvedValue({
         id: 'user-123',
         email: 'facundo@example.com',
@@ -173,17 +250,15 @@ describe('ProfilePage', () => {
         name: null,
         lastname: null,
         photoUrl: null,
+        stats: null,
       });
 
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(component.displayName()).toBe('facundo');
     });
 
     it('returns empty string when profile is not loaded yet', () => {
-      // Then
       expect(component.displayName()).toBe('');
     });
   });
@@ -203,6 +278,7 @@ describe('ProfilePage', () => {
         level: 1,
         unlockedAchievements: [],
       } as UserExperienceSummary);
+
       profileService.getUserExperience.mockResolvedValueOnce({
         xp: 140,
         level: 2,
@@ -213,6 +289,14 @@ describe('ProfilePage', () => {
       await component.loadExperience();
 
       expect(component.levelUpPulse()).toBe(true);
+      expect(toastService.brand).toHaveBeenCalledWith(
+        '¡Subiste al nivel 2! Tu progreso quedó actualizado.',
+        4000,
+      );
+      expect(notificationService.showLocal).toHaveBeenCalledWith(
+        '¡Subiste de nivel!',
+        'Ahora estás en el nivel 2.',
+      );
     });
 
     it('lists every achievement under locked when the user has none unlocked', async () => {
@@ -259,50 +343,79 @@ describe('ProfilePage', () => {
     });
   });
 
+  describe('missions', () => {
+    it('loads the missions joined by the current user', async () => {
+      const mission = mockMission();
+
+      missionService.getJoinedMissionsByUser.mockReturnValue(of([mission]));
+
+      await component.ngOnInit();
+
+      expect(missionService.getJoinedMissionsByUser).toHaveBeenCalledWith('user-123');
+      expect(component.missions()).toEqual([mission]);
+      expect(component.missionsLoading()).toBe(false);
+      expect(component.missionsError()).toBeNull();
+    });
+
+    it('shows an error when missions loading fails', async () => {
+      missionService.getJoinedMissionsByUser.mockReturnValue(
+        throwError(() => new Error('No se pudieron cargar tus misiones')),
+      );
+
+      await component.ngOnInit();
+
+      expect(component.missionsError()).toBe('No se pudieron cargar tus misiones');
+      expect(component.missionsLoading()).toBe(false);
+      expect(component.missions()).toEqual([]);
+    });
+
+    it('translates mission statuses', () => {
+      expect(component.missionStatusLabel('OPEN')).toBe('Abierta');
+      expect(component.missionStatusLabel('IN_PROGRESS')).toBe('En progreso');
+      expect(component.missionStatusLabel('CLOSED')).toBe('Cerrada');
+    });
+
+    it('formats mission date', () => {
+      expect(component.missionDate(new Date('2026-07-08T10:00:00.000Z'))).toBe('08/07/2026');
+    });
+  });
+
   describe('tabs', () => {
     it('starts with reports tab selected', () => {
-      // Then
       expect(component.activeTab()).toBe('reports');
     });
 
     it('changes active tab to missions', () => {
-      // When
       component.setTab('missions');
 
-      // Then
       expect(component.activeTab()).toBe('missions');
     });
 
     it('changes active tab to achievements', () => {
-      // When
       component.setTab('achievements');
 
-      // Then
       expect(component.activeTab()).toBe('achievements');
     });
   });
 
   describe('profile edit route', () => {
     it('has edit profile route configured', () => {
-      // Then
       expect(component.rutaMiPerfil).toBe('/profile/edit');
     });
   });
 
   describe('my reports', () => {
     it('loads all the user reports including resolved and closed ones', async () => {
-      // Given
       const reportes = [
         mockReporte({ publicId: 'r-activo', status: 'ACTIVE' }),
         mockReporte({ publicId: 'r-resuelto', status: 'RESOLVED' }),
         mockReporte({ publicId: 'r-cerrado', status: 'CLOSED' }),
       ];
+
       reportListService.getMyReports.mockResolvedValue(reportes);
 
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(reportListService.getMyReports).toHaveBeenCalled();
       expect(component.reports()).toEqual(reportes);
       expect(component.reportsLoading()).toBe(false);
@@ -310,15 +423,12 @@ describe('ProfilePage', () => {
     });
 
     it('shows an error when reports loading fails', async () => {
-      // Given
       reportListService.getMyReports.mockRejectedValue(
         new Error('No se pudieron cargar los reportes'),
       );
 
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(component.reportsError()).toBe('No se pudieron cargar los reportes');
       expect(component.reportsLoading()).toBe(false);
       expect(component.reports()).toEqual([]);

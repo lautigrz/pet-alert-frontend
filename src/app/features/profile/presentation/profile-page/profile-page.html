@@ -281,14 +281,122 @@
         <p class="text-sm text-slate-300">Cargando tu progreso...</p>
       </section>
       }
-      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-        <h2 class="text-lg font-bold text-[#12355B] mb-2">
-          Misiones
-        </h2>
-        <p class="text-sm text-slate-500">
-          Todavía no tenés misiones disponibles.
-        </p>
-      </div>
+      <section class="mt-6">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-[#12355B]">
+              Misiones a las que estoy unido
+            </h2>
+            <p class="text-sm text-slate-500">
+              Acá podés ver las misiones en las que estás participando.
+            </p>
+          </div>
+
+          <span
+            class="inline-flex items-center gap-2 rounded-full bg-[#E8842E]/10 px-3 py-1 text-xs font-bold text-[#E8842E]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+              stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
+              <path d="M9 18h6" />
+              <path d="M10 22h4" />
+              <path d="M12 2a7 7 0 0 0-4 12.74V16h8v-1.26A7 7 0 0 0 12 2z" />
+            </svg>
+
+            {{ missions().length }} {{ missions().length === 1 ? 'misión' : 'misiones' }}
+          </span>
+        </div>
+
+        @if (missionsLoading()) {
+        <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+          Cargando misiones...
+        </div>
+        } @else if (missionsError()) {
+        <div role="alert" class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded">
+          {{ missionsError() }}
+        </div>
+        } @else if (missions().length === 0) {
+        <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+          <div
+            class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#12355B]/5 text-[#12355B]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+              stroke-linejoin="round" class="h-7 w-7" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+          </div>
+
+          <h3 class="text-lg font-bold text-[#12355B] mb-2">
+            Todavía no estás unido a ninguna misión
+          </h3>
+
+          <p class="text-sm text-slate-500">
+            Cuando te sumes a una misión de búsqueda, va a aparecer acá.
+          </p>
+        </div>
+        } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          @for (mission of missions(); track mission.publicId; let missionIndex = $index) {
+          <article
+            class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#E8842E]/40 transition-all">
+            <div class="flex items-start gap-4">
+              <div
+                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#12355B] text-white shadow-sm">
+                <span class="text-sm font-bold">
+                  {{ missionIndex + 1 }}
+                </span>
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-[11px] font-bold uppercase tracking-wide text-[#E8842E]">
+                      Misión #{{ missionIndex + 1 }}
+                    </p>
+
+                    <h3 class="mt-1 font-bold text-[#12355B] truncate">
+                      {{ mission.title }}
+                    </h3>
+                  </div>
+
+                  <span
+                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#12355B]/5 px-2.5 py-1 text-[11px] font-semibold text-[#12355B]">
+                    {{ missionStatusLabel(mission.status) }}
+                  </span>
+                </div>
+
+                <div class="mt-3 flex items-start gap-2 text-xs text-slate-500">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" class="mt-0.5 h-4 w-4 shrink-0 text-[#E8842E]" aria-hidden="true">
+                    <path d="M12 21s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z" />
+                    <circle cx="12" cy="10" r="2.5" />
+                  </svg>
+
+                  <span class="truncate">
+                    {{ mission.report.location.address || 'Sin ubicación' }}
+                  </span>
+                </div>
+
+                <p class="mt-3 text-sm text-slate-600 line-clamp-2">
+                  {{ mission.description }}
+                </p>
+
+                <div class="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                  <span class="text-xs text-slate-400">
+                    Creada el {{ missionDate(mission.createdAt) }}
+                  </span>
+
+                  <a [routerLink]="['/missions', mission.publicId]"
+                    class="inline-flex items-center gap-1 text-sm font-semibold text-[#E8842E] hover:underline">
+                    Ver misión
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
+          }
+        </div>
+        }
+      </section>
       }
 
       @if (activeTab() === 'achievements') {
@@ -297,7 +405,6 @@
         Cargando logros...
       </div>
       } @else if (achievements().length === 0) {
-      >>>>>>> dev
       <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
         <h2 class="text-lg font-bold text-[#12355B] mb-2">
           Logros
