@@ -30,7 +30,7 @@ describe('ProfilePage', () => {
   };
 
   let reportListService: {
-    getMisReportes: ReturnType<typeof vi.fn>;
+    getMyReports: ReturnType<typeof vi.fn>;
   };
 
   let component: ProfilePage;
@@ -42,7 +42,7 @@ describe('ProfilePage', () => {
     };
 
     reportListService = {
-      getMisReportes: vi.fn(),
+      getMyReports: vi.fn(),
     };
 
     profileService.getProfile.mockResolvedValue({
@@ -67,7 +67,7 @@ describe('ProfilePage', () => {
       ],
     } as UserExperienceSummary);
 
-    reportListService.getMisReportes.mockResolvedValue([]);
+    reportListService.getMyReports.mockResolvedValue([]);
 
     TestBed.configureTestingModule({
       imports: [ProfilePage],
@@ -297,13 +297,13 @@ describe('ProfilePage', () => {
         mockReporte({ publicId: 'r-resuelto', status: 'RESOLVED' }),
         mockReporte({ publicId: 'r-cerrado', status: 'CLOSED' }),
       ];
-      reportListService.getMisReportes.mockResolvedValue(reportes);
+      reportListService.getMyReports.mockResolvedValue(reportes);
 
       // When
       await component.ngOnInit();
 
       // Then
-      expect(reportListService.getMisReportes).toHaveBeenCalled();
+      expect(reportListService.getMyReports).toHaveBeenCalled();
       expect(component.reports()).toEqual(reportes);
       expect(component.reportsLoading()).toBe(false);
       expect(component.reportsError()).toBeNull();
@@ -311,7 +311,7 @@ describe('ProfilePage', () => {
 
     it('shows an error when reports loading fails', async () => {
       // Given
-      reportListService.getMisReportes.mockRejectedValue(
+      reportListService.getMyReports.mockRejectedValue(
         new Error('No se pudieron cargar los reportes'),
       );
 

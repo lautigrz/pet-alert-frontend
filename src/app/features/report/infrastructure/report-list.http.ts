@@ -30,7 +30,7 @@ export class ReportListHttp {
   }
 
 
-  getMisReportesPaginado(filtros: ReporteFiltros = {}, page = 1, limit = 50): Promise<ReportesPaginados> {
+  getPaginatedMyReports(filtros: ReporteFiltros = {}, page = 1, limit = 50): Promise<ReportesPaginados> {
     let params = new HttpParams()
       .set('page', String(page))
       .set('limit', String(limit));
@@ -50,7 +50,7 @@ export class ReportListHttp {
   }
 
 
-  getReportesDeUsuario(publicId: string): Promise<Reporte[]> {
+  getUserReports(publicId: string): Promise<Reporte[]> {
     return firstValueFrom(
       this.http.get<Reporte[]>(`${this.baseUrl}/reports/user/${publicId}`),
     );

@@ -16,7 +16,7 @@ describe('PublicProfilePage', () => {
     getUserReviews: ReturnType<typeof vi.fn>;
     createUserReview: ReturnType<typeof vi.fn>;
   };
-  let reportListService: { getReportesDeUsuario: ReturnType<typeof vi.fn> };
+  let reportListService: { getUserReports: ReturnType<typeof vi.fn> };
   let authService: { getCurrentUserId: ReturnType<typeof vi.fn> };
   let publicIdParam: string | null;
 
@@ -26,6 +26,7 @@ describe('PublicProfilePage', () => {
     name: 'Juan',
     lastname: 'Pérez',
     photoUrl: null,
+    stats: null,
   };
 
   beforeEach(() => {
@@ -36,7 +37,7 @@ describe('PublicProfilePage', () => {
       getUserReviews: vi.fn().mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0 }),
       createUserReview: vi.fn().mockResolvedValue({ id: 1, rating: 5, description: 'Muy buena experiencia', createdAt: '', updatedAt: '', reviewer: fakeProfile }),
     };
-    reportListService = { getReportesDeUsuario: vi.fn().mockResolvedValue([]) };
+    reportListService = { getUserReports: vi.fn().mockResolvedValue([]) };
     authService = { getCurrentUserId: vi.fn().mockReturnValue('me-999') };
 
     TestBed.configureTestingModule({
@@ -60,7 +61,7 @@ describe('PublicProfilePage', () => {
     await component.ngOnInit();
 
     expect(profileService.getPublicProfile).toHaveBeenCalledWith('u-1');
-    expect(reportListService.getReportesDeUsuario).toHaveBeenCalledWith('u-1');
+    expect(reportListService.getUserReports).toHaveBeenCalledWith('u-1');
     expect(profileService.getUserRating).toHaveBeenCalledWith('u-1');
     expect(profileService.getUserReviews).toHaveBeenCalledWith('u-1');
     expect(component.profile()).toEqual(fakeProfile);
@@ -87,7 +88,7 @@ describe('PublicProfilePage', () => {
   });
 
   it('setea reportsError si falla la carga de reportes', async () => {
-    reportListService.getReportesDeUsuario.mockRejectedValue(
+    reportListService.getUserReports.mockRejectedValue(
       new Error('No se pudieron cargar los reportes'),
     );
 
