@@ -56,6 +56,13 @@ export const routes: Routes = [
         './features/appeal/presentation/appeal-form-page/appeal-form-page'
       ).then((m) => m.AppealFormPage),
   },
+  {
+    path: 'landing',
+    loadComponent: () =>
+      import('./features/landing/presentation/landing-page/landing-page').then(
+        (m) => m.LandingPage,
+      ),
+  },
 
   {
     path: 'admin/login',

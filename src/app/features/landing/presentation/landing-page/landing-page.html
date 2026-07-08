@@ -1,0 +1,490 @@
+<header class="site-header">
+  <div class="container nav">
+    <a class="brand" href="#inicio" (click)="scrollTo('inicio', $event)" aria-label="Ir al inicio de PetFinder">
+      <span class="brand-mark">
+        <img src="/landing/Union.png" alt="Logo de PetFinder" class="brand-logo" />
+      </span>
+      <span>PetFinder</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Navegación principal">
+      <a href="#beneficios" (click)="scrollTo('beneficios', $event)">Funcionalidades</a>
+      <a href="#como-funciona" (click)="scrollTo('como-funciona', $event)">Cómo funciona</a>
+      <a href="#encontrados" (click)="scrollTo('encontrados', $event)">Encontrados</a>
+      <a href="#acceso-anticipado" (click)="scrollTo('acceso-anticipado', $event)">Empezar</a>
+    </nav>
+
+    <a class="button button-small button-primary" routerLink="/">
+      Empezá acá
+    </a>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="inicio">
+    <figure class="hero-bg">
+      <img src="/landing/assets/hero-dueno-mascota.jpg"
+        alt="Persona abrazando a su mascota después de reencontrarla con PetFinder" />
+    </figure>
+
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <h1>
+          Cuando cada minuto cuenta,
+          <span>PetFinder moviliza al barrio.</span>
+        </h1>
+
+        <p class="hero-description">
+          Reportes geolocalizados, matching con IA y un chat seguro para que
+          las mascotas perdidas vuelvan a casa.
+        </p>
+
+        <div class="hero-actions">
+          <a class="button button-primary" routerLink="/">
+            Empezá acá
+          </a>
+          <a class="button button-secondary" href="#como-funciona" (click)="scrollTo('como-funciona', $event)">
+            Conocé más
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="value-strip" aria-label="Propuesta de valor">
+    <div class="container value-grid">
+      <article>
+        <span class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        </span>
+        <div>
+          <strong>Reportes geolocalizados</strong>
+          <p>Información útil según la zona.</p>
+        </div>
+      </article>
+
+      <article>
+        <span class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+        </span>
+        <div>
+          <strong>Búsqueda más simple</strong>
+          <p>Filtros, imágenes y detalles relevantes.</p>
+        </div>
+      </article>
+
+      <article>
+        <span class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        </span>
+        <div>
+          <strong>Comunidad cercana</strong>
+          <p>Más personas atentas, más posibilidades.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="beneficios">
+    <div class="container">
+      <div class="section-heading">
+        <h2>Todo lo importante, en un solo lugar</h2>
+      </div>
+
+      <div class="features-carousel">
+        <input class="carousel-radio" type="radio" name="features-carousel" id="feat-slide-1" checked />
+        <input class="carousel-radio" type="radio" name="features-carousel" id="feat-slide-2" />
+        <input class="carousel-radio" type="radio" name="features-carousel" id="feat-slide-3" />
+        <input class="carousel-radio" type="radio" name="features-carousel" id="feat-slide-4" />
+        <input class="carousel-radio" type="radio" name="features-carousel" id="feat-slide-5" />
+
+        <div class="carousel-shell">
+          <div class="carousel-viewport">
+            <div class="carousel-track feature-track">
+              <figure class="feature-slide">
+                <div class="feature-copy">
+                  <span class="feature-kicker">Alertas en tiempo real</span>
+                  <h3>Alertas por <span class="feature-highlight">cercanía</span></h3>
+                  <p>
+                    Recibí información relevante sobre mascotas perdidas o
+                    avistadas dentro del radio que elijas.
+                  </p>
+                </div>
+                <div class="feature-image feature-media">
+                  <img class="feature-ui" src="/landing/assets/reportes.png"
+                    alt="Pantalla principal con el mapa de PetFinder" />
+                  <img class="feature-card feature-card-1" src="/landing/assets/reportes (1).png" alt="" aria-hidden="true" />
+                  <img class="feature-card feature-card-2" src="/landing/assets/reportes (2).png" alt="" aria-hidden="true" />
+                </div>
+              </figure>
+
+              <figure class="feature-slide">
+                <div class="feature-copy">
+                  <span class="feature-kicker">Búsqueda</span>
+                  <h3>Reportes fáciles de <span class="feature-highlight">encontrar</span></h3>
+                  <p>
+                    Buscá por ubicación, tipo de mascota, fecha y detalles
+                    mencionados en cada publicación.
+                  </p>
+                </div>
+                <div class="feature-image feature-media">
+                  <img class="feature-ui feature-ui-busqueda" src="/landing/assets/busqueda.png"
+                    alt="Pantalla de búsqueda de reportes en PetFinder" />
+                  <img class="feature-float feature-float-1" src="/landing/assets/busqueda (1).png" alt="" aria-hidden="true" />
+                  <img class="feature-float feature-float-2" src="/landing/assets/busqueda (2).png" alt="" aria-hidden="true" />
+                  <img class="feature-float feature-float-3" src="/landing/assets/busqueda (3).png" alt="" aria-hidden="true" />
+                </div>
+              </figure>
+
+              <figure class="feature-slide">
+                <div class="feature-copy">
+                  <span class="feature-kicker">Detalle del caso</span>
+                  <h3>Información clara y <span class="feature-highlight">actualizada</span></h3>
+                  <p>
+                    Fotos, descripción, ubicación, fecha y estado del caso para
+                    saber qué pasó y cómo ayudar.
+                  </p>
+                </div>
+                <div class="feature-image feature-media">
+                  <img class="feature-ui" src="/landing/assets/detalle.png"
+                    alt="Pantalla de detalle de un reporte en PetFinder" />
+                  <img class="feature-card feature-card-boxed feature-card-1" src="/landing/assets/detalle (1).png" alt="" aria-hidden="true" />
+                  <img class="feature-card feature-card-boxed feature-card-2" src="/landing/assets/detalle (2).png" alt="" aria-hidden="true" />
+                </div>
+              </figure>
+
+              <figure class="feature-slide">
+                <div class="feature-copy">
+                  <span class="feature-kicker">Matching asistido por IA</span>
+                  <h3>Encontrá posibles <span class="feature-highlight">coincidencias</span></h3>
+                  <p>
+                    PetFinder compara imágenes y características de mascotas
+                    perdidas y avistadas para sugerir casos que podrían estar
+                    relacionados.
+                  </p>
+                </div>
+                <div class="feature-image feature-media">
+                  <img class="feature-ui" src="/landing/assets/ai.png"
+                    alt="Pantalla de coincidencias sugeridas por IA en PetFinder" />
+                  <img class="feature-card feature-card-1" src="/landing/assets/ai (1).png" alt="" aria-hidden="true" />
+                  <img class="feature-card feature-card-2" src="/landing/assets/ai (2).png" alt="" aria-hidden="true" />
+                </div>
+              </figure>
+
+              <figure class="feature-slide">
+                <div class="feature-copy">
+                  <span class="feature-kicker">Chat entre usuarios</span>
+                  <h3>Coordiná el <span class="feature-highlight">encuentro</span></h3>
+                  <p>
+                    Cuando una coincidencia es confirmada, el dueño y la persona
+                    que realizó el avistamiento pueden conversar sin publicar
+                    teléfonos ni correos.
+                  </p>
+                </div>
+                <div class="feature-image feature-media">
+                  <img class="feature-ui" src="/landing/assets/chat.png"
+                    alt="Pantalla de chat entre usuarios en PetFinder" />
+                  <img class="feature-card feature-card-sm feature-card-1 chat-cat" src="/landing/assets/chat (2).png" alt="" aria-hidden="true" />
+                  <img class="feature-card feature-card-2" src="/landing/assets/chat (1).png" alt="" aria-hidden="true" />
+                </div>
+              </figure>
+            </div>
+          </div>
+
+          <div class="carousel-controls fcontrols-1">
+            <label for="feat-slide-5" aria-label="Ir a la última funcionalidad"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg></label>
+            <label for="feat-slide-2" aria-label="Siguiente funcionalidad"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg></label>
+          </div>
+          <div class="carousel-controls fcontrols-2">
+            <label for="feat-slide-1" aria-label="Funcionalidad anterior"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg></label>
+            <label for="feat-slide-3" aria-label="Siguiente funcionalidad"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg></label>
+          </div>
+          <div class="carousel-controls fcontrols-3">
+            <label for="feat-slide-2" aria-label="Funcionalidad anterior"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg></label>
+            <label for="feat-slide-4" aria-label="Siguiente funcionalidad"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg></label>
+          </div>
+          <div class="carousel-controls fcontrols-4">
+            <label for="feat-slide-3" aria-label="Funcionalidad anterior"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg></label>
+            <label for="feat-slide-5" aria-label="Siguiente funcionalidad"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg></label>
+          </div>
+          <div class="carousel-controls fcontrols-5">
+            <label for="feat-slide-4" aria-label="Funcionalidad anterior"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg></label>
+            <label for="feat-slide-1" aria-label="Volver a la primera funcionalidad"><svg class="ctrl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg></label>
+          </div>
+
+          <div class="carousel-dots feature-dots" aria-label="Seleccionar funcionalidad">
+            <label for="feat-slide-1" aria-label="Mostrar funcionalidad 1"></label>
+            <label for="feat-slide-2" aria-label="Mostrar funcionalidad 2"></label>
+            <label for="feat-slide-3" aria-label="Mostrar funcionalidad 3"></label>
+            <label for="feat-slide-4" aria-label="Mostrar funcionalidad 4"></label>
+            <label for="feat-slide-5" aria-label="Mostrar funcionalidad 5"></label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-soft" id="como-funciona">
+    <div class="container">
+      <div class="section-heading">
+        <span class="eyebrow eyebrow-light">Cómo funciona</span>
+        <h2>Publicar una alerta puede tomar solo unos minutos</h2>
+      </div>
+
+      <ol class="timeline">
+        <li class="timeline-step">
+          <div class="timeline-node">1</div>
+          <div class="timeline-text">
+            <h3>Creá el reporte</h3>
+            <p>Indicá si la mascota está perdida o fue avistada y cargá sus características principales.</p>
+          </div>
+        </li>
+
+        <li class="timeline-step">
+          <div class="timeline-node">2</div>
+          <div class="timeline-text">
+            <h3>Sumá ubicación y detalles</h3>
+            <p>Agregá fotos, señas particulares, fecha y el lugar donde ocurrió el caso.</p>
+          </div>
+        </li>
+
+        <li class="timeline-step">
+          <div class="timeline-node">3</div>
+          <div class="timeline-text">
+            <h3>Revisá posibles coincidencias</h3>
+            <p>La IA compara reportes y sugiere mascotas con características similares para facilitar la búsqueda.</p>
+          </div>
+        </li>
+
+        <li class="timeline-step">
+          <div class="timeline-node">4</div>
+          <div class="timeline-text">
+            <h3>Coordiná el encuentro por chat</h3>
+            <p>Conversá dentro de PetFinder y organizá un punto de encuentro de manera segura.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section found" id="encontrados">
+    <div class="container">
+      <div class="section-heading">
+        <h2>Finales felices</h2>
+        <p>Historias reales de mascotas que volvieron a casa gracias a la comunidad de PetFinder.</p>
+      </div>
+
+      <div class="found-carousel" (mouseenter)="onEnter()" (mouseleave)="onLeave()" aria-roledescription="carrusel" aria-label="Casos de mascotas reunidas con PetFinder">
+        <div class="found-viewport">
+          <div class="found-track" #foundTrack>
+          <article class="found-card">
+            <div class="found-photo">
+              <svg class="found-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+              <img src="/landing/assets/encontrado-1.jpg" alt="Mishi, gata reunida con su familia" loading="lazy" />
+            </div>
+            <div class="found-body">
+              <h3 class="found-name">Mishi</h3>
+              <p class="found-text">Volvió a casa a los dos días de la primera alerta cercana.</p>
+              <span class="found-chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                Caballito, CABA
+              </span>
+            </div>
+          </article>
+
+          <article class="found-card">
+            <div class="found-photo">
+              <svg class="found-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+              <img src="/landing/assets/encontrado-2.jpg" alt="Rocco, perro reunido con su familia" loading="lazy" />
+            </div>
+            <div class="found-body">
+              <h3 class="found-name">Rocco</h3>
+              <p class="found-text">Una vecina lo reconoció por una foto del reporte y avisó al instante.</p>
+              <span class="found-chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                Quilmes, GBA
+              </span>
+            </div>
+          </article>
+
+          <article class="found-card">
+            <div class="found-photo">
+              <svg class="found-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+              <img src="/landing/assets/encontrado-3.jpg" alt="Luna, gata reunida con su familia" loading="lazy" />
+            </div>
+            <div class="found-body">
+              <h3 class="found-name">Luna</h3>
+              <p class="found-text">El matching con IA la conectó con un avistamiento a pocas cuadras.</p>
+              <span class="found-chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                Rosario, Santa Fe
+              </span>
+            </div>
+          </article>
+
+          <article class="found-card">
+            <div class="found-photo">
+              <svg class="found-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+              <img src="/landing/assets/encontrado-4.jpg" alt="Pelusa, perra reunida con su familia" loading="lazy" />
+            </div>
+            <div class="found-body">
+              <h3 class="found-name">Pelusa</h3>
+              <p class="found-text">Apareció gracias a un aviso de avistamiento en su mismo barrio.</p>
+              <span class="found-chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                La Plata, Bs. As.
+              </span>
+            </div>
+          </article>
+
+          <article class="found-card">
+            <div class="found-photo">
+              <svg class="found-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+              <img src="/landing/assets/encontrado-5.jpg" alt="Toby, perro reunido con su familia" loading="lazy" />
+            </div>
+            <div class="found-body">
+              <h3 class="found-name">Toby</h3>
+              <p class="found-text">Un vecino lo vio en el reporte y lo reconoció enseguida.</p>
+              <span class="found-chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                Córdoba Capital
+              </span>
+            </div>
+          </article>
+
+          <article class="found-card">
+            <div class="found-photo">
+              <svg class="found-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+              <img src="/landing/assets/encontrado-6.jpg" alt="Nina, gata reunida con su familia" loading="lazy" />
+            </div>
+            <div class="found-body">
+              <h3 class="found-name">Nina</h3>
+              <p class="found-text">La alerta llegó a tiempo y volvió a casa el mismo día.</p>
+              <span class="found-chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                Villa Crespo, CABA
+              </span>
+            </div>
+          </article>
+
+          </div>
+        </div>
+
+        <button class="found-arrow found-arrow-prev" type="button" (click)="prev()" aria-label="Ver caso anterior">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+        <button class="found-arrow found-arrow-next" type="button" (click)="next()" aria-label="Ver siguiente caso">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section early-access" id="acceso-anticipado">
+    <div class="container cta-wrap">
+      <img class="cta-pin cta-pin-1" src="/landing/assets/cta (1).png" alt="" aria-hidden="true" />
+      <img class="cta-pin cta-pin-2" src="/landing/assets/cta (2).png" alt="" aria-hidden="true" />
+      <img class="cta-pin cta-pin-3" src="/landing/assets/cta (3).png" alt="" aria-hidden="true" />
+      <img class="cta-pin cta-pin-4" src="/landing/assets/cta (4).png" alt="" aria-hidden="true" />
+      <img class="cta-pin cta-pin-5" src="/landing/assets/cta (5).png" alt="" aria-hidden="true" />
+      <img class="cta-pin cta-pin-6" src="/landing/assets/cta (6).png" alt="" aria-hidden="true" />
+
+      <div class="cta-content">
+        <h2>Sumate y ayudá a que vuelvan a casa</h2>
+        <p>
+          Empezá a reportar, buscar y coordinar casos de mascotas perdidas
+          en tu zona.
+        </p>
+        <a class="button button-primary button-cta" routerLink="/">
+          Empezá acá
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="social-section">
+    <div class="container social-content">
+      <div>
+        <h2>Seguí a <span class="petfinder">PetFinder</span> en redes</h2>
+      </div>
+
+      <div class="social-links">
+        <a href="https://www.instagram.com/petfinder.arg/" target="_blank" rel="noopener" aria-label="Instagram de PetFinder">
+          <span>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.3-1.46.72-2.13 1.38C1.35 2.68.93 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.3.79.72 1.46 1.38 2.13.67.66 1.34 1.08 2.13 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.3 1.46-.72 2.13-1.38.66-.67 1.08-1.34 1.38-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.3-.79-.72-1.46-1.38-2.13C21.32 1.35 20.65.93 19.86.63 19.1.33 18.22.13 16.95.07 15.67.01 15.26 0 12 0z" />
+              <path d="M12 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84M12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4z" />
+              <circle cx="18.41" cy="5.59" r="1.44" />
+            </svg>
+          </span>
+          Instagram
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=61591995021422" target="_blank" rel="noopener" aria-label="Facebook de PetFinder">
+          <span>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z" />
+            </svg>
+          </span>
+          Facebook
+        </a>
+        <a href="https://x.com/PetFinderArg" target="_blank" rel="noopener" aria-label="X de PetFinder">
+          <span>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.59l5.24 6.93 6.07-6.93zm-1.29 19.5h2.04L6.49 3.24H4.3L17.61 20.65z" />
+            </svg>
+          </span>
+          X / Twitter
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-content">
+    <a class="brand brand-footer" href="#inicio" (click)="scrollTo('inicio', $event)">
+      <span class="brand-mark">
+        <img src="/landing/Union blanco.png" alt="Logo de PetFinder" class="brand-logo" />
+      </span>
+      <span>PetFinder</span>
+    </a>
+
+    <p>Encontrarlos empieza cerca.</p>
+    <small>© 2026 PetFinder.</small>
+  </div>
+</footer>
