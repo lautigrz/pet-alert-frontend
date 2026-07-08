@@ -45,7 +45,7 @@ export class ReportContactComponent {
     this.router.navigate(['/users', this.report().user.publicId]);
   }
 
-  async enviarMensaje(): Promise<void> {
+  async sendMessage(): Promise<void> {
     const targetPublicId = this.report().user.publicId;
     if (!targetPublicId) return;
     try {

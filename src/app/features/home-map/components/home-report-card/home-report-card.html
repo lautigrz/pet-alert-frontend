@@ -43,6 +43,15 @@
         }
       </span>
 
+        @if (destacado()) {
+          <span
+            class="inline-flex w-fit items-center gap-0.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#E8842E]/10 text-[#E8842E] border border-[#E8842E]/30"
+          >
+            <span class="text-xs leading-none">★</span>
+            Destacado
+          </span>
+        }
+
         @if (estadoLabel()) {
           <span
             class="inline-flex w-fit items-center px-2.5 py-1 rounded-md text-xs font-bold bg-slate-200 text-slate-600"

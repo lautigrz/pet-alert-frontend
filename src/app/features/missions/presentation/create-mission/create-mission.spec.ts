@@ -40,11 +40,30 @@ vi.mock('leaflet', () => {
 describe('CreateMissionPage', () => {
   let component: CreateMissionPage;
   let fixture: ComponentFixture<CreateMissionPage>;
-  let mockActivatedRoute: any;
-  let mockRouter: any;
-  let mockReportService: any;
-  let mockMissionService: any;
-  let mockToastService: any;
+  let mockActivatedRoute: {
+    snapshot: {
+      paramMap: {
+        get: ReturnType<typeof vi.fn>;
+      };
+    };
+  };
+  let mockRouter: {
+    navigate: ReturnType<typeof vi.fn>;
+    url: string;
+    events: unknown;
+  };
+  let mockReportService: {
+    getReportByPublicId: ReturnType<typeof vi.fn>;
+  };
+  let mockMissionService: {
+    createMission: ReturnType<typeof vi.fn>;
+    updateMission: ReturnType<typeof vi.fn>;
+    getMissionDetail: ReturnType<typeof vi.fn>;
+  };
+  let mockToastService: {
+    success: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     mockActivatedRoute = {
@@ -179,7 +198,7 @@ describe('CreateMissionPage', () => {
       component.description = 'Alguna instrucción';
       component.radius = 800;
 
-      (component as any).missionMarker = {
+      (component as unknown as { missionMarker: unknown }).missionMarker = {
         getLatLng: vi.fn().mockReturnValue({ lat: -34.6037, lng: -58.3816 })
       };
 
@@ -203,7 +222,7 @@ describe('CreateMissionPage', () => {
       mockMissionService.createMission.mockReturnValue(throwError(() => new Error('API error')));
       component.title = 'Misión de búsqueda';
       component.description = 'Alguna instrucción';
-      (component as any).missionMarker = {
+      (component as unknown as { missionMarker: unknown }).missionMarker = {
         getLatLng: vi.fn().mockReturnValue({ lat: -34.6037, lng: -58.3816 })
       };
 
@@ -224,7 +243,7 @@ describe('CreateMissionPage', () => {
       component.description = 'Instrucción editada';
       component.radius = 1500;
 
-      (component as any).missionMarker = {
+      (component as unknown as { missionMarker: unknown }).missionMarker = {
         getLatLng: vi.fn().mockReturnValue({ lat: -34.6037, lng: -58.3816 })
       };
 
@@ -245,7 +264,7 @@ describe('CreateMissionPage', () => {
       mockMissionService.updateMission.mockReturnValue(throwError(() => new Error('API error')));
       component.title = 'Misión de búsqueda editada';
       component.description = 'Instrucción editada';
-      (component as any).missionMarker = {
+      (component as unknown as { missionMarker: unknown }).missionMarker = {
         getLatLng: vi.fn().mockReturnValue({ lat: -34.6037, lng: -58.3816 })
       };
 

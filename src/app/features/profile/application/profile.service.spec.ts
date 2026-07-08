@@ -12,6 +12,13 @@ import {
   UserNotFoundError,
 } from '../domain/profile.errors';
 
+const fakeStats = {
+  reportsCreated: 2,
+  successfulReturns: 1,
+  activeDays: 15,
+  petsHelped: 0,
+};
+
 describe('ProfileService.updateProfile', () => {
   let profileHttp: {
     updateProfile: ReturnType<typeof vi.fn>;
@@ -75,6 +82,7 @@ describe('ProfileService.updateProfile', () => {
         lastname: 'Pereira',
         photoUrl: 'https://image.com/avatar.jpg',
         role: null,
+        stats: null,
       });
     });
   });
@@ -199,6 +207,7 @@ describe('ProfileService.getProfile', () => {
         lastname: 'Pereira',
         photoUrl: null,
         role: 'USER',
+        stats: fakeStats,
       });
 
       // When
@@ -213,6 +222,7 @@ describe('ProfileService.getProfile', () => {
         lastname: 'Pereira',
         photoUrl: null,
         role: 'USER',
+        stats: fakeStats,
       });
     });
   });
@@ -280,6 +290,7 @@ describe('ProfileService.getPublicProfile', () => {
         name: 'Ana',
         lastname: null,
         photoUrl: null,
+        stats: null,
       });
     });
   });

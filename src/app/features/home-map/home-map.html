@@ -1,16 +1,16 @@
-@if (mostrarFiltros()) {
-<button type="button" aria-label="Cerrar filtros" (click)="cerrarFiltros()"
+@if (showFilters()) {
+<button type="button" aria-label="Cerrar filtros" (click)="closeFilters()"
   class="fixed inset-0 bg-black/40 z-[1090] lg:hidden"></button>
 }
 
 <aside
   class="hidden fixed left-1/2 top-1/2 z-[1100] w-[90%] max-w-md max-h-[85vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto bg-white rounded-2xl shadow-xl lg:block lg:static lg:translate-x-0 lg:translate-y-0 lg:w-[430px] lg:max-w-none lg:max-h-none lg:rounded-none lg:shadow-none lg:border-r lg:border-slate-200 shrink-0"
-  [class.!block]="mostrarFiltros()">
+  [class.!block]="showFilters()">
   <div class="px-5 py-5">
     <app-notification-prompt />
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-bold text-[#12355B]">Filtros</h2>
-      <button type="button" (click)="cerrarFiltros()" aria-label="Cerrar filtros"
+      <button type="button" (click)="closeFilters()" aria-label="Cerrar filtros"
         class="lg:hidden text-slate-400 hover:text-[#12355B]">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -23,14 +23,14 @@
     <div class="mb-4">
       <p class="text-xs font-semibold text-slate-500 mb-2">Tipo de reporte</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="seleccionarTipo('todos')"
+        <button type="button" (click)="selectType('todos')"
           class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'todos'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
           Todos
         </button>
 
-        <button type="button" (click)="seleccionarTipo('perdidos')"
+        <button type="button" (click)="selectType('perdidos')"
           class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'perdidos'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
@@ -39,7 +39,7 @@
           <span>Perdidos</span>
         </button>
 
-        <button type="button" (click)="seleccionarTipo('avistados')"
+        <button type="button" (click)="selectType('avistados')"
           class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'avistados'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
@@ -272,6 +272,40 @@
 
   <div class="hidden lg:block px-5 py-4 border-t border-slate-200">
     <div class="flex items-center justify-between">
+      <div class="flex items-center gap-1.5">
+        <h3 class="text-base font-bold text-[#12355B]">Reportes destacados</h3>
+        <app-info-tooltip
+          align="center"
+          tooltipTitle="¿Qué es destacar?"
+          [ariaLabel]="'¿Qué es destacar un reporte?'"
+        >
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Destacar tu reporte lo muestra
+            <span class="font-semibold text-[#12355B]">priorizado</span>:
+            aparece primero en los listados y con más visibilidad para que más gente lo vea.
+          </p>
+
+          <p class="text-xs text-slate-500 leading-relaxed mt-2">
+            <span class="font-semibold text-[#12355B]">¿Cómo?</span>
+            Entrá al detalle de tu reporte y tocá
+            <span class="font-semibold text-[#12355B]">★ Destacar reporte</span>.
+            Se abona una sola vez y queda destacado mientras el reporte siga activo.
+          </p>
+        </app-info-tooltip>
+      </div>
+      <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
+        {{ badgeDestacados() }}
+      </span>
+    </div>
+    @for (r of reportesDestacados(); track r.publicId) {
+    <div class="home-card mt-3">
+      <app-home-report-card [reporte]="r"></app-home-report-card>
+    </div>
+    }
+  </div>
+
+  <div class="hidden lg:block px-5 py-4 border-t border-slate-200">
+    <div class="flex items-center justify-between">
       <h3 class="text-base font-bold text-[#12355B]">Reportes cercanos</h3>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
         {{ badgeCercanos() }}
@@ -292,7 +326,7 @@
 <div class="flex-1 relative min-w-0 h-full">
   <div id="map" class="absolute inset-0 h-full w-full"></div>
 
-  <button type="button" (click)="abrirFiltros()" aria-label="Filtros"
+  <button type="button" (click)="openFilters()" aria-label="Filtros"
     class="lg:hidden absolute top-4 right-4 z-[1000] w-11 h-11 rounded-full bg-[#E8842E] hover:bg-[#d57821] text-white shadow-lg flex items-center justify-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -352,11 +386,11 @@
     </div>
   </div>
 
-  @if (reporteSeleccionado(); as r) {
+  @if (selectedReport(); as r) {
   <div
     class="lg:hidden fixed inset-x-0 bottom-0 z-[1000] bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.15)] px-3 pt-2 pb-[5.5rem]">
     <div class="flex justify-end mb-1">
-      <button type="button" (click)="reporteSeleccionado.set(null)" aria-label="Cerrar"
+      <button type="button" (click)="selectedReport.set(null)" aria-label="Cerrar"
         class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-[#12355B]">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -397,7 +431,7 @@
       m.report.lost_report_detail?.pet?.petImages?.[0]?.photoUrl ??
       m.report.reportImages?.[0]?.photoUrl ??
       'assets/default-pet.png'
-    " class="w-full h-44 object-cover">
+    " class="w-full h-44 object-cover" alt="Foto de la mascota">
 
     <div class="p-4">
 

@@ -22,6 +22,42 @@ const MUNDO: [number, number][] = [
   [-90, 180],
 ];
 
+interface SelectedMission {
+  publicId?: string;
+  public_id?: string;
+  status: string;
+  createdAt: Date;
+  searchArea?: {
+    latitude: number;
+    longitude: number;
+    radius: number;
+  };
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+  report: {
+    publicId: string;
+    photoUrl?: string | null;
+    title?: string | null;
+    status: string;
+    petDetails?: {
+      name?: string;
+      photoUrl?: string | null;
+    };
+    lost_report_detail?: {
+      pet?: {
+        name?: string;
+        petImages?: { photoUrl: string }[];
+      };
+    };
+    reportImages?: { photoUrl: string }[];
+    location?: {
+      address?: string | null;
+    };
+    location_address?: string | null;
+  };
+}
+
 @Component({
   selector: 'app-home-map',
   standalone: true,
@@ -57,21 +93,30 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly centrosFiltro = signal('todos');
   readonly searchTerm = signal('');
   readonly suggestions = signal<LocationSuggestion[]>([]);
-  readonly mostrarFiltros = signal(false);
-  readonly reporteSeleccionado = signal<Reporte | null>(null);
-  readonly misiones = signal<any[]>([]);
+
+
+  readonly misiones = signal<SelectedMission[]>([]);
+
+  readonly showFilters = signal(false);
+  readonly selectedReport = signal<Reporte | null>(null);
+
 
 
   readonly reportes = signal<Reporte[]>([]);
   readonly reportesFiltrados = signal<Reporte[]>([]);
   readonly misReportes = signal<Reporte[]>([]);
   readonly reportesCercanos = signal<Reporte[]>([]);
+  readonly reportesDestacados = signal<Reporte[]>([]);
   readonly totalMisReportes = signal(0);
   readonly totalCercanos = signal(0);
+  readonly totalDestacados = signal(0);
   readonly badgeMisReportes = computed(() => this.formatBadge(this.totalMisReportes()));
   readonly badgeCercanos = computed(() => this.formatBadge(this.totalCercanos()));
 
-  readonly misionSeleccionada = signal<any | null>(null);
+  readonly misionSeleccionada = signal<SelectedMission | null>(null);
+
+
+  readonly badgeDestacados = computed(() => this.formatBadge(this.totalDestacados()));
 
   readonly lugares = signal<Place[]>([]);
 
@@ -172,10 +217,28 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       this.misReportes.set(misReportesActivos.slice(0, 3));
       this.totalCercanos.set(reportes.length);
       this.reportesCercanos.set(reportes.slice(0, 5));
+      this.actualizarDestacados();
     } catch (error) {
       console.error('Error cargando reportes', error);
     }
   };
+
+  private actualizarDestacados(): void {
+    const destacados = this.reportes().filter((reporte) => reporte.featured);
+    this.totalDestacados.set(destacados.length);
+    this.reportesDestacados.set(this.ordenarPorCercania(destacados).slice(0, 3));
+  }
+
+  private ordenarPorCercania(reportes: Reporte[]): Reporte[] {
+    const centro = this.userLatLng;
+    if (!centro) return reportes;
+
+    return [...reportes].sort(
+      (a, b) =>
+        this.calcularDistancia(centro.lat, centro.lng, a.location.latitude, a.location.longitude) -
+        this.calcularDistancia(centro.lat, centro.lng, b.location.latitude, b.location.longitude),
+    );
+  }
 
   private aplicarFiltrosActuales(): void {
     if (this.userLatLng) {
@@ -243,7 +306,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       marker.on('click', () => {
         if (this.esMobile()) {
           marker.closePopup();
-          this.zone.run(() => this.reporteSeleccionado.set(reporte));
+          this.zone.run(() => this.selectedReport.set(reporte));
         }
       });
 
@@ -367,7 +430,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   }
 
-  abrirMision(mission: any): void {
+  abrirMision(mission: SelectedMission): void {
 
     this.misionSeleccionada.set(null);
 
@@ -407,7 +470,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.map.attributionControl.setPosition('bottomleft');
     this.map.zoomControl.setPosition('bottomright');
     this.map.on('click', () =>
-      this.zone.run(() => this.reporteSeleccionado.set(null)),
+      this.zone.run(() => this.selectedReport.set(null)),
     );
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -493,6 +556,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         if (reaplicarFiltros && !this.searchLatLng) {
           this.aplicarFiltroCentros();
         }
+        this.actualizarDestacados();
         setTimeout(() => this.map.invalidateSize(), 100);
       },
       () => {
@@ -558,7 +622,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private missionCircles: L.Circle[] = [];
   private missionMarkers: L.Marker[] = [];
 
-  private dibujarMisiones(misiones: any[]): void {
+  private dibujarMisiones(misiones: SelectedMission[]): void {
 
     this.missionCircles.forEach(c => this.map.removeLayer(c));
     this.missionMarkers.forEach(m => this.map.removeLayer(m));
@@ -581,7 +645,11 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
       const lat = mission.searchArea?.latitude ?? mission.latitude;
       const lng = mission.searchArea?.longitude ?? mission.longitude;
-      const radius = mission.searchArea?.radius ?? mission.radius;
+      const radius = mission.searchArea?.radius ?? mission.radius ?? 1000;
+
+      if (lat === undefined || lng === undefined) {
+        continue;
+      }
 
       const circle = L.circle(
         [lat, lng],
@@ -605,7 +673,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
         this.zone.run(() => {
 
-          this.reporteSeleccionado.set(null);
+          this.selectedReport.set(null);
 
           this.misionSeleccionada.set(mission);
 
@@ -969,44 +1037,45 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.aplicarFiltroCentros();
   }
 
-  abrirFiltros(): void {
-    this.mostrarFiltros.set(true);
+  openFilters(): void {
+    this.showFilters.set(true);
   }
 
-  cerrarFiltros(): void {
-    this.mostrarFiltros.set(false);
+  closeFilters(): void {
+    this.showFilters.set(false);
   }
 
-  seleccionarTipo(valor: string): void {
-    this.tipoFiltro.set(valor);
+
+  selectType(value: string): void {
+    this.tipoFiltro.set(value);
     this.filtrarPorRadar();
-
   }
 
-  seleccionarCercania(valor: string): void {
-    this.cercaniaFiltro.set(valor);
+  seleccionarCercania(value: string): void {
+    this.cercaniaFiltro.set(value);
     this.aplicarFiltros();
   }
 
-  seleccionarMascota(valor: string): void {
-    this.mascotaFiltro.set(valor);
+  seleccionarMascota(value: string): void {
+    this.mascotaFiltro.set(value);
     this.filtrarPorRadar();
   }
 
-  seleccionarCentros(valor: string): void {
-    this.centrosFiltro.set(valor);
+  seleccionarCentros(value: string): void {
+    this.centrosFiltro.set(value);
     this.aplicarFiltroCentros();
   }
 
   cambiarRadar(event: Event): void {
 
-    const valor =
+    const value =
       Number(
         (event.target as HTMLInputElement)
           .value
       );
 
-    this.radioRadar.set(valor);
+    this.radioRadar.set(value);
+
 
     this.dibujarRadar();
 

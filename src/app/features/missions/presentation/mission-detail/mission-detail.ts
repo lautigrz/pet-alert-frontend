@@ -10,6 +10,7 @@ import { ReportService } from '../../../report/application/report.service';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ChatsService } from '../../../chats/application/chats.service';
 import { MissionOutput } from '../../infrastructure/models/mission.model';
+import { MissionUpdateOutput } from '../../infrastructure/mission-update.http';
 import { FormsModule } from '@angular/forms';
 import { MissionStatusMapper, UpdateStatusMapper } from '../mission-status.mapper';
 
@@ -35,7 +36,7 @@ export class MissionDetailPage implements OnInit, OnDestroy {
   private readonly chatsService = inject(ChatsService);
 
   readonly mission = signal<MissionOutput | null>(null);
-  readonly responses = signal<any[]>([]);
+  readonly responses = signal<MissionUpdateOutput[]>([]);
   readonly currentUserId = signal<string | null>(null);
   readonly isVolunteer = signal<boolean>(false);
   readonly isOwner = signal<boolean>(false);

@@ -20,7 +20,13 @@
   }
 
 </a>
-    <a [routerLink]="[rutaMiPerfil]" routerLinkActive="text-[#E8842E]" class="hover:text-[#E8842E] transition-colors">Perfil</a>
+    <a
+  routerLink="/profile"
+  routerLinkActive="text-[#E8842E]"
+  class="hover:text-[#E8842E] transition-colors"
+>
+  Perfil
+</a>
   </nav>
 
   <div class="flex items-center gap-4 shrink-0">
@@ -44,8 +50,13 @@
       @if (menuAbierto()) {
         <button type="button" (click)="cerrarMenu()" aria-label="Cerrar menú" class="fixed inset-0 z-[1050] cursor-default"></button>
         <div class="absolute right-0 top-[calc(100%+10px)] z-[1100] min-w-[190px] bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 flex flex-col">
-          <a [routerLink]="[rutaMiPerfil]" (click)="cerrarMenu()"
-            class="px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 transition-colors">Mi perfil</a>
+          <a
+  routerLink="/profile"
+  (click)="cerrarMenu()"
+  class="px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 transition-colors"
+>
+  Mi perfil
+</a>
           <button type="button" (click)="cerrarSesion()"
             class="text-left px-3 py-2.5 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">Cerrar sesión</button>
         </div>

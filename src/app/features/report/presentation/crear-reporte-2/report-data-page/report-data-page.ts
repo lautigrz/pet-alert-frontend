@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { WizardStepperComponent } from '../../../../../shared/component/wizard-stepper/wizard-stepper.component';
 import { PetIconComponent } from '../../../../../shared/component/pet-icon/pet-icon.component';

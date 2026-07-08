@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { ReportService } from '../../application/report.service';
 import { ReportListService } from '../../application/report-list.service';
 import { PaymentService } from '../../application/payment.service';
@@ -17,7 +16,9 @@ import { ReportModalComponent } from '../../../../shared/component/report-modal/
 import { CloseReportModalComponent } from '../components/close-report-modal/close-report-modal';
 import { MissionService } from '../../../missions/application/mission.service';
 import { ChatsService } from '../../../chats/application/chats.service';
-import { MissionStatusMapper } from '../../../missions/presentation/mission-status.mapper';
+
+import { InfoTooltipComponent } from "../../../../shared/component/info-tooltip/info-tooltip.component";
+
 
 @Component({
   selector: 'app-report-detail',
@@ -31,7 +32,8 @@ import { MissionStatusMapper } from '../../../missions/presentation/mission-stat
     ReportContactComponent,
     ReportTimelineComponent,
     ReportModalComponent,
-    CloseReportModalComponent
+    CloseReportModalComponent,
+    InfoTooltipComponent
   ],
   host: { class: 'flex flex-1 flex-col' },
   templateUrl: './report-detail.html',
@@ -49,6 +51,7 @@ export class ReportDetailPage implements OnInit {
   private readonly USUARIO_BAJA_VALORACION_PUBLIC_ID = '70867c26-8c5c-40d2-b3df-08036823ff16';
 
 
+
   report = signal<ReportDetail | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
@@ -60,9 +63,11 @@ export class ReportDetailPage implements OnInit {
   siguiendoHistoria = signal(false);
   cargandoSeguimiento = signal(false);
   actualizandoSeguimiento = signal(false);
+  userRatingAverage = signal(0);
+  userRatingCount = signal(0);
 
-  misionAsociada = signal<any | null>(null);
-  duenoMision = signal<any | null>(null);
+  misionAsociada = signal<unknown | null>(null);
+  duenoMision = signal<unknown | null>(null);
   hasActiveMission = signal<boolean>(false);
 
   esPropio = computed(() => {
@@ -80,45 +85,13 @@ export class ReportDetailPage implements OnInit {
     const publicId = this.route.snapshot.paramMap.get('publicId')!;
 
     try {
-      const r = await this.reportService.getReportByPublicId(publicId);
-      this.report.set(r);
-
-      const missions = await firstValueFrom(this.missionService.getMissions());
-
-      if (r.type === 'LOST') {
-        const myMission = missions.find(m => m.report.publicId === r.publicId && !MissionStatusMapper.isClosed(m.status));
-        if (myMission) {
-          this.hasActiveMission.set(true);
-        }
-      }
-
-      if (r.type === 'SIGHTING') {
-        const sightingLat = r.location.latitude;
-        const sightingLng = r.location.longitude;
-
-        const matchingMission = missions.find(m => {
-          const distance = this.calcularDistancia(
-            sightingLat,
-            sightingLng,
-            m.searchArea.latitude,
-            m.searchArea.longitude
-          );
-          return distance <= m.searchArea.radius;
-        });
-
-        if (matchingMission) {
-          try {
-            const lostReport = await this.reportService.getReportByPublicId(matchingMission.report.publicId);
-            this.duenoMision.set(lostReport.user);
-            this.misionAsociada.set(matchingMission);
-          } catch (e) {
-            console.error('Error loading mission owner:', e);
-          }
-        }
-      }
+      const report = await this.reportService.getReportByPublicId(publicId);
+      this.report.set(report);
+      await this.cargarRatingUsuario(report.user.publicId);
     } catch {
       this.error.set('No se pudo cargar el reporte');
     }
+
 
     try {
       const perfil = await this.profileService.getProfile();
@@ -186,16 +159,32 @@ export class ReportDetailPage implements OnInit {
     }
   }
 
-  esUsuarioBajaValoracion(report: ReportDetail): boolean {
-    return report.user.publicId === this.USUARIO_BAJA_VALORACION_PUBLIC_ID;
-    //ACA IRIA LA LOGICA REAL
+
+  private async cargarRatingUsuario(userPublicId: string): Promise<void> {
+    try {
+      const rating = await this.profileService.getUserRating(userPublicId);
+      this.userRatingAverage.set(rating.average);
+      this.userRatingCount.set(rating.count);
+    } catch {
+      this.userRatingAverage.set(0);
+      this.userRatingCount.set(0);
+    }
+  }
+  sinValoraciones(): boolean {
+    return this.userRatingCount() === 0;
   }
 
-  valoracionUsuario(report: ReportDetail): string {
-    return this.esUsuarioBajaValoracion(report) ? '2.0' : '5.0';
-    //ACA IRIA LA LOGICA REAL
+  esUsuarioBajaValoracion(): boolean {
+    return !this.sinValoraciones() && this.userRatingAverage() < 3;
   }
 
+  valoracionUsuario(): string {
+    if (this.sinValoraciones()) {
+      return 'Sin calificar';
+    }
+
+    return this.userRatingAverage().toFixed(1);
+  }
   private readonly router = inject(Router);
   irAEditarDatos(): void {
     const r = this.report();

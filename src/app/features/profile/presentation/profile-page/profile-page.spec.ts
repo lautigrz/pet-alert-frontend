@@ -7,6 +7,7 @@ import { ProfileService } from '../../application/profile.service';
 import { UserNotFoundError } from '../../domain/profile.errors';
 import { ReportListService } from '../../../report/application/report-list.service';
 import { Reporte } from '../../../report/domain/report-read.model';
+import type { UserExperienceSummary } from '../../domain/profile.model';
 
 const mockReporte = (overrides: Partial<Reporte> = {}): Reporte =>
   ({
@@ -25,6 +26,7 @@ const mockReporte = (overrides: Partial<Reporte> = {}): Reporte =>
 describe('ProfilePage', () => {
   let profileService: {
     getProfile: ReturnType<typeof vi.fn>;
+    getUserExperience: ReturnType<typeof vi.fn>;
   };
 
   let reportListService: {
@@ -36,6 +38,7 @@ describe('ProfilePage', () => {
   beforeEach(() => {
     profileService = {
       getProfile: vi.fn(),
+      getUserExperience: vi.fn(),
     };
 
     reportListService = {
@@ -50,6 +53,19 @@ describe('ProfilePage', () => {
       lastname: 'Pereira',
       photoUrl: null,
     });
+
+    profileService.getUserExperience.mockResolvedValue({
+      xp: 120,
+      level: 2,
+      unlockedAchievements: [
+        {
+          code: 'FIRST_STEPS',
+          name: 'Primeros pasos',
+          description: 'Alcanza 10 XP para empezar',
+          requiredXp: 10,
+        },
+      ],
+    } as UserExperienceSummary);
 
     reportListService.getMisReportes.mockResolvedValue([]);
 
@@ -169,6 +185,77 @@ describe('ProfilePage', () => {
     it('returns empty string when profile is not loaded yet', () => {
       // Then
       expect(component.displayName()).toBe('');
+    });
+  });
+
+  describe('experience widget', () => {
+    it('loads the user experience summary and exposes the current level and achievements', async () => {
+      await component.ngOnInit();
+
+      expect(profileService.getUserExperience).toHaveBeenCalled();
+      expect(component.experience()?.level).toBe(2);
+      expect(component.experience()?.unlockedAchievements).toHaveLength(1);
+    });
+
+    it('shows a level-up toast when the level increases', async () => {
+      profileService.getUserExperience.mockResolvedValueOnce({
+        xp: 40,
+        level: 1,
+        unlockedAchievements: [],
+      } as UserExperienceSummary);
+      profileService.getUserExperience.mockResolvedValueOnce({
+        xp: 140,
+        level: 2,
+        unlockedAchievements: [],
+      } as UserExperienceSummary);
+
+      await component.loadExperience();
+      await component.loadExperience();
+
+      expect(component.levelUpPulse()).toBe(true);
+    });
+
+    it('lists every achievement under locked when the user has none unlocked', async () => {
+      profileService.getUserExperience.mockResolvedValue({
+        xp: 0,
+        level: 1,
+        achievements: [
+          { code: 'FIRST_RESCUE', name: 'Primer rescate', description: '', requiredXp: 10, unlocked: false },
+          { code: 'SOLIDARY_NEIGHBOR', name: 'Vecino solidario', description: '', requiredXp: 50, unlocked: false },
+          { code: 'URBAN_EXPLORER', name: 'Explorador urbano', description: '', requiredXp: 100, unlocked: false },
+        ],
+        unlockedAchievements: [],
+      } as UserExperienceSummary);
+
+      await component.ngOnInit();
+
+      expect(component.unlockedAchievementsList()).toHaveLength(0);
+      expect(component.lockedAchievementsList().map((a) => a.code)).toEqual([
+        'FIRST_RESCUE',
+        'SOLIDARY_NEIGHBOR',
+        'URBAN_EXPLORER',
+      ]);
+    });
+
+    it('moves an achievement to unlocked once its required xp is reached', async () => {
+      profileService.getUserExperience.mockResolvedValue({
+        xp: 60,
+        level: 1,
+        achievements: [
+          { code: 'FIRST_RESCUE', name: 'Primer rescate', description: '', requiredXp: 10, unlocked: true },
+          { code: 'SOLIDARY_NEIGHBOR', name: 'Vecino solidario', description: '', requiredXp: 50, unlocked: true },
+          { code: 'URBAN_EXPLORER', name: 'Explorador urbano', description: '', requiredXp: 100, unlocked: false },
+        ],
+        unlockedAchievements: [],
+      } as UserExperienceSummary);
+
+      await component.ngOnInit();
+
+      expect(component.unlockedAchievementsList().map((a) => a.code)).toEqual([
+        'FIRST_RESCUE',
+        'SOLIDARY_NEIGHBOR',
+      ]);
+      expect(component.lockedAchievementsList().map((a) => a.code)).toEqual(['URBAN_EXPLORER']);
     });
   });
 

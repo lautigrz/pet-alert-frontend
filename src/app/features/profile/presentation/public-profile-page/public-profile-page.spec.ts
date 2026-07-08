@@ -10,7 +10,12 @@ import { AuthService } from '../../../auth/application/auth.service';
 describe('PublicProfilePage', () => {
   let component: PublicProfilePage;
   let fixture: ComponentFixture<PublicProfilePage>;
-  let profileService: { getPublicProfile: ReturnType<typeof vi.fn> };
+  let profileService: {
+    getPublicProfile: ReturnType<typeof vi.fn>;
+    getUserRating: ReturnType<typeof vi.fn>;
+    getUserReviews: ReturnType<typeof vi.fn>;
+    createUserReview: ReturnType<typeof vi.fn>;
+  };
   let reportListService: { getReportesDeUsuario: ReturnType<typeof vi.fn> };
   let authService: { getCurrentUserId: ReturnType<typeof vi.fn> };
   let publicIdParam: string | null;
@@ -25,7 +30,12 @@ describe('PublicProfilePage', () => {
 
   beforeEach(() => {
     publicIdParam = 'u-1';
-    profileService = { getPublicProfile: vi.fn().mockResolvedValue(fakeProfile) };
+    profileService = {
+      getPublicProfile: vi.fn().mockResolvedValue(fakeProfile),
+      getUserRating: vi.fn().mockResolvedValue({ average: 4.5, count: 2 }),
+      getUserReviews: vi.fn().mockResolvedValue({ items: [], page: 1, pageSize: 10, total: 0 }),
+      createUserReview: vi.fn().mockResolvedValue({ id: 1, rating: 5, description: 'Muy buena experiencia', createdAt: '', updatedAt: '', reviewer: fakeProfile }),
+    };
     reportListService = { getReportesDeUsuario: vi.fn().mockResolvedValue([]) };
     authService = { getCurrentUserId: vi.fn().mockReturnValue('me-999') };
 
@@ -51,6 +61,8 @@ describe('PublicProfilePage', () => {
 
     expect(profileService.getPublicProfile).toHaveBeenCalledWith('u-1');
     expect(reportListService.getReportesDeUsuario).toHaveBeenCalledWith('u-1');
+    expect(profileService.getUserRating).toHaveBeenCalledWith('u-1');
+    expect(profileService.getUserReviews).toHaveBeenCalledWith('u-1');
     expect(component.profile()).toEqual(fakeProfile);
     expect(component.loading()).toBe(false);
     expect(component.reportsLoading()).toBe(false);
@@ -93,8 +105,8 @@ describe('PublicProfilePage', () => {
   });
 
   it('setTab cambia la pestaña activa', () => {
-    component.setTab('missions');
-    expect(component.activeTab()).toBe('missions');
+    component.setTab('reviews');
+    expect(component.activeTab()).toBe('reviews');
   });
 
   it('esPropio es false cuando el perfil es de otro usuario', async () => {
@@ -119,4 +131,21 @@ describe('PublicProfilePage', () => {
     component.cerrarModalDenuncia();
     expect(component.mostrandoModalDenuncia()).toBe(false);
   });
+
+  it('envía una reseña y recarga rating y listado', async () => {
+    await component.ngOnInit();
+    component.setReviewRating(5);
+    component.reviewDescription.set('Muy buena experiencia');
+
+    await component.enviarReview();
+
+    expect(profileService.createUserReview).toHaveBeenCalledWith({
+      reviewedUserId: 'u-1',
+      rating: 5,
+      description: 'Muy buena experiencia',
+    });
+    expect(component.activeTab()).toBe('reviews');
+    expect(component.reviewSheetOpen()).toBe(false);
+  });
+
 });

@@ -373,7 +373,7 @@ describe('ReportListPage', () => {
       component.busquedaDescripcion.set('mancha blanca');
 
       // When
-      await component.seleccionarTab('mis-reportes');
+      await component.selectTab('mis-reportes');
 
       // Then
       expect(reportListService.getMisReportesPaginado).toHaveBeenCalledWith(
@@ -399,7 +399,7 @@ describe('ReportListPage', () => {
       });
 
       // When
-      await component.seleccionarTab('mis-reportes');
+      await component.selectTab('mis-reportes');
 
       // Then
       expect(component.reportes()).toEqual([
@@ -421,7 +421,7 @@ describe('ReportListPage', () => {
     it('keeps the applied filters when changing page', async () => {
       // Given
       component.busquedaDescripcion.set('mancha');
-      await component.seleccionarTab('mis-reportes');
+      await component.selectTab('mis-reportes');
 
       // When
       await component.goToPage(2);
@@ -437,7 +437,7 @@ describe('ReportListPage', () => {
 
     it('goes back to page 1 when a filter changes', async () => {
       // Given
-      await component.seleccionarTab('mis-reportes');
+      await component.selectTab('mis-reportes');
       await component.goToPage(3);
       expect(component.page()).toBe(3);
 

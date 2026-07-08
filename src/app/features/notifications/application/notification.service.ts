@@ -60,6 +60,19 @@ export class NotificationService {
     this.toast.info('Notificaciones desactivadas');
   }
 
+  showLocal(title: string, body: string): void {
+    if (!this.isSupported() || Notification.permission !== 'granted') return;
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready
+        .then((registration) => registration.showNotification(title, { body }))
+        .catch(() => new Notification(title, { body }));
+      return;
+    }
+
+    new Notification(title, { body });
+  }
+
   private setActive(value: boolean): void {
     this.active.set(value);
     localStorage.setItem(ACTIVE_KEY, value ? '1' : '0');

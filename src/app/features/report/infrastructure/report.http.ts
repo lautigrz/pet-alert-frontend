@@ -173,7 +173,6 @@ export class ReportHttp {
       breed?: string | null;
       hasIdCollar?: boolean;
       color?: string;
-      isInTransit?: boolean;
     };
     lostDetails?: {
       petPublicId: string;

@@ -4,10 +4,18 @@ import { of, throwError, firstValueFrom } from 'rxjs';
 import { describe, beforeEach, it, expect, vi } from 'vitest';
 import { MissionService } from './mission.service';
 import { MissionHttp } from '../infrastructure/mission.http';
+import { MissionCardOutput, MissionOutput } from '../infrastructure/models/mission.model';
 
 describe('MissionService', () => {
   let service: MissionService;
-  let mockMissionHttp: any;
+  let mockMissionHttp: {
+    createMission: ReturnType<typeof vi.fn>;
+    getMissions: ReturnType<typeof vi.fn>;
+    getMissionDetail: ReturnType<typeof vi.fn>;
+    joinMission: ReturnType<typeof vi.fn>;
+    leaveMission: ReturnType<typeof vi.fn>;
+    cancelMission: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockMissionHttp = {
@@ -62,15 +70,16 @@ describe('MissionService', () => {
       try {
         await firstValueFrom(service.createMission(dto));
         expect.fail('Debería haber fallado');
-      } catch (err: any) {
-        expect(err.message).toBe('Mensaje de error');
+      } catch (err) {
+        const error = err as Error;
+        expect(error.message).toBe('Mensaje de error');
       }
     });
   });
 
   describe('getMissions', () => {
     it('debería retornar el listado de misiones', async () => {
-      const list = [{ publicId: 'm1', status: 'OPEN' }] as any;
+      const list = [{ publicId: 'm1', status: 'OPEN' }] as unknown as MissionCardOutput[];
       mockMissionHttp.getMissions.mockReturnValue(of(list));
 
       const res = await firstValueFrom(service.getMissions());
@@ -81,7 +90,7 @@ describe('MissionService', () => {
 
   describe('getMissionDetail', () => {
     it('debería retornar el detalle de la misión', async () => {
-      const detail = { publicId: 'm1', title: 'Título' } as any;
+      const detail = { publicId: 'm1', title: 'Título' } as unknown as MissionOutput;
       mockMissionHttp.getMissionDetail.mockReturnValue(of(detail));
 
       const res = await firstValueFrom(service.getMissionDetail('m1'));

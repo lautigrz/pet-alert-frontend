@@ -3,11 +3,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError, firstValueFrom } from 'rxjs';
 import { describe, beforeEach, it, expect, vi } from 'vitest';
 import { MissionUpdateService } from './mission-update.service';
-import { MissionUpdateHttp } from '../infrastructure/mission-update.http';
+import { MissionUpdateHttp, MissionUpdateOutput } from '../infrastructure/mission-update.http';
 
 describe('MissionUpdateService', () => {
   let service: MissionUpdateService;
-  let mockUpdateHttp: any;
+  let mockUpdateHttp: {
+    getUpdates: ReturnType<typeof vi.fn>;
+    createUpdate: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockUpdateHttp = {
@@ -31,7 +34,7 @@ describe('MissionUpdateService', () => {
 
   describe('getUpdates', () => {
     it('debería llamar a la API y retornar las actualizaciones', async () => {
-      const updates = [{ publicId: 'u1', comment: 'test' }] as any;
+      const updates = [{ publicId: 'u1', comment: 'test' }] as unknown as MissionUpdateOutput[];
       mockUpdateHttp.getUpdates.mockReturnValue(of(updates));
 
       const res = await firstValueFrom(service.getUpdates('m1'));
@@ -49,8 +52,9 @@ describe('MissionUpdateService', () => {
       try {
         await firstValueFrom(service.getUpdates('m1'));
         expect.fail('Debería haber fallado');
-      } catch (err: any) {
-        expect(err.message).toBe('Error al obtener actualizaciones');
+      } catch (err) {
+        const error = err as Error;
+        expect(error.message).toBe('Error al obtener actualizaciones');
       }
     });
   });
@@ -80,8 +84,9 @@ describe('MissionUpdateService', () => {
       try {
         await firstValueFrom(service.createUpdate(dto));
         expect.fail('Debería haber fallado');
-      } catch (err: any) {
-        expect(err.message).toBe('Error al crear actualización');
+      } catch (err) {
+        const error = err as Error;
+        expect(error.message).toBe('Error al crear actualización');
       }
     });
   });

@@ -11,6 +11,7 @@ import { ToastService } from '../../../../shared/application/toast.service';
 import { NavbarComponent } from '../../../../shared/component/navbar/navbar.component';
 import { FooterComponent } from '../../../../shared/component/footer/footer.component';
 import { BottomNavComponent } from '../../../../shared/component/bottom-nav/bottom-nav.component';
+import { MissionOutput } from '../../infrastructure/models/mission.model';
 
 @Component({
   selector: 'app-create-mission',
@@ -40,6 +41,7 @@ export class CreateMissionPage implements OnInit, AfterViewInit {
   description = '';
   showInstructions = true;
 
+  private _mission?: MissionOutput;
   private map!: L.Map;
   @ViewChild('missionMap') missionMap!: ElementRef<HTMLDivElement>;
 
@@ -51,6 +53,7 @@ export class CreateMissionPage implements OnInit, AfterViewInit {
       this.missionId = id;
       try {
         const m = await firstValueFrom(this.missionService.getMissionDetail(this.missionId));
+        this._mission = m;
         this.reportId = m.report.publicId;
         this.title = m.title;
         this.description = m.description;
@@ -185,8 +188,8 @@ export class CreateMissionPage implements OnInit, AfterViewInit {
     }
   }
 
-  private get mission(): any {
-    return (this as any)._mission;
+  private get mission(): MissionOutput | undefined {
+    return this._mission;
   }
 
   async saveMission(): Promise<void> {

@@ -8,19 +8,49 @@ import { AuthService } from '../../../auth/application/auth.service';
 import { ReportService } from '../../../report/application/report.service';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ChatsService } from '../../../chats/application/chats.service';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
+import { MissionOutput } from '../../infrastructure/models/mission.model';
+import { Mock } from 'vitest';
 
 describe('MissionDetailPage', () => {
   let component: MissionDetailPage;
   let fixture: ComponentFixture<MissionDetailPage>;
-  let mockActivatedRoute: any;
-  let mockRouter: any;
-  let mockMissionService: any;
-  let mockMissionUpdateService: any;
-  let mockAuthService: any;
-  let mockReportService: any;
-  let mockToastService: any;
-  let mockChatsService: any;
+  let mockActivatedRoute: {
+    snapshot: {
+      paramMap: {
+        get: Mock;
+      };
+    };
+  };
+  let mockRouter: {
+    navigate: Mock;
+    events: unknown;
+    url: string;
+  };
+  let mockMissionService: {
+    getMissions: Mock;
+    joinMission: Mock;
+    leaveMission: Mock;
+    cancelMission: Mock;
+    getMissionDetail: Mock;
+  };
+  let mockMissionUpdateService: {
+    getUpdates: Mock;
+    createUpdate: Mock;
+  };
+  let mockAuthService: {
+    getCurrentUserId: Mock;
+  };
+  let mockReportService: {
+    getReportByPublicId: Mock;
+  };
+  let mockToastService: {
+    success: Mock;
+    error: Mock;
+  };
+  let mockChatsService: {
+    getOrCreateConversation: Mock;
+  };
 
   beforeEach(async () => {
     mockActivatedRoute = {
@@ -212,7 +242,7 @@ describe('MissionDetailPage', () => {
 
   describe('métodos de unión y abandono de misión', () => {
     it('debería unirse a la misión correctamente', async () => {
-      const missionData = { publicId: 'mission-123' } as any;
+      const missionData = { publicId: 'mission-123' } as unknown as MissionOutput;
       component.mission.set(missionData);
 
       await component.join();
@@ -222,7 +252,7 @@ describe('MissionDetailPage', () => {
     });
 
     it('debería abandonar la misión correctamente', async () => {
-      const missionData = { publicId: 'mission-123' } as any;
+      const missionData = { publicId: 'mission-123' } as unknown as MissionOutput;
       component.mission.set(missionData);
 
       await component.leave();
@@ -234,7 +264,7 @@ describe('MissionDetailPage', () => {
 
   describe('método cancel', () => {
     it('debería cancelar la misión si el usuario confirma', async () => {
-      const missionData = { publicId: 'mission-123' } as any;
+      const missionData = { publicId: 'mission-123' } as unknown as MissionOutput;
       component.mission.set(missionData);
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
@@ -245,7 +275,7 @@ describe('MissionDetailPage', () => {
     });
 
     it('no debería cancelar si el usuario no confirma', async () => {
-      const missionData = { publicId: 'mission-123' } as any;
+      const missionData = { publicId: 'mission-123' } as unknown as MissionOutput;
       component.mission.set(missionData);
       vi.spyOn(window, 'confirm').mockReturnValue(false);
 
@@ -257,7 +287,7 @@ describe('MissionDetailPage', () => {
 
   describe('método sendUpdate', () => {
     it('debería enviar una actualización y limpiar la caja de texto', async () => {
-      const missionData = { publicId: 'mission-123' } as any;
+      const missionData = { publicId: 'mission-123' } as unknown as MissionOutput;
       component.mission.set(missionData);
       component.comment = 'Nueva pista encontrada';
 
@@ -273,7 +303,7 @@ describe('MissionDetailPage', () => {
     });
 
     it('debería mostrar un error si la caja de comentarios está vacía', async () => {
-      const missionData = { publicId: 'mission-123' } as any;
+      const missionData = { publicId: 'mission-123' } as unknown as MissionOutput;
       component.mission.set(missionData);
       component.comment = '';
 
@@ -294,7 +324,7 @@ describe('MissionDetailPage', () => {
 
   describe('método editMission', () => {
     it('debería navegar a la página de edición de misión', () => {
-      const missionData = { publicId: 'mission-123' } as any;
+      const missionData = { publicId: 'mission-123' } as unknown as MissionOutput;
       component.mission.set(missionData);
 
       component.editMission();

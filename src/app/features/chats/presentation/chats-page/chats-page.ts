@@ -94,7 +94,7 @@ export class ChatsPage implements OnInit, OnDestroy {
         this.route.snapshot.queryParamMap.get('conversation');
 
       if (conversationId) {
-        this.abrirConversacion(conversationId);
+        this.openConversation(conversationId);
       }
     });
 
@@ -173,7 +173,7 @@ selectContact(contact: ConversationSummaryOutput): void {
     });
 }
 
-abrirConversacion(conversationId: string): void {
+openConversation(conversationId: string): void {
 
   const contacto = this.contacts.find(c => c.publicId === conversationId);
 
