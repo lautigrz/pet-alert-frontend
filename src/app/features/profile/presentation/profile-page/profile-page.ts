@@ -1,10 +1,11 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProfileService } from '../../application/profile.service';
 import { UpdatedProfile, UserExperienceAchievement, UserExperienceSummary } from '../../domain/profile.model';
 import { ReportListService } from '../../../report/application/report-list.service';
 import { Reporte } from '../../../report/domain/report-read.model';
 import { HomeReportCardComponent } from '../../../home-map/components/home-report-card/home-report-card';
+import { AchievementIconComponent } from '../achievement-icon/achievement-icon.component';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { NotificationService } from '../../../notifications/application/notification.service';
 import { GivenUserReview, UserRatingSummary, UserReview } from '../../domain/user-review.model';
@@ -14,7 +15,7 @@ type ProfileTab = 'reports' | 'reviews' | 'missions' | 'achievements';
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  imports: [RouterLink, HomeReportCardComponent],
+  imports: [RouterLink, HomeReportCardComponent, AchievementIconComponent],
   templateUrl: './profile-page.html',
   styleUrls: ['./profile-page.css'],
 })
@@ -208,6 +209,15 @@ readonly reviewsError = signal<string | null>(null);
     this.activeTab.set(tab);
   }
 
+  @ViewChild('achievementsTrack') achievementsTrack?: ElementRef<HTMLDivElement>;
+
+  scrollAchievements(direction: number): void {
+    const track = this.achievementsTrack?.nativeElement;
+    if (!track) return;
+
+    track.scrollBy({ left: direction * track.clientWidth * 0.8, behavior: 'smooth' });
+  }
+
   private currentXp(experience: UserExperienceSummary): number {
     const totalXp = experience.totalXp ?? experience.xp;
     return typeof totalXp === 'number' && Number.isFinite(totalXp) ? totalXp : 0;
@@ -246,10 +256,6 @@ readonly reviewsError = signal<string | null>(null);
         ...a,
         progressLabel: `${Math.min(this.totalXp(), a.requiredXp)} / ${a.requiredXp}`,
       }));
-  }
-
-  achievementIcon(achievement: UserExperienceAchievement): string {
-    return achievement.icon ?? '⭐';
   }
 
   timeAgo(date: string): string {
