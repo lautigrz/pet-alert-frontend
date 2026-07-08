@@ -52,7 +52,7 @@ describe('ReportContactComponent', () => {
     fixture.componentRef.setInput('report', makeReportDetail({ user: { publicId: 'owner-1', username: 'ana', photoUrl: null, createdAt: '2024-01-01T00:00:00.000Z' } }));
     chatsService.getOrCreateConversation.mockResolvedValue('conv-7');
 
-    await component.enviarMensaje();
+    await component.sendMessage();
 
     expect(chatsService.getOrCreateConversation).toHaveBeenCalledWith('owner-1');
     expect(router.navigate).toHaveBeenCalledWith(['/chats'], { queryParams: { conversation: 'conv-7' } });
@@ -62,7 +62,7 @@ describe('ReportContactComponent', () => {
     fixture.componentRef.setInput('report', makeReportDetail());
     chatsService.getOrCreateConversation.mockRejectedValue(new Error('x'));
 
-    await component.enviarMensaje();
+    await component.sendMessage();
 
     expect(toastService.error).toHaveBeenCalledWith('No se pudo abrir el chat');
   });

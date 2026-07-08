@@ -53,8 +53,8 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly centrosFiltro = signal('todos');
   readonly searchTerm = signal('');
   readonly suggestions = signal<LocationSuggestion[]>([]);
-  readonly mostrarFiltros = signal(false);
-  readonly reporteSeleccionado = signal<Reporte | null>(null);
+  readonly showFilters = signal(false);
+  readonly selectedReport = signal<Reporte | null>(null);
 
 
   readonly reportes = signal<Reporte[]>([]);
@@ -251,7 +251,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       marker.on('click', () => {
         if (this.esMobile()) {
           marker.closePopup();
-          this.zone.run(() => this.reporteSeleccionado.set(reporte));
+          this.zone.run(() => this.selectedReport.set(reporte));
         }
       });
 
@@ -384,7 +384,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.map.attributionControl.setPosition('bottomleft');
     this.map.zoomControl.setPosition('bottomright');
     this.map.on('click', () =>
-      this.zone.run(() => this.reporteSeleccionado.set(null)),
+      this.zone.run(() => this.selectedReport.set(null)),
     );
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -767,44 +767,44 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.aplicarFiltroCentros();
   }
 
-  abrirFiltros(): void {
-    this.mostrarFiltros.set(true);
+  openFilters(): void {
+    this.showFilters.set(true);
   }
 
-  cerrarFiltros(): void {
-    this.mostrarFiltros.set(false);
+  closeFilters(): void {
+    this.showFilters.set(false);
   }
 
-  seleccionarTipo(valor: string): void {
-    this.tipoFiltro.set(valor);
+  selectType(value: string): void {
+    this.tipoFiltro.set(value);
       this.filtrarPorRadar();
 
   }
 
-  seleccionarCercania(valor: string): void {
-    this.cercaniaFiltro.set(valor);
+  seleccionarCercania(value: string): void {
+    this.cercaniaFiltro.set(value);
     this.aplicarFiltros();
   }
 
-  seleccionarMascota(valor: string): void {
-    this.mascotaFiltro.set(valor);
+  seleccionarMascota(value: string): void {
+    this.mascotaFiltro.set(value);
     this.filtrarPorRadar();
   }
 
-  seleccionarCentros(valor: string): void {
-    this.centrosFiltro.set(valor);
+  seleccionarCentros(value: string): void {
+    this.centrosFiltro.set(value);
     this.aplicarFiltroCentros();
   }
 
   cambiarRadar(event: Event): void {
 
-  const valor =
+  const value =
     Number(
       (event.target as HTMLInputElement)
       .value
     );
 
-  this.radioRadar.set(valor);
+  this.radioRadar.set(value);
 
   this.dibujarRadar();
 
