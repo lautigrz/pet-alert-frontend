@@ -52,4 +52,14 @@ export class MissionHttp {
     );
   }
 
+  updateMission(
+    publicId: string,
+    body: { title: string; description: string; latitude: number; longitude: number; radius: number }
+  ): Observable<void> {
+    return this.http.patch<void>(
+      `${this.baseUrl}/missions/${publicId}`,
+      body
+    );
+  }
+
 }

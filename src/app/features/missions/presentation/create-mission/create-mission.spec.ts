@@ -56,18 +56,29 @@ describe('CreateMissionPage', () => {
     };
 
     mockRouter = {
-      navigate: vi.fn().mockResolvedValue(true)
+      navigate: vi.fn().mockResolvedValue(true),
+      url: '/missions/create/report-abc',
+      events: of()
     };
 
     mockReportService = {
       getReportByPublicId: vi.fn().mockResolvedValue({
         publicId: 'report-abc',
-        location: { latitude: -34.6037, longitude: -58.3816 }
+        location: { latitude: -34.6037, longitude: -58.3816 },
+        details: { name: 'Bobby', images: [] }
       })
     };
 
     mockMissionService = {
-      createMission: vi.fn().mockReturnValue(of({ missionId: 1, publicId: 'mission-abc' }))
+      createMission: vi.fn().mockReturnValue(of({ missionId: 1, publicId: 'mission-abc' })),
+      updateMission: vi.fn().mockReturnValue(of(void 0)),
+      getMissionDetail: vi.fn().mockReturnValue(of({
+        publicId: 'mission-abc',
+        title: 'Misión de prueba',
+        description: 'Detalle de prueba',
+        searchArea: { radius: 1200, latitude: -34.6037, longitude: -58.3816 },
+        report: { publicId: 'report-abc' }
+      }))
     };
 
     mockToastService = {
@@ -88,73 +99,91 @@ describe('CreateMissionPage', () => {
 
     fixture = TestBed.createComponent(CreateMissionPage);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   it('debería crear el componente', () => {
+    fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
-  describe('onInit', () => {
+  describe('onInit en modo creación', () => {
     it('debería cargar los detalles del reporte por publicId', async () => {
+      fixture.detectChanges();
       await component.ngOnInit();
       expect(mockReportService.getReportByPublicId).toHaveBeenCalledWith('report-abc');
       expect(component.report).toBeDefined();
+      expect(component.isEditMode).toBe(false);
     });
   });
 
-  describe('volver', () => {
-    it('debería navegar de vuelta al detalle del reporte', () => {
-      component.volver();
+  describe('onInit en modo edición', () => {
+    it('debería cargar los detalles de la misión y el reporte asociado', async () => {
+      mockRouter.url = '/missions/edit/mission-abc';
+      mockActivatedRoute.snapshot.paramMap.get = vi.fn().mockReturnValue('mission-abc');
+
+      fixture.detectChanges();
+      await component.ngOnInit();
+
+      expect(component.isEditMode).toBe(true);
+      expect(component.missionId).toBe('mission-abc');
+      expect(mockMissionService.getMissionDetail).toHaveBeenCalledWith('mission-abc');
+      expect(component.title).toBe('Misión de prueba');
+      expect(component.description).toBe('Detalle de prueba');
+      expect(component.radius).toBe(1200);
+      expect(mockReportService.getReportByPublicId).toHaveBeenCalledWith('report-abc');
+    });
+  });
+
+  describe('goBack', () => {
+    it('debería navegar de vuelta al detalle del reporte si es modo creación', () => {
+      component.isEditMode = false;
+      component.reportId = 'report-abc';
+      component.goBack();
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/reports', 'report-abc']);
     });
+
+    it('debería navegar de vuelta al detalle de la misión si es modo edición', () => {
+      component.isEditMode = true;
+      component.missionId = 'mission-abc';
+      component.goBack();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/missions', 'mission-abc']);
+    });
   });
 
-  describe('validación al continuar', () => {
-    it('debería mostrar un toast de error si el título está vacío', () => {
-      component.titulo = '';
-      component.descripcion = 'Alguna instrucción';
+  describe('saveMission en modo creación', () => {
+    beforeEach(() => {
+      component.isEditMode = false;
+      component.reportId = 'report-abc';
+    });
 
-      component.continuar();
+    it('debería mostrar un toast de error si el título está vacío', async () => {
+      component.title = '';
+      component.description = 'Alguna descripción';
+
+      await component.saveMission();
 
       expect(mockToastService.error).toHaveBeenCalledWith('Ingresá un título para la misión');
-      expect(component.step).toBe(1);
     });
 
-    it('debería mostrar un toast de error si la descripción está vacía', () => {
-      component.titulo = 'Misión de búsqueda';
-      component.descripcion = '';
+    it('debería mostrar un toast de error si la descripción está vacía', async () => {
+      component.title = 'Buscar a Bobby';
+      component.description = '';
 
-      component.continuar();
+      await component.saveMission();
 
       expect(mockToastService.error).toHaveBeenCalledWith('Ingresá una descripción');
-      expect(component.step).toBe(1);
     });
 
-    it('debería pasar al paso 2 e inicializar el mapa si es válido', () => {
-      vi.useFakeTimers();
-      component.titulo = 'Misión de búsqueda';
-      component.descripcion = 'Alguna instrucción';
-
-      component.continuar();
-      vi.advanceTimersByTime(150);
-
-      expect(component.step).toBe(2);
-      vi.useRealTimers();
-    });
-  });
-
-  describe('guardarMision', () => {
     it('debería llamar a MissionService.createMission y navegar al inicio al guardar con éxito', async () => {
-      component.titulo = 'Misión de búsqueda';
-      component.descripcion = 'Alguna instrucción';
-      component.radio = 800;
+      component.title = 'Misión de búsqueda';
+      component.description = 'Alguna instrucción';
+      component.radius = 800;
 
       (component as any).missionMarker = {
         getLatLng: vi.fn().mockReturnValue({ lat: -34.6037, lng: -58.3816 })
       };
 
-      await component.guardarMision();
+      await component.saveMission();
 
       expect(mockMissionService.createMission).toHaveBeenCalledWith({
         reportPublicId: 'report-abc',
@@ -167,17 +196,62 @@ describe('CreateMissionPage', () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/home'], {
         state: { missionCreated: true }
       });
+      expect(mockToastService.success).toHaveBeenCalledWith('Misión iniciada con éxito');
     });
 
     it('debería mostrar un toast de error si falla la creación de la misión', async () => {
       mockMissionService.createMission.mockReturnValue(throwError(() => new Error('API error')));
+      component.title = 'Misión de búsqueda';
+      component.description = 'Alguna instrucción';
       (component as any).missionMarker = {
         getLatLng: vi.fn().mockReturnValue({ lat: -34.6037, lng: -58.3816 })
       };
 
-      await component.guardarMision();
+      await component.saveMission();
 
       expect(mockToastService.error).toHaveBeenCalledWith('No se pudo crear la misión');
+    });
+  });
+
+  describe('saveMission en modo edición', () => {
+    beforeEach(() => {
+      component.isEditMode = true;
+      component.missionId = 'mission-abc';
+    });
+
+    it('debería llamar a MissionService.updateMission y navegar al detalle de la misión al guardar con éxito', async () => {
+      component.title = 'Misión de búsqueda editada';
+      component.description = 'Instrucción editada';
+      component.radius = 1500;
+
+      (component as any).missionMarker = {
+        getLatLng: vi.fn().mockReturnValue({ lat: -34.6037, lng: -58.3816 })
+      };
+
+      await component.saveMission();
+
+      expect(mockMissionService.updateMission).toHaveBeenCalledWith('mission-abc', {
+        title: 'Misión de búsqueda editada',
+        description: 'Instrucción editada',
+        latitude: -34.6037,
+        longitude: -58.3816,
+        radius: 1500
+      });
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/missions', 'mission-abc']);
+      expect(mockToastService.success).toHaveBeenCalledWith('Misión actualizada con éxito');
+    });
+
+    it('debería mostrar un toast de error si falla la actualización de la misión', async () => {
+      mockMissionService.updateMission.mockReturnValue(throwError(() => new Error('API error')));
+      component.title = 'Misión de búsqueda editada';
+      component.description = 'Instrucción editada';
+      (component as any).missionMarker = {
+        getLatLng: vi.fn().mockReturnValue({ lat: -34.6037, lng: -58.3816 })
+      };
+
+      await component.saveMission();
+
+      expect(mockToastService.error).toHaveBeenCalledWith('No se pudo actualizar la misión');
     });
   });
 });

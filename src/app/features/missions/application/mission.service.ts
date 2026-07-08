@@ -94,4 +94,20 @@ export class MissionService {
     );
   }
 
+  updateMission(
+    publicId: string,
+    dto: { title: string; description: string; latitude: number; longitude: number; radius: number }
+  ): Observable<void> {
+    return this.missionHttp.updateMission(publicId, dto).pipe(
+      catchError((error) => {
+        if (error instanceof HttpErrorResponse) {
+          return throwError(() => new Error(
+            error.error?.message ?? 'No se pudo actualizar la misión'
+          ));
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
 }

@@ -94,6 +94,12 @@ export const routes: Routes = [
       .then(m => m.CreateMissionPage),
 },
   {
+  path: 'missions/edit/:publicId',
+  loadComponent: () =>
+    import('./features/missions/presentation/create-mission/create-mission')
+      .then(m => m.CreateMissionPage),
+},
+  {
     path: '',
     component: AppShellComponent,
     canActivate: [authGuard],

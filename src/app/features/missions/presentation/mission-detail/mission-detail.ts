@@ -1,30 +1,29 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import * as L from 'leaflet';
-
 import { MissionService } from '../../application/mission.service';
 import { MissionUpdateService } from '../../application/mission-update.service';
 import { AuthService } from '../../../auth/application/auth.service';
 import { ReportService } from '../../../report/application/report.service';
-import { MissionUpdateOutput } from '../../infrastructure/mission-update.http';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ChatsService } from '../../../chats/application/chats.service';
 import { MissionOutput } from '../../infrastructure/models/mission.model';
+import { FormsModule } from '@angular/forms';
+import { MissionStatusMapper, UpdateStatusMapper } from '../mission-status.mapper';
 
 @Component({
   selector: 'app-mission-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './mission-detail.html',
-  styleUrl: './mission-detail.css'
+  styleUrls: []
 })
 export class MissionDetailPage implements OnInit, OnDestroy {
+
+  protected readonly MissionStatusMapper = MissionStatusMapper;
+  protected readonly UpdateStatusMapper = UpdateStatusMapper;
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -36,17 +35,22 @@ export class MissionDetailPage implements OnInit, OnDestroy {
   private readonly chatsService = inject(ChatsService);
 
   readonly mission = signal<MissionOutput | null>(null);
-  readonly responses = signal<MissionUpdateOutput[]>([]);
+  readonly responses = signal<any[]>([]);
   readonly currentUserId = signal<string | null>(null);
   readonly isVolunteer = signal<boolean>(false);
   readonly isOwner = signal<boolean>(false);
   readonly ownerId = signal<string | null>(null);
-  readonly owner = signal<any | null>(null);
+  readonly owner = signal<{
+    publicId: string;
+    username: string;
+    photoUrl: string | null;
+  } | null>(null);
+  readonly animalType = signal<'DOG' | 'CAT' | null>(null);
 
-  readonly tiempoTranscurrido = computed(() => {
+  readonly elapsedTime = computed(() => {
     const m = this.mission();
     if (!m) return '';
-    if (m.status === 'CLOSED') return 'Cerrada';
+    if (MissionStatusMapper.isClosed(m.status)) return 'Cerrada';
 
     const createdDate = new Date(m.createdAt);
     const now = new Date();
@@ -70,24 +74,21 @@ export class MissionDetailPage implements OnInit, OnDestroy {
   private circle?: L.Circle;
   private marker?: L.Marker;
 
-  comentario = '';
-  imagen?: File;
+  comment = '';
+  image?: File;
 
   async ngOnInit(): Promise<void> {
     const publicId = this.route.snapshot.paramMap.get('publicId') || '';
     if (publicId) {
-      await this.cargarMision(publicId);
-      await this.cargarRespuestas(publicId);
+      await this.loadMission(publicId);
+      await this.loadResponses(publicId);
     }
   }
 
-  async cargarMision(publicId: string): Promise<void> {
+  async loadMission(publicId: string): Promise<void> {
     try {
       const m = await firstValueFrom(this.missionService.getMissionDetail(publicId));
       this.mission.set(m);
-
-
-      console.log("Mision", m);
 
       const userId = this.authService.getCurrentUserId();
       this.currentUserId.set(userId);
@@ -99,14 +100,15 @@ export class MissionDetailPage implements OnInit, OnDestroy {
       this.owner.set(reportDetail.user);
       this.ownerId.set(reportDetail.user.publicId);
       this.isOwner.set(reportDetail.user.publicId === userId);
+      this.animalType.set(reportDetail.details.animalType);
 
-      this.inicializarMapa(m);
+      this.initializeMap(m);
     } catch (error) {
       console.error('Error loading mission details:', error);
     }
   }
 
-  async cargarRespuestas(publicId: string): Promise<void> {
+  async loadResponses(publicId: string): Promise<void> {
     try {
       const data = await firstValueFrom(this.missionUpdateService.getUpdates(publicId));
       this.responses.set(data);
@@ -115,41 +117,41 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     }
   }
 
-  seleccionarImagen(event: Event): void {
+  selectImage(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
-      this.imagen = input.files[0];
+      this.image = input.files[0];
     }
   }
 
-  async unirse(): Promise<void> {
+  async join(): Promise<void> {
     const m = this.mission();
     if (!m) return;
 
     try {
       await firstValueFrom(this.missionService.joinMission(m.publicId));
       this.toastService.success("Te uniste a la misión con éxito");
-      await this.cargarMision(m.publicId);
-    } catch (error) {
+      await this.loadMission(m.publicId);
+    } catch {
       this.toastService.error("No se pudo unir a la misión");
     }
   }
 
-  async abandonar(): Promise<void> {
+  async leave(): Promise<void> {
     const m = this.mission();
     if (!m) return;
 
     try {
       await firstValueFrom(this.missionService.leaveMission(m.publicId));
       this.toastService.success("Abandonaste la misión");
-      await this.cargarMision(m.publicId);
+      await this.loadMission(m.publicId);
     } catch (error) {
       console.error(error);
       this.toastService.error(error instanceof Error ? error.message : "No se pudo abandonar la misión");
     }
   }
 
-  async cancelar(): Promise<void> {
+  async cancel(): Promise<void> {
     const m = this.mission();
     if (!m) return;
 
@@ -158,18 +160,18 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     try {
       await firstValueFrom(this.missionService.cancelMission(m.publicId));
       this.toastService.success("Misión cancelada con éxito");
-      await this.cargarMision(m.publicId);
+      await this.loadMission(m.publicId);
     } catch (error) {
       console.error(error);
       this.toastService.error(error instanceof Error ? error.message : "No se pudo cancelar la misión");
     }
   }
 
-  async enviarMision(): Promise<void> {
+  async sendUpdate(): Promise<void> {
     const m = this.mission();
     if (!m) return;
 
-    if (!this.comentario.trim()) {
+    if (!this.comment.trim()) {
       this.toastService.error("Escribí un comentario");
       return;
     }
@@ -178,14 +180,14 @@ export class MissionDetailPage implements OnInit, OnDestroy {
       await firstValueFrom(
         this.missionUpdateService.createUpdate({
           missionPublicId: m.publicId,
-          comment: this.comentario,
+          comment: this.comment,
           photoUrl: undefined
         })
       );
-      this.comentario = '';
-      this.imagen = undefined;
+      this.comment = '';
+      this.image = undefined;
       this.toastService.success("Actualización enviada correctamente");
-      await this.cargarRespuestas(m.publicId);
+      await this.loadResponses(m.publicId);
     } catch (error) {
       console.error(error);
       this.toastService.error(error instanceof Error ? error.message : "No se pudo enviar la actualización");
@@ -198,7 +200,13 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     }
   }
 
-  inicializarMapa(m: MissionOutput): void {
+  editMission(): void {
+    const m = this.mission();
+    if (!m) return;
+    this.router.navigate(['/missions/edit', m.publicId]);
+  }
+
+  initializeMap(m: MissionOutput): void {
     const lat = m.searchArea.latitude;
     const lng = m.searchArea.longitude;
     const radius = m.searchArea.radius;
@@ -249,21 +257,21 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     });
   }
 
-  readonly puntuaciones = signal<Record<string, number>>({});
+  readonly scores = signal<Record<string, number>>({});
 
-  puntuar(updatePublicId: string, puntos: number): void {
-    this.puntuaciones.update(prev => ({
+  rateUpdate(updatePublicId: string, points: number): void {
+    this.scores.update(prev => ({
       ...prev,
-      [updatePublicId]: puntos
+      [updatePublicId]: points
     }));
-    this.toastService.success(`¡Valoración enviada! Se otorgaron +${puntos} XP`);
+    this.toastService.success(`¡Valoración enviada! Se otorgaron +${points} XP`);
   }
 
-  obtienePuntos(updatePublicId: string): number {
-    return this.puntuaciones()[updatePublicId] || 0;
+  getPoints(updatePublicId: string): number {
+    return this.scores()[updatePublicId] || 0;
   }
 
-  async contactarDueno(): Promise<void> {
+  async contactOwner(): Promise<void> {
     const ow = this.owner();
     if (!ow) return;
 

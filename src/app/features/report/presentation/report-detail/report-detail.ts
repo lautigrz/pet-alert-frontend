@@ -17,6 +17,7 @@ import { ReportModalComponent } from '../../../../shared/component/report-modal/
 import { CloseReportModalComponent } from '../components/close-report-modal/close-report-modal';
 import { MissionService } from '../../../missions/application/mission.service';
 import { ChatsService } from '../../../chats/application/chats.service';
+import { MissionStatusMapper } from '../../../missions/presentation/mission-status.mapper';
 
 @Component({
   selector: 'app-report-detail',
@@ -62,6 +63,7 @@ export class ReportDetailPage implements OnInit {
 
   misionAsociada = signal<any | null>(null);
   duenoMision = signal<any | null>(null);
+  hasActiveMission = signal<boolean>(false);
 
   esPropio = computed(() => {
     const r = this.report();
@@ -81,8 +83,16 @@ export class ReportDetailPage implements OnInit {
       const r = await this.reportService.getReportByPublicId(publicId);
       this.report.set(r);
 
+      const missions = await firstValueFrom(this.missionService.getMissions());
+
+      if (r.type === 'LOST') {
+        const myMission = missions.find(m => m.report.publicId === r.publicId && !MissionStatusMapper.isClosed(m.status));
+        if (myMission) {
+          this.hasActiveMission.set(true);
+        }
+      }
+
       if (r.type === 'SIGHTING') {
-        const missions = await firstValueFrom(this.missionService.getMissions());
         const sightingLat = r.location.latitude;
         const sightingLng = r.location.longitude;
 
@@ -197,7 +207,7 @@ export class ReportDetailPage implements OnInit {
     if (r) this.router.navigate(['/reports', r.publicId, 'edit', 'ubicacion']);
   }
 
-  crearMision(): void {
+  createMission(): void {
 
     const r = this.report();
 
