@@ -225,7 +225,7 @@ export class ReportListPage implements OnInit {
     }
 
     if (this.tab() === 'mis-reportes') {
-      const { data, pagination } = await this.reportesService.getMisReportesPaginado(
+      const { data, pagination } = await this.reportesService.getPaginatedMyReports(
         filtros,
         this.page(),
         REPORTS_PER_PAGE,
@@ -236,7 +236,7 @@ export class ReportListPage implements OnInit {
 
     filtros.status = 'ACTIVE';
     if (this.generalReportsCache === null) {
-      this.generalReportsCache = await this.reportesService.getGenerales(filtros);
+      this.generalReportsCache = await this.reportesService.getGenerals(filtros);
     }
     this.totalPages.set(Math.max(1, Math.ceil(this.generalReportsCache.length / REPORTS_PER_PAGE)));
     const start = (this.page() - 1) * REPORTS_PER_PAGE;

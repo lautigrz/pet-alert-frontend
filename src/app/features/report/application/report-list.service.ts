@@ -8,7 +8,7 @@ export class ReportListService {
   private readonly reportesHttp = inject(ReportListHttp);
 
 
-  async getGenerales(filtros: ReporteFiltros = {}): Promise<Reporte[]> {
+  async getGenerals(filtros: ReporteFiltros = {}): Promise<Reporte[]> {
     try {
       console.log('Obteniendo reportes con filtros:', filtros);
       return await this.reportesHttp.getFiltered(filtros);
@@ -17,10 +17,10 @@ export class ReportListService {
     }
   }
 
-  
-  async getMisReportes(filtros: ReporteFiltros = {}): Promise<Reporte[]> {
+
+  async getMyReports(filtros: ReporteFiltros = {}): Promise<Reporte[]> {
     try {
-      const { data } = await this.reportesHttp.getMisReportesPaginado(filtros);
+      const { data } = await this.reportesHttp.getPaginatedMyReports(filtros);
       return data;
     } catch (error) {
       throw this.mapError(error);
@@ -28,18 +28,18 @@ export class ReportListService {
   }
 
 
-  async getMisReportesPaginado(filtros: ReporteFiltros = {}, page = 1, limit = 10): Promise<ReportesPaginados> {
+  async getPaginatedMyReports(filtros: ReporteFiltros = {}, page = 1, limit = 10): Promise<ReportesPaginados> {
     try {
-      return await this.reportesHttp.getMisReportesPaginado(filtros, page, limit);
+      return await this.reportesHttp.getPaginatedMyReports(filtros, page, limit);
     } catch (error) {
       throw this.mapError(error);
     }
   }
 
-  
-  async getReportesDeUsuario(publicId: string): Promise<Reporte[]> {
+
+  async getUserReports(publicId: string): Promise<Reporte[]> {
     try {
-      return await this.reportesHttp.getReportesDeUsuario(publicId);
+      return await this.reportesHttp.getUserReports(publicId);
     } catch (error) {
       throw this.mapError(error);
     }
@@ -54,7 +54,7 @@ export class ReportListService {
     }
   }
 
-  
+
   private mapError(error: unknown): Error {
     if (!(error instanceof HttpErrorResponse)) {
       return new Error('Ocurrió un error inesperado');

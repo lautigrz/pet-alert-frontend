@@ -66,8 +66,8 @@ export class ReportDetailPage implements OnInit {
   userRatingAverage = signal(0);
   userRatingCount = signal(0);
 
-  misionAsociada = signal<unknown | null>(null);
-  duenoMision = signal<unknown | null>(null);
+  associatedMission = signal<unknown | null>(null);
+  missionOwner = signal<unknown | null>(null);
   hasActiveMission = signal<boolean>(false);
 
   esPropio = computed(() => {

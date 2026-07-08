@@ -23,28 +23,26 @@
     <div class="mb-4">
       <p class="text-xs font-semibold text-slate-500 mb-2">Tipo de reporte</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="selectType('todos')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'todos'
+        <button type="button" (click)="selectType('ALL')"
+          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="filterType() === 'ALL'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
           Todos
         </button>
 
-        <button type="button" (click)="selectType('perdidos')"
-          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'perdidos'
+        <button type="button" (click)="selectType('LOST')"
+          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="filterType() === 'LOST'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          <img src="Icono-mascota-perdida.png" alt="" class="w-4 h-4 shrink-0 scale-[0.82]"
-            [class.brightness-0]="tipoFiltro() !== 'perdidos'">
+          <img src="Icono-mascota-perdida.png" alt="" class="w-4 h-4 shrink-0 scale-[0.82]" [class.brightness-0]="filterType() !== 'LOST'">
           <span>Perdidos</span>
         </button>
 
-        <button type="button" (click)="selectType('avistados')"
-          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'avistados'
+        <button type="button" (click)="selectType('SIGHTING')"
+          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="filterType() === 'SIGHTING'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          <img src="Icono-mascota-encontrada.png" alt="" class="w-4 h-4 shrink-0"
-            [class.brightness-0]="tipoFiltro() !== 'avistados'">
+          <img src="Icono-mascota-encontrada.png" alt="" class="w-4 h-4 shrink-0" [class.brightness-0]="filterType() !== 'SIGHTING'">
           <span>Encontrados</span>
         </button>
 
@@ -60,25 +58,34 @@
           <span></span>
         </div>
 
-        <input type="range" min="1" max="20" step="1" [value]="radioRadar()" (input)="cambiarRadar($event)"
+        <input
+          type="range"
+          min="1"
+          max="20"
+          step="1"
+          [value]="radioRadar()"
+          (input)="replaceRadar($event)"
           class="w-full slider-orange"
-          [style.background]="'linear-gradient(to right, #E8842E 0%, #E8842E ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb 100%)'" />
+          [style.background]="'linear-gradient(to right, #E8842E 0%, #E8842E ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb 100%)'"
+        />
       </div>
     </div>
 
     <div class="mb-4">
       <p class="text-xs font-semibold text-slate-500 mb-2">Mascota</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="seleccionarMascota('todos')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="mascotaFiltro() === 'todos'
+        <button type="button" (click)="selectPet('ALL')"
+          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="petFilter() === 'ALL'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
           Todos
         </button>
 
-        <button type="button" (click)="seleccionarMascota('perro')"
+        <button
+          type="button"
+          (click)="selectPet('DOG')"
           class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="mascotaFiltro() === 'perro'
+          [class]="petFilter() === 'DOG'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
@@ -89,9 +96,11 @@
 
         </button>
 
-        <button type="button" (click)="seleccionarMascota('gato')"
+        <button
+          type="button"
+          (click)="selectPet('CAT')"
           class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
-          [class]="mascotaFiltro() === 'gato'
+          [class]="petFilter() === 'CAT'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
@@ -111,12 +120,12 @@
 
         <div class="flex gap-2">
 
-          <button type="button" (click)="toggleMisiones()"
-            class="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold border transition" [class]="mostrarMisiones()
+          <button type="button" (click)="toggleMissions()"
+            class="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold border transition" [class]="showMissions()
          ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
-            {{ mostrarMisiones() ? 'Ocultar misiones' : 'Mostrar misiones' }}
+            {{ showMissions() ? 'Ocultar misiones' : 'Mostrar misiones' }}
 
           </button>
 
@@ -149,15 +158,18 @@
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="seleccionarCentros('todos')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="centrosFiltro() === 'todos'
+        <button type="button" (click)="selectCenters('ALL')"
+          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="centerFilter() === 'ALL'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
           Ninguno
         </button>
 
-        <button type="button" (click)="seleccionarCentros('comisarias')"
-          class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="centrosFiltro() === 'comisarias'
+        <button
+          type="button"
+          (click)="selectCenters('POLICE')"
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+          [class]="centerFilter() === 'POLICE'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
@@ -171,8 +183,11 @@
 
         </button>
 
-        <button type="button" (click)="seleccionarCentros('veterinarias')"
-          class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="centrosFiltro() === 'veterinarias'
+        <button
+          type="button"
+          (click)="selectCenters('VETERINARY')"
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+          [class]="centerFilter() === 'VETERINARY'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
@@ -190,7 +205,7 @@
 
       </div>
 
-      @if (centrosCargando()) {
+      @if (loadingCenters()) {
       <div class="hidden lg:block mt-4 border border-slate-200 rounded-lg bg-white px-3 py-3">
         <p class="text-sm text-slate-500">
           Buscando centros cercanos...
@@ -198,15 +213,15 @@
       </div>
       }
 
-      @if (centrosError()) {
+      @if (errorCenters()) {
       <div class="hidden lg:block mt-4 border border-red-100 rounded-lg bg-red-50 px-3 py-3">
         <p class="text-sm text-red-600">
-          {{ centrosError() }}
+          {{ errorCenters() }}
         </p>
       </div>
       }
 
-      @if (lugares().length > 0) {
+      @if (places().length > 0) {
 
       <div class="hidden lg:block mt-4 border border-slate-200 rounded-lg overflow-hidden">
 
@@ -216,10 +231,10 @@
           </h4>
         </div>
 
-        @for (lugar of lugares(); track $index) {
+        @for (lugar of places(); track $index) {
 
         <button type="button" class="w-full text-left px-3 py-3 hover:bg-slate-50 border-b last:border-b-0 transition"
-          (click)="irALugar(lugar.lat, lugar.lng)">
+          (click)="goToAPlace(lugar.lat, lugar.lng)">
 
           <div class="flex items-center gap-2 font-medium text-slate-700">
 
@@ -256,14 +271,14 @@
     <div class="flex items-center justify-between mb-2">
       <h3 class="text-base font-bold text-[#12355B]">Mis reportes</h3>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
-        {{ badgeMisReportes() }}
+        {{ badgeMyReports() }}
       </span>
     </div>
     <a routerLink="/reports" [queryParams]="{ tab: 'mis-reportes' }"
       class="text-xs text-[#E8842E] font-semibold hover:underline">
       Ver todos mis reportes
     </a>
-    @for (r of misReportes(); track r.publicId) {
+    @for (r of myReports(); track r.publicId) {
     <div class="home-card mt-3">
       <app-home-report-card [reporte]="r"></app-home-report-card>
     </div>
@@ -294,10 +309,10 @@
         </app-info-tooltip>
       </div>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
-        {{ badgeDestacados() }}
+        {{ featuredBadges() }}
       </span>
     </div>
-    @for (r of reportesDestacados(); track r.publicId) {
+    @for (r of featuredReports(); track r.publicId) {
     <div class="home-card mt-3">
       <app-home-report-card [reporte]="r"></app-home-report-card>
     </div>
@@ -308,13 +323,13 @@
     <div class="flex items-center justify-between">
       <h3 class="text-base font-bold text-[#12355B]">Reportes cercanos</h3>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
-        {{ badgeCercanos() }}
+        {{ nearbyBadges() }}
       </span>
     </div>
     <a routerLink="/reports" class="text-xs text-[#E8842E] font-semibold mb-1 block hover:underline">
       Ver todos los reportes
     </a>
-    @for (r of reportesCercanos(); track r.publicId) {
+    @for (r of nearbyReports(); track r.publicId) {
     <div class="home-card mt-3">
       <app-home-report-card [reporte]="r"></app-home-report-card>
     </div>
@@ -407,12 +422,12 @@
   </div>
   }
 
-  @if (misionSeleccionada(); as m) {
+  @if (selectedMission(); as m) {
 
   <div
     class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-[340px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
 
-    <button type="button" (click)="misionSeleccionada.set(null)"
+    <button type="button" (click)="selectedMission.set(null)"
       class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center hover:bg-slate-100">
 
       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -481,7 +496,7 @@
 
       </div>
 
-      <button type="button" (click)="abrirMision(m)"
+      <button type="button" (click)="openMission(m)"
         class="mt-5 flex items-center justify-center w-full rounded-xl bg-[#12355B] hover:bg-[#0f2d4d] text-white font-semibold py-3 transition">
 
         Ver misión
@@ -520,14 +535,14 @@
         <p class="text-sm font-bold text-[#12355B]">Enterate de las novedades</p>
         <p class="mt-0.5 text-[13px] text-slate-500">Activá las notificaciones y te avisamos al toque de coincidencias y
           avistamientos cerca.</p>
-        <button type="button" (click)="activarNotificaciones()" [disabled]="notifBusy()"
+        <button type="button" (click)="turnOnNotifications()" [disabled]="notifBusy()"
           class="mt-3 w-full rounded-lg bg-[#E8842E] hover:bg-[#d57821] disabled:opacity-60 text-white font-bold text-sm py-2.5 transition">
           {{ notifBusy() ? 'Activando…' : 'Activar notificaciones' }}
         </button>
       </div>
       }
 
-      <button type="button" (click)="verReporte()"
+      <button type="button" (click)="viewReport()"
         class="w-full bg-[#12355B] hover:bg-[#0e2a4a] text-white font-semibold py-3 rounded-md transition">
         Ver reporte
       </button>

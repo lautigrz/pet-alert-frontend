@@ -22,6 +22,7 @@ const MUNDO: [number, number][] = [
   [-90, 180],
 ];
 
+
 interface SelectedMission {
   publicId?: string;
   public_id?: string;
@@ -58,6 +59,12 @@ interface SelectedMission {
   };
 }
 
+type ReportTypeFilter = 'ALL' | 'LOST' | 'SIGHTING';
+type PetTypeFilter = 'ALL' | 'DOG' | 'CAT';
+type ProximityFilter = 'ALL' | '5km' | '10km' | '20km';
+type CenterFilter = 'ALL' | 'VETERINARY' | 'POLICE';
+
+
 @Component({
   selector: 'app-home-map',
   standalone: true,
@@ -68,7 +75,7 @@ interface SelectedMission {
 })
 export class HomeMapComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
-  private lugaresLayer = L.layerGroup();
+  private placesLayer = L.layerGroup();
   private markersLayer = L.layerGroup();
 
   private readonly route = inject(ActivatedRoute);
@@ -81,52 +88,48 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   readonly successReportId = signal<string | null>(null);
   private readonly missionService = inject(MissionService);
 
+
   readonly notifBusy = this.notifications.busy;
 
   readonly canAskNotifications = computed(
     () => this.notifications.isSupported() && this.notifications.permission() === 'default' && !this.notifications.active(),
   );
 
-  readonly tipoFiltro = signal('todos');
-  readonly cercaniaFiltro = signal('todos');
-  readonly mascotaFiltro = signal('todos');
-  readonly centrosFiltro = signal('todos');
+  readonly filterType = signal<ReportTypeFilter>('ALL');
+  readonly proximityFilter = signal<ProximityFilter>('ALL');
+  readonly petFilter = signal<PetTypeFilter>('ALL');
+  readonly centerFilter = signal<CenterFilter>('ALL');
   readonly searchTerm = signal('');
   readonly suggestions = signal<LocationSuggestion[]>([]);
 
 
-  readonly misiones = signal<SelectedMission[]>([]);
+  readonly missions = signal<SelectedMission[]>([]);
+  readonly selectedMission = signal<SelectedMission | null>(null);
 
   readonly showFilters = signal(false);
   readonly selectedReport = signal<Reporte | null>(null);
 
 
 
-  readonly reportes = signal<Reporte[]>([]);
-  readonly reportesFiltrados = signal<Reporte[]>([]);
-  readonly misReportes = signal<Reporte[]>([]);
-  readonly reportesCercanos = signal<Reporte[]>([]);
-  readonly reportesDestacados = signal<Reporte[]>([]);
-  readonly totalMisReportes = signal(0);
-  readonly totalCercanos = signal(0);
-  readonly totalDestacados = signal(0);
-  readonly badgeMisReportes = computed(() => this.formatBadge(this.totalMisReportes()));
-  readonly badgeCercanos = computed(() => this.formatBadge(this.totalCercanos()));
+  readonly reports = signal<Reporte[]>([]);
+  readonly leakedReports = signal<Reporte[]>([]);
+  readonly myReports = signal<Reporte[]>([]);
+  readonly nearbyReports = signal<Reporte[]>([]);
+  readonly featuredReports = signal<Reporte[]>([]);
+  readonly totalMyReports = signal(0);
+  readonly totalNearby = signal(0);
+  readonly totalFeatured = signal(0);
+  readonly badgeMyReports = computed(() => this.formatBadge(this.totalMyReports()));
+  readonly nearbyBadges = computed(() => this.formatBadge(this.totalNearby()));
+  readonly featuredBadges = computed(() => this.formatBadge(this.totalFeatured()));
+  readonly places = signal<Place[]>([]);
 
-  readonly misionSeleccionada = signal<SelectedMission | null>(null);
+  readonly loadingCenters = signal(false);
+  readonly errorCenters = signal<string | null>(null);
 
-
-  readonly badgeDestacados = computed(() => this.formatBadge(this.totalDestacados()));
-
-  readonly lugares = signal<Place[]>([]);
-
-
-  readonly centrosCargando = signal(false);
-  readonly centrosError = signal<string | null>(null);
-
-  private readonly lugaresCache = new Map<string, Place[]>();
+  private readonly placesCache = new Map<string, Place[]>();
   private readonly RADIO_MAX_KM = 20;
-  private centrosRequestId = 0;
+  private centersRequestId = 0;
 
 
   private readonly DEFAULT_LOCATION = {
@@ -203,83 +206,84 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       : 'Icono-avistamiento-sin-transito.png';
   }
 
-  private async cargarReportes(): Promise<void> {
+  private async loadReports(): Promise<void> {
     try {
-      const [reportes, misReportes] = await Promise.all([
-        this.reportesService.getGenerales({ status: 'ACTIVE' }),
-        this.reportesService.getMisReportes(),
+      const [reports, myReports] = await Promise.all([
+        this.reportesService.getGenerals({ status: 'ACTIVE' }),
+        this.reportesService.getMyReports(),
       ]);
 
-      const misReportesActivos = misReportes.filter((r) => r.status === 'ACTIVE');
-      this.reportes.set(reportes);
-      this.aplicarFiltrosActuales();
-      this.totalMisReportes.set(misReportesActivos.length);
-      this.misReportes.set(misReportesActivos.slice(0, 3));
-      this.totalCercanos.set(reportes.length);
-      this.reportesCercanos.set(reportes.slice(0, 5));
-      this.actualizarDestacados();
+      const myActiveReports = myReports.filter((r) => r.status === 'ACTIVE');
+      this.reports.set(reports);
+      this.applyCurrentFilters();
+      this.totalMyReports.set(myActiveReports.length);
+      this.myReports.set(myActiveReports.slice(0, 3));
+      this.totalNearby.set(reports.length);
+      this.nearbyReports.set(reports.slice(0, 5));
+      this.updateFeatured();
     } catch (error) {
       console.error('Error cargando reportes', error);
     }
   };
 
-  private actualizarDestacados(): void {
-    const destacados = this.reportes().filter((reporte) => reporte.featured);
-    this.totalDestacados.set(destacados.length);
-    this.reportesDestacados.set(this.ordenarPorCercania(destacados).slice(0, 3));
+  private updateFeatured(): void {
+    const highlights = this.reports().filter((report) => report.featured);
+    this.totalFeatured.set(highlights.length);
+    this.featuredReports.set(this.sortByProximity(highlights).slice(0, 3));
   }
 
-  private ordenarPorCercania(reportes: Reporte[]): Reporte[] {
-    const centro = this.userLatLng;
-    if (!centro) return reportes;
+  private sortByProximity(reports: Reporte[]): Reporte[] {
+    const center = this.userLatLng;
+    if (!center) return reports;
 
-    return [...reportes].sort(
+    return [...reports].sort(
       (a, b) =>
-        this.calcularDistancia(centro.lat, centro.lng, a.location.latitude, a.location.longitude) -
-        this.calcularDistancia(centro.lat, centro.lng, b.location.latitude, b.location.longitude),
+        this.calculateDistance(center.lat, center.lng, a.location.latitude, a.location.longitude) -
+        this.calculateDistance(center.lat, center.lng, b.location.latitude, b.location.longitude),
     );
   }
 
-  private aplicarFiltrosActuales(): void {
+  private applyCurrentFilters(): void {
     if (this.userLatLng) {
-      this.filtrarPorRadar();
+      this.filterByRadar();
       return;
     }
-    this.mostrarTodos();
+    this.showAll();
   }
 
-  private mostrarTodos(): void {
-    this.reportesFiltrados.set(this.reportes());
-    this.dibujarMarcadores(this.reportes());
+  private showAll(): void {
+    this.leakedReports.set(this.reports());
+    this.drawMarkers(this.reports());
   }
 
   private formatBadge(n: number): string {
     return n > 10 ? '+10' : String(n);
   }
 
-  private dibujarMarcadores(reportes: Reporte[]): void {
+  private drawMarkers(reportes: Reporte[]): void {
 
     this.markersLayer.clearLayers();
 
-    if (this.mostrarMisiones()) {
+
+    if (this.showMissions()) {
       return;
     }
 
-    reportes.forEach((reporte) => {
+    reportes.forEach((report) => {
 
-      const lat = reporte.location.latitude;
-      const lng = reporte.location.longitude;
+      const lat = report.location.latitude;
+      const lng = report.location.longitude;
 
       const color =
-        reporte.type === 'LOST'
+        report.type === 'LOST'
           ? '#E8842E'
           : '#12355B';
 
       const fallbackIcon =
-        this.fallbackIconFor(reporte);
+        this.fallbackIconFor(report);
 
       const imageUrl =
-        reporte.details?.images?.[0]?.url;
+        report.details?.images?.[0]?.url;
 
       const marker = L.marker(
         [lat, lng],
@@ -293,7 +297,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       ).addTo(this.markersLayer);
 
       marker.bindPopup(
-        this.buildPopup(reporte),
+        this.buildPopup(report),
         {
           className: 'report-popup',
           maxWidth: 300,
@@ -304,97 +308,52 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       );
 
       marker.on('click', () => {
-        if (this.esMobile()) {
+        if (this.isMobile()) {
           marker.closePopup();
-          this.zone.run(() => this.selectedReport.set(reporte));
+          this.zone.run(() => this.selectedReport.set(report));
         }
       });
 
     });
   }
 
-  private esMobile(): boolean {
+  private isMobile(): boolean {
     return window.innerWidth < 1024;
   }
 
-  aplicarFiltros(): void {
+  applyFilters(): void {
+    let filters = [...this.reports()];
 
-    let filtrados = [...this.reportes()];
-
-
-    if (this.tipoFiltro() === 'perdidos') {
-
-      filtrados = filtrados.filter(
-        reporte => reporte.type === 'LOST'
-      );
-
+    if (this.filterType() !== 'ALL') {
+      filters = filters.filter((report) => report.type === this.filterType());
     }
 
+    if (this.petFilter() !== 'ALL') {
+      const selectedPet = this.petFilter();
 
-    if (this.tipoFiltro() === 'avistados') {
+      filters = filters.filter((report) => {
+        const animalType = (report.details as { animalType?: AnimalType }).animalType;
 
-      filtrados = filtrados.filter(
-        reporte => reporte.type === 'SIGHTING'
-      );
-
-    }
-
-
-    if (this.mascotaFiltro() === 'perro') {
-
-      filtrados = filtrados.filter(reporte => {
-        const animalType =
-          (reporte.details as { animalType?: AnimalType }).animalType;
-
-        return animalType === 'DOG';
+        return animalType === selectedPet;
       });
-
     }
 
+    if (this.proximityFilter() !== 'ALL' && this.userLatLng) {
+      const maxDistance = Number(this.proximityFilter().replace('km', ''));
 
-    if (this.mascotaFiltro() === 'gato') {
-
-      filtrados = filtrados.filter(reporte => {
-        const animalType =
-          (reporte.details as { animalType?: AnimalType }).animalType;
-
-        return animalType === 'CAT';
-      });
-
-    }
-
-
-    if (
-      this.cercaniaFiltro() !== 'todos' &&
-      this.userLatLng
-    ) {
-
-      const distanciaMaxima =
-        Number(
-          this.cercaniaFiltro()
-            .replace('km', '')
+      filters = filters.filter((report) => {
+        const distance = this.calculateDistance(
+          this.userLatLng!.lat,
+          this.userLatLng!.lng,
+          report.location.latitude,
+          report.location.longitude,
         );
 
-      filtrados = filtrados.filter(
-        reporte => {
-
-          const distancia =
-            this.calcularDistancia(
-              this.userLatLng!.lat,
-              this.userLatLng!.lng,
-              reporte.location.latitude,
-              reporte.location.longitude
-            );
-
-          return distancia <= distanciaMaxima;
-
-        }
-      );
-
-
+        return distance <= maxDistance;
+      });
     }
 
-    this.reportesFiltrados.set(filtrados);
+
 
     this.missionCircles.forEach(c => this.map.removeLayer(c));
     this.missionMarkers.forEach(m => this.map.removeLayer(m));
@@ -402,7 +361,10 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.missionCircles = [];
     this.missionMarkers = [];
 
-    this.dibujarMarcadores(filtrados);
+
+    this.leakedReports.set(filters);
+    this.drawMarkers(filters);
+
   }
 
   async ngOnInit(): Promise<void> {
@@ -430,9 +392,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   }
 
-  abrirMision(mission: SelectedMission): void {
+  openMission(mission: SelectedMission): void {
 
-    this.misionSeleccionada.set(null);
+    this.selectedMission.set(null);
 
     this.router.navigate(
       ['/missions', mission.publicId ?? mission.public_id],
@@ -449,7 +411,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.initializeMap();
   }
 
-  verReporte(): void {
+  viewReport(): void {
     const reportId = this.successReportId();
     this.successReportId.set(null);
     this.router.navigate(['/reports', reportId]);
@@ -460,7 +422,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
-  async activarNotificaciones(): Promise<void> {
+  async turnOnNotifications(): Promise<void> {
     await this.notifications.enable();
   }
 
@@ -477,27 +439,29 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       attribution: '&copy; OpenStreetMap',
     }).addTo(this.map);
 
-    this.lugaresLayer.addTo(this.map);
 
+    this.placesLayer.addTo(this.map);
     this.markersLayer.addTo(this.map);
     this.addFocusControl();
     this.getUserLocation();
-    await this.cargarReportes();
-    await this.cargarMisiones();
+    this.loadReports();
+    this.loadMissions();
+
     setTimeout(() => {
       this.map.invalidateSize();
     }, 500);
   }
 
-  readonly mostrarMisiones = signal(false);
 
-  toggleMisiones(): void {
+  readonly showMissions = signal(false);
 
-    this.mostrarMisiones.update(v => !v);
+  toggleMissions(): void {
 
-    if (this.mostrarMisiones()) {
+    this.showMissions.update(v => !v);
 
-      this.dibujarMisiones(this.misiones());
+    if (this.showMissions()) {
+
+      this.drawMissions(this.missions());
       this.markersLayer.clearLayers();
 
     } else {
@@ -508,24 +472,25 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       this.missionCircles = [];
       this.missionMarkers = [];
 
-      this.dibujarMarcadores(this.reportesFiltrados());
-
+      this.drawMarkers(this.leakedReports());
     }
 
   }
 
-  private dibujarLugares(): void {
-    this.lugaresLayer.clearLayers();
+  private drawPlaces(): void {
+    this.placesLayer.clearLayers();
+
     const icon = buildPlacePinIcon(
-      this.centrosFiltro() === 'veterinarias' ? 'veterinary' : 'police',
+      this.centerFilter() === 'VETERINARY' ? 'veterinary' : 'police',
     );
-    this.lugares().forEach(lugar => this.dibujarLugar(lugar, icon));
+
+    this.places().forEach((place) => this.drawPlace(place, icon));
   }
 
-  private dibujarLugar(lugar: Place, icon: L.DivIcon): void {
-    L.marker([lugar.lat, lugar.lng], { icon })
-      .addTo(this.lugaresLayer)
-      .bindPopup(`${lugar.name}<br>${lugar.distance?.toFixed(1)} km`);
+  private drawPlace(place: Place, icon: L.DivIcon): void {
+    L.marker([place.lat, place.lng], { icon })
+      .addTo(this.placesLayer)
+      .bindPopup(`${place.name}<br>${place.distance?.toFixed(1)} km`);
   }
 
   private addFocusControl(): void {
@@ -543,20 +508,20 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     control.addTo(this.map);
   }
 
-  private getUserLocation(reaplicarFiltros = false): void {
+  private getUserLocation(reapplyFilters = false): void {
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         this.userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
         this.placeUserMarker();
-        this.dibujarRadar();
-        this.filtrarPorRadar();
+        this.drawRadar();
+        this.filterByRadar();
         this.map.setView(this.userLatLng, 15);
-        if (reaplicarFiltros && !this.searchLatLng) {
-          this.aplicarFiltroCentros();
+        if (reapplyFilters && !this.searchLatLng) {
+          this.applyFilterCenters();
         }
-        this.actualizarDestacados();
+        this.updateFeatured();
         setTimeout(() => this.map.invalidateSize(), 100);
       },
       () => {
@@ -566,7 +531,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     );
   }
 
-  private calcularDistancia(
+  private calculateDistance(
     lat1: number,
     lon1: number,
     lat2: number,
@@ -593,27 +558,21 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     return R * c;
   }
 
-
-  private async cargarMisiones(): Promise<void> {
-
-
-
-
+  private async loadMissions(): Promise<void> {
     try {
 
-      const misiones =
+      const missions =
         await firstValueFrom(this.missionService.getMissions());
-      console.log(misiones[0].report);
 
+      this.missions.set(missions);
 
-      this.misiones.set(misiones);
-      if (this.mostrarMisiones()) {
-        this.dibujarMisiones(misiones);
+      if (this.showMissions()) {
+        this.drawMissions(missions);
       }
 
     } catch (error) {
 
-      console.error("Error cargando misiones", error);
+      console.error("Error loading missions", error);
 
     }
 
@@ -622,7 +581,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private missionCircles: L.Circle[] = [];
   private missionMarkers: L.Marker[] = [];
 
-  private dibujarMisiones(misiones: SelectedMission[]): void {
+  private drawMissions(missions: SelectedMission[]): void {
 
     this.missionCircles.forEach(c => this.map.removeLayer(c));
     this.missionMarkers.forEach(m => this.map.removeLayer(m));
@@ -630,7 +589,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.missionCircles = [];
     this.missionMarkers = [];
 
-    for (const mission of misiones) {
+    for (const mission of missions) {
 
       const report = mission.report;
 
@@ -675,7 +634,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
           this.selectedReport.set(null);
 
-          this.misionSeleccionada.set(mission);
+          this.selectedMission.set(mission);
 
         });
 
@@ -734,94 +693,94 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
 
   }
 
-  private async buscarLugares(
-    tipo: 'veterinary' | 'police'
+  private async searchPlaces(
+    type: 'veterinary' | 'police'
   ): Promise<void> {
-    const centro = this.getCentroBusqueda();
-    const cacheKey = this.getCacheKey(tipo, centro);
+    const center = this.getSearchCenter();
+    const cacheKey = this.getCacheKey(type, center);
 
-    const lugaresCacheados = this.lugaresCache.get(cacheKey);
+    const cachedPlaces = this.placesCache.get(cacheKey);
 
-    if (lugaresCacheados) {
-      this.showVisiblePlaces(lugaresCacheados);
+    if (cachedPlaces) {
+      this.showVisiblePlaces(cachedPlaces);
       return;
     }
 
-    const requestId = ++this.centrosRequestId;
+    const requestId = ++this.centersRequestId;
 
-    this.centrosCargando.set(true);
-    this.centrosError.set(null);
+    this.loadingCenters.set(true);
+    this.errorCenters.set(null);
 
-    const radioBusqueda = this.RADIO_MAX_KM * 1000;
+    const searchRadius = this.RADIO_MAX_KM * 1000;
 
     try {
-      const lugares = await this.placesService.searchPlaces(
-        tipo,
-        centro.lat,
-        centro.lng,
-        radioBusqueda,
+      const places = await this.placesService.searchPlaces(
+        type,
+        center.lat,
+        center.lng,
+        searchRadius,
       );
 
-      if (requestId !== this.centrosRequestId) {
+      if (requestId !== this.centersRequestId) {
         return;
       }
 
-      this.lugaresCache.set(cacheKey, lugares);
+      this.placesCache.set(cacheKey, places);
 
-      this.showVisiblePlaces(lugares);
+      this.showVisiblePlaces(places);
     } catch (error) {
-      if (requestId !== this.centrosRequestId) {
+      if (requestId !== this.centersRequestId) {
         return;
       }
 
       console.error('Error buscando lugares cercanos', error);
 
-      this.lugares.set([]);
-      this.lugaresLayer.clearLayers();
-      this.centrosError.set('No se pudieron cargar los centros cercanos. Intentá nuevamente.');
+      this.places.set([]);
+      this.placesLayer.clearLayers();
+      this.errorCenters.set('No se pudieron cargar los centros cercanos. Intentá nuevamente.');
     } finally {
-      if (requestId === this.centrosRequestId) {
-        this.centrosCargando.set(false);
+      if (requestId === this.centersRequestId) {
+        this.loadingCenters.set(false);
       }
     }
   }
 
-  private showVisiblePlaces(completos: Place[]): void {
+  private showVisiblePlaces(complete: Place[]): void {
     const radio = this.radioRadar();
-    const visibles = completos.filter((lugar) => (lugar.distance ?? 0) <= radio);
+    const visibles = complete.filter((place) => (place.distance ?? 0) <= radio);
 
-    this.lugares.set(visibles);
-    this.dibujarLugares();
+    this.places.set(visibles);
+    this.drawPlaces();
 
-    if (completos.length === 0) {
-      this.centrosError.set('No se encontraron centros cercanos en OpenStreetMap.');
+    if (complete.length === 0) {
+      this.errorCenters.set('No se encontraron centros cercanos en OpenStreetMap.');
     } else if (visibles.length === 0) {
-      this.centrosError.set(`No hay centros dentro de ${radio} km. Ampliá la cercanía.`);
+      this.errorCenters.set(`No hay centros dentro de ${radio} km. Ampliá la cercanía.`);
     } else {
-      this.centrosError.set(null);
+      this.errorCenters.set(null);
     }
   }
 
-  async aplicarFiltroCentros(): Promise<void> {
-    this.centrosError.set(null);
+  async applyFilterCenters(): Promise<void> {
+    this.errorCenters.set(null);
 
-    if (this.centrosFiltro() === 'veterinarias') {
-      await this.buscarLugares('veterinary');
+    if (this.centerFilter() === 'VETERINARY') {
+      await this.searchPlaces('veterinary');
       return;
     }
 
-    if (this.centrosFiltro() === 'comisarias') {
-      await this.buscarLugares('police');
+    if (this.centerFilter() === 'POLICE') {
+      await this.searchPlaces('police');
       return;
     }
 
-    this.centrosRequestId++;
-    this.lugares.set([]);
-    this.lugaresLayer.clearLayers();
-    this.centrosCargando.set(false);
+    this.centersRequestId++;
+    this.places.set([]);
+    this.placesLayer.clearLayers();
+    this.loadingCenters.set(false);
   }
 
-  irALugar(
+  goToAPlace(
     lat: number,
     lng: number
   ): void {
@@ -845,20 +804,20 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     }).addTo(this.map);
   }
 
-  private dibujarRadar(): void {
-    const centro = this.centroReferencia();
-    if (!centro) return;
-    const radioMetros = this.radioRadar() * 1000;
-    this.actualizarMascaraRadar(centro, radioMetros);
+  private drawRadar(): void {
+    const center = this.referenceCenter();
+    if (!center) return;
+    const radioMeters = this.radioRadar() * 1000;
+    this.updateRadarMask(center, radioMeters);
   }
 
-  private actualizarMascaraRadar(centro: L.LatLng, radioMetros: number): void {
-    const anillos = [MUNDO, this.puntosCirculo(centro, radioMetros)];
+  private updateRadarMask(center: L.LatLng, radioMeters: number): void {
+    const rings = [MUNDO, this.circlePoints(center, radioMeters)];
     if (this.radarMask) {
-      this.radarMask.setLatLngs(anillos);
+      this.radarMask.setLatLngs(rings);
       return;
     }
-    this.radarMask = L.polygon(anillos, {
+    this.radarMask = L.polygon(rings, {
       stroke: false,
       fillColor: '#12355B',
       fillOpacity: 0.2,
@@ -866,20 +825,20 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     }).addTo(this.map);
   }
 
-  private puntosCirculo(centro: L.LatLng, radioMetros: number): [number, number][] {
-    const puntos: [number, number][] = [];
+  private circlePoints(center: L.LatLng, radioMeters: number): [number, number][] {
+    const points: [number, number][] = [];
     for (let i = 0; i <= 64; i++) {
-      puntos.push(this.puntoDestino(centro, radioMetros, (i * 360) / 64));
+      points.push(this.destinationPoint(center, radioMeters, (i * 360) / 64));
     }
-    return puntos;
+    return points;
   }
 
-  private puntoDestino(centro: L.LatLng, radioMetros: number, gradosBearing: number): [number, number] {
-    const radioTierra = 6371000;
-    const delta = radioMetros / radioTierra;
-    const theta = (gradosBearing * Math.PI) / 180;
-    const lat1 = (centro.lat * Math.PI) / 180;
-    const lng1 = (centro.lng * Math.PI) / 180;
+  private destinationPoint(center: L.LatLng, radioMeter: number, degreesBearing: number): [number, number] {
+    const earthRadio = 6371000;
+    const delta = radioMeter / earthRadio;
+    const theta = (degreesBearing * Math.PI) / 180;
+    const lat1 = (center.lat * Math.PI) / 180;
+    const lng1 = (center.lng * Math.PI) / 180;
     const lat2 = Math.asin(Math.sin(lat1) * Math.cos(delta) + Math.cos(lat1) * Math.sin(delta) * Math.cos(theta));
     const lng2 = lng1 + Math.atan2(Math.sin(theta) * Math.sin(delta) * Math.cos(lat1), Math.cos(delta) - Math.sin(lat1) * Math.sin(lat2));
     return [(lat2 * 180) / Math.PI, (lng2 * 180) / Math.PI];
@@ -889,9 +848,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     if (this.userLatLng) {
       this.map.setView(this.userLatLng, 16);
       if (!this.searchLatLng) {
-        this.dibujarRadar();
-        this.filtrarPorRadar();
-        this.aplicarFiltroCentros();
+        this.drawRadar();
+        this.filterByRadar();
+        this.applyFilterCenters();
       }
       return;
     }
@@ -912,100 +871,42 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.suggestions.set(await this.placesService.geocode(this.searchTerm()));
   }
 
-  private filtrarPorRadar(): void {
+  private filterByRadar(): void {
+    const center = this.referenceCenter();
 
-    const centro = this.centroReferencia();
-    if (!centro) return;
+    if (!center) return;
 
-    // ==========================
-    // SOLO MISIONES
-    // ==========================
+    let leaked = [...this.reports()];
 
-    if (this.tipoFiltro() === 'misiones') {
-
-      this.markersLayer.clearLayers();
-
-      this.dibujarMisiones(this.misiones());
-
-      return;
-
+    if (this.filterType() !== 'ALL') {
+      leaked = leaked.filter((report) => report.type === this.filterType());
     }
 
-    let filtrados = [...this.reportes()];
+    if (this.petFilter() !== 'ALL') {
+      const selectedPet = this.petFilter();
 
-    // FILTRO TIPO
+      leaked = leaked.filter((report) => {
+        const animalType = (report.details as { animalType?: AnimalType }).animalType;
 
-    if (this.tipoFiltro() === 'perdidos') {
+        return animalType === selectedPet;
+      });
+    }
 
-      filtrados = filtrados.filter(
-        reporte => reporte.type === 'LOST'
+    const maxDistance = this.radioRadar();
+
+    leaked = leaked.filter((report) => {
+      const distance = this.calculateDistance(
+        center.lat,
+        center.lng,
+        report.location.latitude,
+        report.location.longitude,
       );
 
-    }
+      return distance <= maxDistance;
+    });
 
-    if (this.tipoFiltro() === 'avistados') {
-
-      filtrados = filtrados.filter(
-        reporte => reporte.type === 'SIGHTING'
-      );
-
-    }
-
-    // FILTRO MASCOTA
-
-    if (this.mascotaFiltro() === 'perro') {
-
-      filtrados = filtrados.filter(reporte => {
-        const animalType =
-          (reporte.details as { animalType?: AnimalType }).animalType;
-
-        return animalType === 'DOG';
-      });
-
-    }
-
-
-
-    if (this.mascotaFiltro() === 'gato') {
-
-      filtrados = filtrados.filter(reporte => {
-        const animalType =
-          (reporte.details as { animalType?: AnimalType }).animalType;
-
-        return animalType === 'CAT';
-      });
-
-    }
-
-    // FILTRO RADAR
-
-    const distanciaMaxima =
-      this.radioRadar();
-
-    filtrados = filtrados.filter(
-      reporte => {
-
-        const distancia =
-          this.calcularDistancia(
-            centro.lat,
-            centro.lng,
-            reporte.location.latitude,
-            reporte.location.longitude
-          );
-
-        return distancia <= distanciaMaxima;
-
-      }
-    );
-
-    this.reportesFiltrados.set(
-      filtrados
-    );
-
-    this.dibujarMarcadores(
-      filtrados
-    );
-
+    this.leakedReports.set(leaked);
+    this.drawMarkers(leaked);
   }
 
   selectSuggestion(suggestion: LocationSuggestion): void {
@@ -1014,9 +915,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.searchLatLng = L.latLng(suggestion.lat, suggestion.lng);
     this.map.setView([suggestion.lat, suggestion.lng], 15);
     this.markSearchResult(suggestion.lat, suggestion.lng);
-    this.dibujarRadar();
-    this.filtrarPorRadar();
-    this.aplicarFiltroCentros();
+    this.drawRadar();
+    this.filterByRadar();
+    this.applyFilterCenters();
   }
 
   async searchLocation(): Promise<void> {
@@ -1032,9 +933,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.searchMarker?.remove();
     this.searchMarker = undefined;
     this.searchLatLng = undefined;
-    this.dibujarRadar();
-    this.filtrarPorRadar();
-    this.aplicarFiltroCentros();
+    this.drawRadar();
+    this.filterByRadar();
+    this.applyFilterCenters();
   }
 
   openFilters(): void {
@@ -1045,28 +946,27 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.showFilters.set(false);
   }
 
-
-  selectType(value: string): void {
-    this.tipoFiltro.set(value);
-    this.filtrarPorRadar();
+  selectType(value: ReportTypeFilter): void {
+    this.filterType.set(value);
+    this.filterByRadar();
   }
 
-  seleccionarCercania(value: string): void {
-    this.cercaniaFiltro.set(value);
-    this.aplicarFiltros();
+  selectProximity(value: ProximityFilter): void {
+    this.proximityFilter.set(value);
+    this.applyFilters();
   }
 
-  seleccionarMascota(value: string): void {
-    this.mascotaFiltro.set(value);
-    this.filtrarPorRadar();
+  selectPet(value: PetTypeFilter): void {
+    this.petFilter.set(value);
+    this.filterByRadar();
   }
 
-  seleccionarCentros(value: string): void {
-    this.centrosFiltro.set(value);
-    this.aplicarFiltroCentros();
+  selectCenters(value: CenterFilter): void {
+    this.centerFilter.set(value);
+    this.applyFilterCenters();
   }
 
-  cambiarRadar(event: Event): void {
+  replaceRadar(event: Event): void {
 
     const value =
       Number(
@@ -1075,13 +975,9 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       );
 
     this.radioRadar.set(value);
-
-
-    this.dibujarRadar();
-
-    this.filtrarPorRadar();
-
-    this.reprogramarCentros();
+    this.drawRadar();
+    this.filterByRadar();
+    this.rescheduleCenters();
   }
 
   private markSearchResult(lat: number, lng: number): void {
@@ -1099,13 +995,13 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   private buildPopup(reporte: Reporte): string {
     const d = reporte.details as { images?: { url: string }[]; name?: string; animalType?: string; isInTransit?: boolean };
     const imageUrl = d.images?.[0]?.url;
-    const esPerdida = reporte.type === 'LOST';
-    const enTransito = !esPerdida && d.isInTransit === true;
-    const badgeColor = esPerdida ? '#E8842E' : '#12355B';
-    const badgeText = esPerdida ? 'Mascota perdida' : enTransito ? 'En tránsito' : 'Mascota avistada';
-    const badgeIcon = esPerdida
+    const isLost = reporte.type === 'LOST';
+    const inTransit = !isLost && d.isInTransit === true;
+    const badgeColor = isLost ? '#E8842E' : '#12355B';
+    const badgeText = isLost ? 'Mascota perdida' : inTransit ? 'En tránsito' : 'Mascota avistada';
+    const badgeIcon = isLost
       ? '<img src="Icono-mascota-perdida.png" alt="" style="width:14px;height:14px;display:block;" />'
-      : enTransito
+      : inTransit
         ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
         : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>';
 
@@ -1129,15 +1025,15 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       </div>
       <div style="padding:14px 16px;">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">
-          <span style="font-size:18px;font-weight:800;color:#12355B;line-height:1.2;">${this.nombrePopup(reporte, d.name)}</span>
-          <span style="font-size:12px;color:#94a3b8;white-space:nowrap;">${this.tiempoPopup(reporte.createdAt)}</span>
+          <span style="font-size:18px;font-weight:800;color:#12355B;line-height:1.2;">${this.namePopup(reporte, d.name)}</span>
+          <span style="font-size:12px;color:#94a3b8;white-space:nowrap;">${this.timePopup(reporte.createdAt)}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#475569;margin-bottom:8px;">
-          ${pinSvg}<span>${this.direccionCorta(reporte.location.address)}</span>
+          ${pinSvg}<span>${this.shortAddress(reporte.location.address)}</span>
         </div>
         <div style="display:flex;align-items:center;gap:16px;font-size:13px;color:#475569;margin-bottom:14px;">
-          <span style="display:inline-flex;align-items:center;gap:6px;">${calSvg}${this.fechaPopup(reporte.occurredAt)}</span>
-          <span style="display:inline-flex;align-items:center;gap:6px;">${clockSvg}${this.horaPopup(reporte.occurredAt)}</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;">${calSvg}${this.datePopup(reporte.occurredAt)}</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;">${clockSvg}${this.hourPopup(reporte.occurredAt)}</span>
         </div>
         <a href="/reports/${reporte.publicId}" style="display:block;text-align:center;text-decoration:none;background:#12355B;color:#fff;border-radius:10px;padding:11px;font-size:14px;font-weight:700;font-family:Nunito,sans-serif;">
           Ver detalle
@@ -1147,65 +1043,68 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
   `;
   }
 
-  private nombrePopup(reporte: Reporte, name?: string): string {
+  private namePopup(report: Reporte, name?: string): string {
     if (name?.trim()) return name;
-    const tipo = (reporte.details as { animalType?: string }).animalType;
-    const especie = tipo?.toUpperCase() === 'CAT' ? 'Gato' : 'Perro';
-    if (reporte.type === 'LOST') return `${especie} perdido`;
-    return (reporte.details as { isInTransit?: boolean }).isInTransit ? `${especie} en tránsito` : `${especie} avistado`;
+    const type = (report.details as { animalType?: string }).animalType;
+    const species = type?.toUpperCase() === 'CAT' ? 'Gato' : 'Perro';
+    if (report.type === 'LOST') return `${species} perdido`;
+    return (report.details as { isInTransit?: boolean }).isInTransit ? `${species} en tránsito` : `${species} avistado`;
   }
 
-  private tiempoPopup(fecha: string): string {
-    const horas = Math.floor((Date.now() - new Date(fecha).getTime()) / 3_600_000);
-    if (horas < 1) return 'Hace instantes';
-    if (horas < 24) return `Hace ${horas}hs`;
-    return `Hace ${Math.floor(horas / 24)}d`;
+  private timePopup(fecha: string): string {
+    const hours = Math.floor((Date.now() - new Date(fecha).getTime()) / 3_600_000);
+    if (hours < 1) return 'Hace instantes';
+    if (hours < 24) return `Hace ${hours}hs`;
+    return `Hace ${Math.floor(hours / 24)}d`;
   }
 
-  private direccionCorta(address: string): string {
+  private shortAddress(address: string): string {
     const parts = (address ?? '').split(',').map((p) => p.trim()).filter(Boolean);
     if (parts.length === 0) return 'Sin ubicación';
     if (parts.length >= 2 && /^\d+$/.test(parts[0])) return `${parts[1]} ${parts[0]}`;
     return parts[0];
   }
 
-  private fechaPopup(fecha: string): string {
-    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  private datePopup(fecha: string): string {
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     const d = new Date(fecha);
     if (isNaN(d.getTime())) return 'Sin fecha';
-    return `${String(d.getDate()).padStart(2, '0')} ${meses[d.getMonth()]} ${d.getFullYear()}`;
+    return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
   }
 
-  private horaPopup(fecha: string): string {
+  private hourPopup(fecha: string): string {
     const d = new Date(fecha);
     if (isNaN(d.getTime())) return '';
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} hs`;
   }
 
-  private getCentroBusqueda(): L.LatLng {
+  private getSearchCenter(): L.LatLng {
     return this.searchLatLng ?? this.userLatLng ?? this.map.getCenter();
   }
 
-  private getCacheKey(tipo: 'veterinary' | 'police', centro: L.LatLng): string {
-    return `${tipo}:${centro.lat.toFixed(3)}:${centro.lng.toFixed(3)}`;
+  private getCacheKey(tipo: 'veterinary' | 'police', center: L.LatLng): string {
+    return `${tipo}:${center.lat.toFixed(3)}:${center.lng.toFixed(3)}`;
   }
 
-  private centroReferencia(): L.LatLng | undefined {
+  private referenceCenter(): L.LatLng | undefined {
     return this.searchLatLng ?? this.userLatLng;
   }
 
-  private reprogramarCentros(): void {
-    if (this.centrosFiltro() === 'todos') return;
+  private rescheduleCenters(): void {
+    if (this.centerFilter() === 'ALL') return;
 
-    const tipo = this.centrosFiltro() === 'veterinarias' ? 'veterinary' : 'police';
-    const cached = this.lugaresCache.get(this.getCacheKey(tipo, this.getCentroBusqueda()));
+    const type = this.centerFilter() === 'VETERINARY' ? 'veterinary' : 'police';
+
+    const cached = this.placesCache.get(
+      this.getCacheKey(type, this.getSearchCenter()),
+    );
 
     if (cached) {
       this.showVisiblePlaces(cached);
       return;
     }
 
-    this.aplicarFiltroCentros();
+    this.applyFilterCenters();
   }
 
 
