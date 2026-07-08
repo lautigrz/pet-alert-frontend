@@ -45,7 +45,7 @@ readonly receivedReviews = signal<UserReview[]>([]);
 readonly givenReviews = signal<GivenUserReview[]>([]);
 readonly reviewsLoading = signal(true);
 readonly reviewsError = signal<string | null>(null);
-  
+
 
   readonly experience = signal<UserExperienceSummary | null>(null);
   readonly experienceLoading = signal(true);
@@ -88,7 +88,7 @@ readonly reviewsError = signal<string | null>(null);
     this.reportsError.set(null);
 
     try{
-      const reports = await this.reportListService.getMisReportes();
+      const reports = await this.reportListService.getMyReports();
       this.reports.set(reports);
     } catch(error){
       this.reportsError.set(error instanceof Error ? error.message : 'No se pudieron cargar los reportes');
@@ -122,7 +122,7 @@ readonly reviewsError = signal<string | null>(null);
       this.reviewsLoading.set(false);
     }
   }
-  
+
   async loadExperience(): Promise<void>{
     this.experienceLoading.set(true);
     this.experienceError.set(null);
