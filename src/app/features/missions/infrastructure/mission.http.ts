@@ -4,8 +4,6 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { CreateMissionDTO, CreateMissionResponse, MissionCardOutput, MissionOutput } from './models/mission.model';
 
-
-
 @Injectable({
   providedIn: 'root'
 })

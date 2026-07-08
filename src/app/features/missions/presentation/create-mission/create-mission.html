@@ -65,7 +65,7 @@
         }
       </form>
 
-      <div class="mt-lg space-y-sm">
+      <div class="hidden md:block mt-lg space-y-sm">
         <button (click)="saveMission()" [class.bg-[#12355B]]="isEditMode" [class.bg-[#E8842E]]="!isEditMode"
           class="w-full text-white text-base font-semibold py-4 rounded-xl shadow-md hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-sm border-0 cursor-pointer">
           <span class="material-symbols-outlined text-white">{{ isEditMode ? 'save' : 'rocket_launch' }}</span>
@@ -97,6 +97,15 @@
       </div>
       }
     </section>
+
+    <div
+      class="block md:hidden p-gutter bg-surface-container-lowest mt-0 border-t border-outline-variant z-10 shrink-0">
+      <button (click)="saveMission()" [class.bg-[#12355B]]="isEditMode" [class.bg-[#E8842E]]="!isEditMode"
+        class="w-full text-white text-base font-semibold py-4 rounded-xl shadow-md hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-sm border-0 cursor-pointer">
+        <span class="material-symbols-outlined text-white">{{ isEditMode ? 'save' : 'rocket_launch' }}</span>
+        {{ isEditMode ? 'Guardar Cambios' : 'Iniciar Misión' }}
+      </button>
+    </div>
   </main>
   <app-bottom-nav class="shrink-0 z-20 relative bg-white"></app-bottom-nav>
   <app-footer class="shrink-0 z-20 relative bg-white"></app-footer>

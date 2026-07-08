@@ -36,33 +36,18 @@ export interface CreateMissionUpdateResponse {
 export class MissionUpdateHttp {
 
   private readonly http = inject(HttpClient);
-  private readonly tokenStorage = inject(TokenStorage);
   private readonly baseUrl = environment.apiUrl;
 
   getUpdates(missionPublicId: string): Observable<MissionUpdateOutput[]> {
-    const tokens = this.tokenStorage.read();
-    let headers = new HttpHeaders();
-    if (tokens?.accessToken) {
-      headers = headers.set('Authorization', `Bearer ${tokens.accessToken}`);
-    }
-
     return this.http.get<MissionUpdateOutput[]>(
-      `${this.baseUrl}/mission-updates/${missionPublicId}`,
-      { headers }
+      `${this.baseUrl}/mission-updates/${missionPublicId}`
     );
   }
 
   createUpdate(body: CreateMissionUpdateDTO): Observable<CreateMissionUpdateResponse> {
-    const tokens = this.tokenStorage.read();
-    let headers = new HttpHeaders();
-    if (tokens?.accessToken) {
-      headers = headers.set('Authorization', `Bearer ${tokens.accessToken}`);
-    }
-
     return this.http.post<CreateMissionUpdateResponse>(
       `${this.baseUrl}/mission-updates`,
-      body,
-      { headers }
+      body
     );
   }
 
