@@ -178,6 +178,16 @@
             </button>
             }
           </div>
+
+          @if (!hasActiveMission()) {
+          <button (click)="createMission()"
+            class="mt-3 w-full rounded-xl bg-blue-600 py-3 text-white font-medium hover:bg-blue-700 transition">
+
+            Crear misión de búsqueda
+
+          </button>
+          }
+
           }
 
           @if (!esPropio() && r.status === 'ACTIVE') {

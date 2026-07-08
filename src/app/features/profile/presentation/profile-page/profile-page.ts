@@ -69,6 +69,26 @@ readonly reviewsError = signal<string | null>(null);
     ]);
   }
 
+  readonly missions = signal([
+  {
+    title: 'Buscar a Milo',
+    address: 'Villa Celina',
+    status: 'PENDING',
+    createdAt: '05/07/2026'
+  },
+  {
+    title: 'Revisar estacionamientos',
+    address: 'San Justo',
+    status: 'APPROVED',
+    createdAt: '04/07/2026'
+  },
+  {
+    title: 'Buscar a Luna',
+    address: 'Ramos Mejía',
+    status: 'REJECTED',
+    createdAt: '01/07/2026'
+  }
+]);
   async loadProfile(): Promise<void>{
     this.loading.set(true);
     this.serverError.set(null);

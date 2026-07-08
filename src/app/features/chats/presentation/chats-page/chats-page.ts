@@ -147,6 +147,8 @@ private requestPresence(userPublicId: string): void {
   this.chatsService.getPresence(userPublicId);
 }
 
+
+
 selectContact(contact: ConversationSummaryOutput): void {
 
   this.selectedContact.set(contact);

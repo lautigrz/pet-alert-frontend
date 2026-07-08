@@ -1,0 +1,112 @@
+<div
+  class="min-h-screen md:h-screen w-full flex flex-col bg-background text-on-background overflow-y-auto md:overflow-hidden">
+  <app-navbar class="shrink-0"></app-navbar>
+
+  <main class="flex-1 min-h-0 flex flex-col md:flex-row">
+    <section
+      class="w-full md:w-1/3 lg:w-[400px] bg-surface-container-lowest p-gutter md:shadow-xl z-10 flex flex-col md:overflow-y-auto shrink-0">
+      <div class="mb-sm flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-[#12355B]">{{ isEditMode ? 'Editar misión' : 'Crear misión' }}</h2>
+        <button type="button" (click)="goBack()"
+          class="text-sm font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 cursor-pointer bg-transparent border-0">
+          <span class="material-symbols-outlined text-base">arrow_back</span>
+          Volver
+        </button>
+      </div>
+      <p class="text-tertiary text-sm mb-sm">
+        {{ isEditMode ? 'Ajusta los detalles de la misión de búsqueda.' : 'Define el área de búsqueda y los detalles
+        para ayudar a encontrar a una mascota.' }}
+      </p>
+
+      <form class="space-y-md flex-grow" (submit)="$event.preventDefault()">
+        <div class="space-y-xs">
+          <label class="text-sm font-semibold text-[#12355b]" for="mission-title">Título de la misión</label>
+          <input
+            class="w-full bg-white border border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-[#E8842E] focus:border-[#E8842E] outline-none transition-all text-sm font-medium text-slate-800"
+            id="mission-title" [(ngModel)]="title" name="title" placeholder="Ej: Búsqueda de Max en Palermo"
+            type="text" />
+        </div>
+
+        <div class="space-y-xs">
+          <label class="text-sm font-semibold text-[#12355b]" for="mission-desc">Descripción</label>
+          <textarea
+            class="w-full bg-white border border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-[#E8842E] focus:border-[#E8842E] outline-none transition-all text-sm text-slate-600 resize-none"
+            id="mission-desc" [(ngModel)]="description" name="description"
+            placeholder="Describe a la mascota, su última ubicación conocida y cualquier detalle relevante..."
+            rows="4"></textarea>
+        </div>
+
+        <div class="p-md bg-secondary-fixed rounded-xl space-y-sm">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-semibold text-on-secondary-fixed-variant">Radio de búsqueda</span>
+            <span class="font-bold text-secondary" id="radius-val">
+              {{ radius < 1000 ? radius + ' m' : (radius / 1000) + ' km' }} </span>
+          </div>
+          <input class="w-full h-2 bg-white rounded-lg appearance-none cursor-pointer accent-secondary"
+            id="radius-slider" max="5000" min="500" step="100" type="range" [value]="radius"
+            (input)="changeRadius($event)" />
+          <p class="text-[12px] text-on-secondary-fixed-variant leading-tight">Ajusta el radio para notificar a los
+            voluntarios en la zona.</p>
+        </div>
+
+        @if (report) {
+        <div class="space-y-sm pt-md">
+          <div
+            class="flex items-center gap-sm p-sm border border-outline-variant rounded-xl hover:bg-surface-container transition-colors cursor-pointer">
+            <img [src]="report.details.images[0]?.url ?? 'assets/default-pet.png'"
+              class="w-12 h-12 rounded-lg object-cover border border-slate-200" alt="Mascota">
+            <div>
+              <p class="text-sm font-bold text-on-surface">{{ report.details.name ?? report.details.petName ?? 'Mascota'
+                }}</p>
+              <p class="text-[12px] text-tertiary">Imagen de reporte previo</p>
+            </div>
+          </div>
+        </div>
+        }
+      </form>
+
+      <div class="hidden md:block mt-lg space-y-sm">
+        <button (click)="saveMission()" [class.bg-[#12355B]]="isEditMode" [class.bg-[#E8842E]]="!isEditMode"
+          class="w-full text-white text-base font-semibold py-4 rounded-xl shadow-md hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-sm border-0 cursor-pointer">
+          <span class="material-symbols-outlined text-white">{{ isEditMode ? 'save' : 'rocket_launch' }}</span>
+          {{ isEditMode ? 'Guardar Cambios' : 'Iniciar Misión' }}
+        </button>
+      </div>
+    </section>
+
+
+    <section
+      class="w-full md:flex-grow h-[450px] md:h-full relative bg-surface-container overflow-hidden shrink-0 md:shrink">
+      <div #missionMap class="absolute inset-0 w-full h-full relative z-0"></div>
+
+      @if (showInstructions) {
+      <div
+        class="absolute left-gutter bottom-gutter md:bottom-md bg-white/95 backdrop-blur-md p-md rounded-xl shadow-lg border border-white/50 max-w-xs animate-fade-in z-[1000]">
+        <div class="flex items-center justify-between mb-xs">
+          <div class="flex items-center gap-sm">
+            <span class="material-symbols-outlined text-secondary">info</span>
+            <span class="text-sm font-bold text-on-surface">Instrucciones</span>
+          </div>
+          <button type="button" (click)="showInstructions = false" aria-label="Cerrar instrucciones"
+            class="text-slate-400 hover:text-[#12355B] ml-2 transition-colors flex items-center justify-center">
+            <span class="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+        <p class="text-xs text-tertiary leading-relaxed">Arrastra el marcador azul para centrar el punto de origen. El
+          área azul indica la zona de búsqueda intensiva.</p>
+      </div>
+      }
+    </section>
+
+    <div
+      class="block md:hidden p-gutter bg-surface-container-lowest mt-0 border-t border-outline-variant z-10 shrink-0">
+      <button (click)="saveMission()" [class.bg-[#12355B]]="isEditMode" [class.bg-[#E8842E]]="!isEditMode"
+        class="w-full text-white text-base font-semibold py-4 rounded-xl shadow-md hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-sm border-0 cursor-pointer">
+        <span class="material-symbols-outlined text-white">{{ isEditMode ? 'save' : 'rocket_launch' }}</span>
+        {{ isEditMode ? 'Guardar Cambios' : 'Iniciar Misión' }}
+      </button>
+    </div>
+  </main>
+  <app-bottom-nav class="shrink-0 z-20 relative bg-white"></app-bottom-nav>
+  <app-footer class="shrink-0 z-20 relative bg-white"></app-footer>
+</div>

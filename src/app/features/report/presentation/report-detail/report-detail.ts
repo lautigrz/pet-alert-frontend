@@ -14,7 +14,11 @@ import { ProfileService } from '../../../profile/application/profile.service';
 import { ReportTimelineComponent } from '../components/report-timeline/report-timeline';
 import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
 import { CloseReportModalComponent } from '../components/close-report-modal/close-report-modal';
-import {InfoTooltipComponent} from "../../../../shared/component/info-tooltip/info-tooltip.component";
+import { MissionService } from '../../../missions/application/mission.service';
+import { ChatsService } from '../../../chats/application/chats.service';
+
+import { InfoTooltipComponent } from "../../../../shared/component/info-tooltip/info-tooltip.component";
+
 
 @Component({
   selector: 'app-report-detail',
@@ -42,6 +46,10 @@ export class ReportDetailPage implements OnInit {
   private readonly paymentService = inject(PaymentService);
   private readonly toastService = inject(ToastService);
   private readonly profileService = inject(ProfileService);
+  private readonly missionService = inject(MissionService);
+  private readonly chatsService = inject(ChatsService);
+  private readonly USUARIO_BAJA_VALORACION_PUBLIC_ID = '70867c26-8c5c-40d2-b3df-08036823ff16';
+
 
 
   report = signal<ReportDetail | null>(null);
@@ -58,6 +66,10 @@ export class ReportDetailPage implements OnInit {
   userRatingAverage = signal(0);
   userRatingCount = signal(0);
 
+  associatedMission = signal<unknown | null>(null);
+  missionOwner = signal<unknown | null>(null);
+  hasActiveMission = signal<boolean>(false);
+
   esPropio = computed(() => {
     const r = this.report();
     const id = this.usuarioId();
@@ -73,12 +85,13 @@ export class ReportDetailPage implements OnInit {
     const publicId = this.route.snapshot.paramMap.get('publicId')!;
 
     try {
-    const report = await this.reportService.getReportByPublicId(publicId);
-    this.report.set(report);
-    await this.cargarRatingUsuario(report.user.publicId);
-  } catch {
-    this.error.set('No se pudo cargar el reporte');
-  }
+      const report = await this.reportService.getReportByPublicId(publicId);
+      this.report.set(report);
+      await this.cargarRatingUsuario(report.user.publicId);
+    } catch {
+      this.error.set('No se pudo cargar el reporte');
+    }
+
 
     try {
       const perfil = await this.profileService.getProfile();
@@ -148,30 +161,30 @@ export class ReportDetailPage implements OnInit {
 
 
   private async cargarRatingUsuario(userPublicId: string): Promise<void> {
-  try {
-    const rating = await this.profileService.getUserRating(userPublicId);
-    this.userRatingAverage.set(rating.average);
-    this.userRatingCount.set(rating.count);
-  } catch {
-    this.userRatingAverage.set(0);
-    this.userRatingCount.set(0);
+    try {
+      const rating = await this.profileService.getUserRating(userPublicId);
+      this.userRatingAverage.set(rating.average);
+      this.userRatingCount.set(rating.count);
+    } catch {
+      this.userRatingAverage.set(0);
+      this.userRatingCount.set(0);
+    }
   }
-}
-sinValoraciones(): boolean {
-  return this.userRatingCount() === 0;
-}
-
-esUsuarioBajaValoracion(): boolean {
-  return !this.sinValoraciones() && this.userRatingAverage() < 3;
-}
-
-valoracionUsuario(): string {
-  if (this.sinValoraciones()) {
-    return 'Sin calificar';
+  sinValoraciones(): boolean {
+    return this.userRatingCount() === 0;
   }
 
-  return this.userRatingAverage().toFixed(1);
-}
+  esUsuarioBajaValoracion(): boolean {
+    return !this.sinValoraciones() && this.userRatingAverage() < 3;
+  }
+
+  valoracionUsuario(): string {
+    if (this.sinValoraciones()) {
+      return 'Sin calificar';
+    }
+
+    return this.userRatingAverage().toFixed(1);
+  }
   private readonly router = inject(Router);
   irAEditarDatos(): void {
     const r = this.report();
@@ -181,6 +194,19 @@ valoracionUsuario(): string {
   irAEditarUbicacion(): void {
     const r = this.report();
     if (r) this.router.navigate(['/reports', r.publicId, 'edit', 'ubicacion']);
+  }
+
+  createMission(): void {
+
+    const r = this.report();
+
+    if (!r) return;
+
+    this.router.navigate([
+      '/missions/create',
+      r.publicId
+    ]);
+
   }
 
   private async cargarEstadoSeguimiento(): Promise<void> {
@@ -232,5 +258,33 @@ valoracionUsuario(): string {
     } finally {
       this.actualizandoSeguimiento.set(false);
     }
+  }
+
+  verPerfilDueno(publicId: string): void {
+    this.router.navigate(['/users', publicId]);
+  }
+
+  async enviarMensajeDueno(publicId: string): Promise<void> {
+    try {
+      const conversationId = await this.chatsService.getOrCreateConversation(publicId);
+      this.router.navigate(['/chats'], { queryParams: { conversation: conversationId } });
+    } catch {
+      this.toastService.error('No se pudo abrir el chat');
+    }
+  }
+
+  calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371e3;
+    const phi1 = lat1 * Math.PI / 180;
+    const phi2 = lat2 * Math.PI / 180;
+    const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+    const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+      Math.cos(phi1) * Math.cos(phi2) *
+      Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
   }
 }
