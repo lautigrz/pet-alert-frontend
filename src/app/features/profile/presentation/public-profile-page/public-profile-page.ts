@@ -197,6 +197,23 @@ export class PublicProfilePage implements OnInit {
     return review.reviewer.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(this.reviewerName(review))}&background=e2e8f0&color=12355B&size=96`;
   }
 
+  timeAgo(date: string): string {
+    const days = Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+    if (days <= 0) return 'Hoy';
+    if (days === 1) return 'Ayer';
+    if (days < 7) return `Hace ${days} días`;
+    if (days < 30) {
+      const weeks = Math.floor(days / 7);
+      return `Hace ${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`;
+    }
+    if (days < 365) {
+      const months = Math.floor(days / 30);
+      return `Hace ${months} ${months === 1 ? 'mes' : 'meses'}`;
+    }
+    const years = Math.floor(days / 365);
+    return `Hace ${years} ${years === 1 ? 'año' : 'años'}`;
+  }
+
   @HostListener('document:click')
   cerrarMenuOpciones(): void {
     this.menuOpcionesAbierto.set(false);
