@@ -88,6 +88,10 @@ export class ProfileHttp {
     return firstValueFrom(this.http.get<UserExperienceSummary>(`${this.baseUrl}/users/me/xp`));
   }
 
+  getPublicUserExperience(publicId: string): Promise<UserExperienceSummary> {
+    return firstValueFrom(this.http.get<UserExperienceSummary>(`${this.baseUrl}/users/${publicId}/xp`));
+  }
+
   createUserReview(publicId: string, body: CreateUserReviewRequest): Promise<UserReview> {
     return firstValueFrom(
       this.http.post<UserReview>(`${this.baseUrl}/users/${publicId}/reviews`, body),

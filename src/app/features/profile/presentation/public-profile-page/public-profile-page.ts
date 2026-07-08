@@ -1,4 +1,4 @@
-import { Component, computed, HostListener, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, HostListener, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from '../../application/profile.service';
@@ -9,13 +9,15 @@ import { HomeReportCardComponent } from '../../../home-map/components/home-repor
 import { AuthService } from '../../../auth/application/auth.service';
 import { ReportModalComponent } from '../../../../shared/component/report-modal/report-modal';
 import { UserRatingSummary, UserReview } from '../../domain/user-review.model';
+import { AchievementIconComponent } from '../achievement-icon/achievement-icon.component';
+import type { UserExperienceAchievement, UserExperienceSummary } from '../../domain/profile.model';
 
 type ProfileTab = | 'reports'  | 'missions'  | 'achievements'  | 'reviews';
 
 @Component({
   selector: 'app-public-profile-page',
   standalone: true,
-  imports: [FormsModule, HomeReportCardComponent, ReportModalComponent],
+  imports: [FormsModule, HomeReportCardComponent, ReportModalComponent, AchievementIconComponent],
   templateUrl: './public-profile-page.html',
   styleUrls: ['./public-profile-page.css'],
 })
@@ -38,6 +40,10 @@ export class PublicProfilePage implements OnInit {
   readonly reviews = signal<UserReview[]>([]);
   readonly reviewsLoading = signal(true);
   readonly reviewsError = signal<string | null>(null);
+
+  readonly experience = signal<UserExperienceSummary | null>(null);
+  readonly experienceLoading = signal(true);
+  readonly experienceError = signal<string | null>(null);
 
   readonly reviewSheetOpen = signal(false);
   readonly reviewRating = signal(0);
@@ -66,7 +72,65 @@ export class PublicProfilePage implements OnInit {
       return;
     }
 
-    await Promise.all([this.loadProfile(publicId), this.loadReports(publicId), this.loadRating(publicId), this.loadReviews(publicId)]);
+    await Promise.all([this.loadProfile(publicId), this.loadReports(publicId), this.loadRating(publicId), this.loadReviews(publicId), this.loadExperience(publicId)]);
+  }
+
+  async loadExperience(publicId: string): Promise<void> {
+    this.experienceLoading.set(true);
+    this.experienceError.set(null);
+
+    try {
+      const experience = await this.profileService.getPublicUserExperience(publicId);
+      this.experience.set(experience);
+    } catch (error) {
+      this.experienceError.set(error instanceof Error ? error.message : 'No se pudo cargar el progreso');
+    } finally {
+      this.experienceLoading.set(false);
+    }
+  }
+
+  achievements(): UserExperienceAchievement[] {
+    const experience = this.experience();
+    if (!experience) return [];
+
+    if (Array.isArray(experience.achievements) && experience.achievements.length > 0) {
+      return experience.achievements;
+    }
+
+    return Array.isArray(experience.unlockedAchievements) ? experience.unlockedAchievements : [];
+  }
+
+  unlockedAchievementsList(): (UserExperienceAchievement & { progressLabel: string })[] {
+    return this.achievements()
+      .filter((a) => a.unlocked ?? true)
+      .map((a) => ({ ...a, progressLabel: '' }));
+  }
+
+  private currentXp(experience: UserExperienceSummary): number {
+    const totalXp = experience.totalXp ?? experience.xp;
+    return typeof totalXp === 'number' && Number.isFinite(totalXp) ? totalXp : 0;
+  }
+
+  totalXp(): number {
+    const experience = this.experience();
+    return experience ? this.currentXp(experience) : 0;
+  }
+
+  levelProgressPercent(): number {
+    const experience = this.experience();
+    if (!experience) return 0;
+
+    const xpIntoCurrentLevel = this.currentXp(experience) % 100;
+    const percent = (xpIntoCurrentLevel / 100) * 100;
+    return Number.isFinite(percent) ? Math.min(100, Math.max(0, Math.round(percent))) : 0;
+  }
+
+  xpToNextLevel(): number {
+    const experience = this.experience();
+    if (!experience) return 100;
+
+    const remaining = 100 - (this.currentXp(experience) % 100);
+    return remaining === 100 ? 100 : remaining;
   }
 
   async loadProfile(publicId: string): Promise<void> {
@@ -136,6 +200,15 @@ export class PublicProfilePage implements OnInit {
 
   setTab(tab: ProfileTab): void {
     this.activeTab.set(tab);
+  }
+
+  @ViewChild('achievementsTrack') achievementsTrack?: ElementRef<HTMLDivElement>;
+
+  scrollAchievements(direction: number): void {
+    const track = this.achievementsTrack?.nativeElement;
+    if (!track) return;
+
+    track.scrollBy({ left: direction * track.clientWidth * 0.8, behavior: 'smooth' });
   }
 
   toggleMenuOpciones(event: Event): void {

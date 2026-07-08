@@ -214,6 +214,49 @@ describe('ProfilePage', () => {
 
       expect(component.levelUpPulse()).toBe(true);
     });
+
+    it('lists every achievement under locked when the user has none unlocked', async () => {
+      profileService.getUserExperience.mockResolvedValue({
+        xp: 0,
+        level: 1,
+        achievements: [
+          { code: 'FIRST_RESCUE', name: 'Primer rescate', description: '', requiredXp: 10, unlocked: false },
+          { code: 'SOLIDARY_NEIGHBOR', name: 'Vecino solidario', description: '', requiredXp: 50, unlocked: false },
+          { code: 'URBAN_EXPLORER', name: 'Explorador urbano', description: '', requiredXp: 100, unlocked: false },
+        ],
+        unlockedAchievements: [],
+      } as UserExperienceSummary);
+
+      await component.ngOnInit();
+
+      expect(component.unlockedAchievementsList()).toHaveLength(0);
+      expect(component.lockedAchievementsList().map((a) => a.code)).toEqual([
+        'FIRST_RESCUE',
+        'SOLIDARY_NEIGHBOR',
+        'URBAN_EXPLORER',
+      ]);
+    });
+
+    it('moves an achievement to unlocked once its required xp is reached', async () => {
+      profileService.getUserExperience.mockResolvedValue({
+        xp: 60,
+        level: 1,
+        achievements: [
+          { code: 'FIRST_RESCUE', name: 'Primer rescate', description: '', requiredXp: 10, unlocked: true },
+          { code: 'SOLIDARY_NEIGHBOR', name: 'Vecino solidario', description: '', requiredXp: 50, unlocked: true },
+          { code: 'URBAN_EXPLORER', name: 'Explorador urbano', description: '', requiredXp: 100, unlocked: false },
+        ],
+        unlockedAchievements: [],
+      } as UserExperienceSummary);
+
+      await component.ngOnInit();
+
+      expect(component.unlockedAchievementsList().map((a) => a.code)).toEqual([
+        'FIRST_RESCUE',
+        'SOLIDARY_NEIGHBOR',
+      ]);
+      expect(component.lockedAchievementsList().map((a) => a.code)).toEqual(['URBAN_EXPLORER']);
+    });
   });
 
   describe('tabs', () => {
