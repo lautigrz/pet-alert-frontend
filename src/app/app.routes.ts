@@ -4,6 +4,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { verifiedGuard } from './core/guards/verified.guard';
 import { wizardStepGuard } from './features/report/guards/wizard-step.guard';
+import { reportOwnerGuard } from './features/report/guards/report-owner.guard';
 import { adminGuard, adminGuestGuard } from './features/admin/guards/admin.guard';
 import { AdminLayoutComponent } from './features/admin/presentation/admin-layout/admin-layout';
 import { AppShellComponent } from './shared/component/app-shell/app-shell.component';
@@ -178,7 +179,7 @@ export const routes: Routes = [
       },
       {
         path: 'reports/:publicId/edit/datos',
-        canActivate: [verifiedGuard],
+        canActivate: [verifiedGuard, reportOwnerGuard],
         loadComponent: () =>
           import(
             './features/report/presentation/report-edit-data/report-edit-data'
@@ -186,7 +187,7 @@ export const routes: Routes = [
       },
       {
         path: 'reports/:publicId/edit/ubicacion',
-        canActivate: [verifiedGuard],
+        canActivate: [verifiedGuard, reportOwnerGuard],
         loadComponent: () =>
           import(
             './features/report/presentation/report-edit-location/report-edit-location'
