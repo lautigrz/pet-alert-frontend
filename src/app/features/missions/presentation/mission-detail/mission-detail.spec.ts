@@ -47,6 +47,8 @@ describe('MissionDetailPage', () => {
   let mockToastService: {
     success: Mock;
     error: Mock;
+    award: Mock;
+    brand: Mock;
   };
   let mockChatsService: {
     getOrCreateConversation: Mock;
@@ -106,7 +108,9 @@ describe('MissionDetailPage', () => {
 
     mockToastService = {
       success: vi.fn(),
-      error: vi.fn()
+      error: vi.fn(),
+      award: vi.fn(),
+      brand: vi.fn()
     };
 
     mockChatsService = {
@@ -248,7 +252,7 @@ describe('MissionDetailPage', () => {
       await component.join();
 
       expect(mockMissionService.joinMission).toHaveBeenCalledWith('mission-123');
-      expect(mockToastService.success).toHaveBeenCalledWith('Te uniste a la misión con éxito');
+      expect(mockToastService.brand).toHaveBeenCalledWith('Te uniste a la misión con éxito');
     });
 
     it('debería abandonar la misión correctamente', async () => {
@@ -318,7 +322,7 @@ describe('MissionDetailPage', () => {
     it('debería puntuar una actualización y retornar los puntos', () => {
       component.rateUpdate('update-1', 25);
       expect(component.getPoints('update-1')).toBe(25);
-      expect(mockToastService.success).toHaveBeenCalledWith('¡Valoración enviada! Se otorgaron +25 XP');
+      expect(mockToastService.award).toHaveBeenCalledWith('¡Valoración enviada! Se otorgaron +25 XP');
     });
   });
 
