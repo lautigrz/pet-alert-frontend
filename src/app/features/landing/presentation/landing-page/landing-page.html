@@ -31,7 +31,7 @@
       <div class="hero-copy">
         <h1>
           Cuando cada minuto cuenta,
-          <span>PetFinder moviliza al barrio.</span>
+          <span>PetFinder <br class="hero-break" />moviliza al barrio.</span>
         </h1>
 
         <p class="hero-description">
@@ -102,7 +102,7 @@
         <h2>Todo lo importante, en un solo lugar</h2>
       </div>
 
-      <div class="features-carousel">
+      <div class="features-carousel" #featCarousel>
         <input class="carousel-radio" type="radio" name="features-carousel" id="feat-slide-1" checked />
         <input class="carousel-radio" type="radio" name="features-carousel" id="feat-slide-2" />
         <input class="carousel-radio" type="radio" name="features-carousel" id="feat-slide-3" />
@@ -110,7 +110,7 @@
         <input class="carousel-radio" type="radio" name="features-carousel" id="feat-slide-5" />
 
         <div class="carousel-shell">
-          <div class="carousel-viewport">
+          <div class="carousel-viewport" (touchstart)="onSwipeStart($event)" (touchend)="onFeatureSwipeEnd($event)">
             <div class="carousel-track feature-track">
               <figure class="feature-slide">
                 <div class="feature-copy">
@@ -285,7 +285,7 @@
         <p>Historias reales de mascotas que volvieron a casa gracias a la comunidad de PetFinder.</p>
       </div>
 
-      <div class="found-carousel" (mouseenter)="onEnter()" (mouseleave)="onLeave()" aria-roledescription="carrusel" aria-label="Casos de mascotas reunidas con PetFinder">
+      <div class="found-carousel" (mouseenter)="onEnter()" (mouseleave)="onLeave()" (touchstart)="onSwipeStart($event)" (touchend)="onFoundSwipeEnd($event)" aria-roledescription="carrusel" aria-label="Casos de mascotas reunidas con PetFinder">
         <div class="found-viewport">
           <div class="found-track" #foundTrack>
           <article class="found-card">
