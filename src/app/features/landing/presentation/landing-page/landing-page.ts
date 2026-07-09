@@ -16,6 +16,10 @@ import { RouterLink } from '@angular/router';
 })
 export class LandingPage implements AfterViewInit, OnDestroy {
   @ViewChild('foundTrack') private readonly foundTrack?: ElementRef<HTMLElement>;
+  @ViewChild('featCarousel') private readonly featCarousel?: ElementRef<HTMLElement>;
+
+  private readonly swipeThreshold = 40;
+  private touchStartX = 0;
 
   private readonly stepInterval = 3000;
   private readonly slideDuration = 550;
@@ -60,6 +64,37 @@ export class LandingPage implements AfterViewInit, OnDestroy {
   onLeave(): void {
     this.hovering = false;
     this.start();
+  }
+
+  onSwipeStart(event: TouchEvent): void {
+    this.touchStartX = event.changedTouches[0].clientX;
+  }
+
+  onFoundSwipeEnd(event: TouchEvent): void {
+    const delta = event.changedTouches[0].clientX - this.touchStartX;
+    if (Math.abs(delta) < this.swipeThreshold) return;
+    if (delta < 0) this.next();
+    else this.prev();
+  }
+
+  onFeatureSwipeEnd(event: TouchEvent): void {
+    const delta = event.changedTouches[0].clientX - this.touchStartX;
+    if (Math.abs(delta) < this.swipeThreshold) return;
+    this.moveFeature(delta < 0 ? 1 : -1);
+  }
+
+  private moveFeature(direction: number): void {
+    const radios = this.featureRadios();
+    if (!radios.length) return;
+    const current = radios.findIndex((radio) => radio.checked);
+    const target = Math.min(radios.length - 1, Math.max(0, current + direction));
+    radios[target].checked = true;
+  }
+
+  private featureRadios(): HTMLInputElement[] {
+    const element = this.featCarousel?.nativeElement;
+    if (!element) return [];
+    return Array.from(element.querySelectorAll('input[name="features-carousel"]'));
   }
 
   private start(): void {
