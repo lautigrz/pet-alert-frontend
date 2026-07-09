@@ -16,6 +16,15 @@ export interface MissionUpdateOutput {
     name: string | null;
     lastname: string | null;
   };
+  pointValue?: {
+    points: number;
+    label: string;
+  } | null;
+}
+
+export interface CommentPointValueOutput {
+  points: number;
+  label: string;
 }
 
 export interface CreateMissionUpdateDTO {
@@ -47,6 +56,19 @@ export class MissionUpdateHttp {
     return this.http.post<CreateMissionUpdateResponse>(
       `${this.baseUrl}/mission-updates`,
       body
+    );
+  }
+
+  scoreUpdate(updatePublicId: string, points: number): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/mission-updates/${updatePublicId}/score`,
+      { points }
+    );
+  }
+
+  getCommentPointValues(): Observable<CommentPointValueOutput[]> {
+    return this.http.get<CommentPointValueOutput[]>(
+      `${this.baseUrl}/mission-updates/point-values`
     );
   }
 

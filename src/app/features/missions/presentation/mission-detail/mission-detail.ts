@@ -10,7 +10,7 @@ import { ReportService } from '../../../report/application/report.service';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ChatsService } from '../../../chats/application/chats.service';
 import { MissionOutput } from '../../infrastructure/models/mission.model';
-import { MissionUpdateOutput } from '../../infrastructure/mission-update.http';
+import { MissionUpdateOutput, CommentPointValueOutput } from '../../infrastructure/mission-update.http';
 import { FormsModule } from '@angular/forms';
 import { MissionStatusMapper, UpdateStatusMapper } from '../mission-status.mapper';
 
@@ -37,6 +37,7 @@ export class MissionDetailPage implements OnInit, OnDestroy {
 
   readonly mission = signal<MissionOutput | null>(null);
   readonly responses = signal<MissionUpdateOutput[]>([]);
+  readonly pointValues = signal<CommentPointValueOutput[]>([]);
   readonly currentUserId = signal<string | null>(null);
   readonly isVolunteer = signal<boolean>(false);
   readonly isOwner = signal<boolean>(false);
@@ -83,6 +84,7 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     if (publicId) {
       await this.loadMission(publicId);
       await this.loadResponses(publicId);
+      await this.loadPointValues();
     }
   }
 
@@ -115,6 +117,15 @@ export class MissionDetailPage implements OnInit, OnDestroy {
       this.responses.set(data);
     } catch (error) {
       console.error('Error loading mission updates:', error);
+    }
+  }
+
+  async loadPointValues(): Promise<void> {
+    try {
+      const points = await firstValueFrom(this.missionUpdateService.getCommentPointValues());
+      this.pointValues.set(points);
+    } catch (error) {
+      console.error('Error loading point values:', error);
     }
   }
 
@@ -225,7 +236,12 @@ export class MissionDetailPage implements OnInit, OnDestroy {
         this.map.remove();
       }
 
-      this.map = L.map('detailMap', {
+      const container = document.getElementById('detailMap');
+      if (!container) {
+        return;
+      }
+
+      this.map = L.map(container, {
         zoomControl: true,
         attributionControl: false
       }).setView([lat, lng], 15);
@@ -271,16 +287,27 @@ export class MissionDetailPage implements OnInit, OnDestroy {
 
   readonly scores = signal<Record<string, number>>({});
 
-  rateUpdate(updatePublicId: string, points: number): void {
-    this.scores.update(prev => ({
-      ...prev,
-      [updatePublicId]: points
-    }));
-    this.toastService.award(`¡Valoración enviada! Se otorgaron +${points} XP`);
+  async rateUpdate(updatePublicId: string, points: number): Promise<void> {
+    try {
+      await firstValueFrom(this.missionUpdateService.scoreUpdate(updatePublicId, points));
+      this.toastService.award(`¡Valoración enviada! Se otorgaron +${points} XP`);
+      
+      this.scores.update(prev => ({
+        ...prev,
+        [updatePublicId]: points
+      }));
+
+      const publicId = this.route.snapshot.paramMap.get('publicId') || '';
+      await this.loadResponses(publicId);
+    } catch (error) {
+      console.error(error);
+      this.toastService.error(error instanceof Error ? error.message : "No se pudo valorar el comentario");
+    }
   }
 
   getPoints(updatePublicId: string): number {
-    return this.scores()[updatePublicId] || 0;
+    const found = this.responses().find(r => r.publicId === updatePublicId);
+    return found?.pointValue?.points || this.scores()[updatePublicId] || 0;
   }
 
   async contactOwner(): Promise<void> {

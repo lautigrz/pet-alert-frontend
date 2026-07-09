@@ -14,11 +14,14 @@
             de Búsqueda</span>
 
           @if (MissionStatusMapper.isOpen(m.status)) {
-          <span class="bg-[#E8842E] text-white px-3 py-1 rounded-full font-bold text-xs">{{ MissionStatusMapper.getLabel(m.status) }}</span>
+          <span class="bg-[#E8842E] text-white px-3 py-1 rounded-full font-bold text-xs">{{
+            MissionStatusMapper.getLabel(m.status) }}</span>
           } @else if (MissionStatusMapper.isInProgress(m.status)) {
-          <span class="bg-[#E8842E] text-white px-3 py-1 rounded-full font-bold text-xs">{{ MissionStatusMapper.getLabel(m.status) }}</span>
+          <span class="bg-[#E8842E] text-white px-3 py-1 rounded-full font-bold text-xs">{{
+            MissionStatusMapper.getLabel(m.status) }}</span>
           } @else {
-          <span class="bg-[#12355B] text-white px-3 py-1 rounded-full font-bold text-xs">{{ MissionStatusMapper.getLabel(m.status) }}</span>
+          <span class="bg-[#12355B] text-white px-3 py-1 rounded-full font-bold text-xs">{{
+            MissionStatusMapper.getLabel(m.status) }}</span>
           }
 
           @if (!MissionStatusMapper.isClosed(m.status) && elapsedTime()) {
@@ -135,35 +138,28 @@
               } @else {
               <div class="w-full sm:w-auto flex justify-start sm:justify-end">
                 @if (UpdateStatusMapper.isApproved(r.status)) {
-                <span class="px-2 py-0.5 rounded bg-[#E8842E]/10 text-[#E8842E] text-[10px] font-bold">{{ UpdateStatusMapper.getLabel(r.status) }}</span>
+                <span class="px-2 py-0.5 rounded bg-[#E8842E]/10 text-[#E8842E] text-[10px] font-bold">{{
+                  UpdateStatusMapper.getLabel(r.status) }}</span>
                 } @else if (UpdateStatusMapper.isRejected(r.status)) {
-                <span class="px-2 py-0.5 rounded bg-red-100 text-red-800 text-[10px] font-bold">{{ UpdateStatusMapper.getLabel(r.status) }}</span>
-                } @else {
-                @if (isOwner()) {
-                <div
-                  class="flex flex-wrap items-center gap-1.5 bg-surface-container-low border border-outline-variant rounded-xl px-2.5 py-1.5 sm:px-2 sm:py-1 w-fit">
-                  <span class="text-[10px] sm:text-[9px] text-slate-400 font-bold uppercase mr-1">Puntuar:</span>
-                  <button type="button" (click)="rateUpdate(r.publicId, 10)"
-                    [class]="getPoints(r.publicId) === 10 ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
-                    class="border px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-lg text-[10px] sm:text-[9px] font-bold transition shadow-sm cursor-pointer">
-                    +10 XP
-                  </button>
-                  <button type="button" (click)="rateUpdate(r.publicId, 25)"
-                    [class]="getPoints(r.publicId) === 25 ? 'bg-indigo-100 text-indigo-800 border-indigo-300' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
-                    class="border px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-lg text-[10px] sm:text-[9px] font-bold transition shadow-sm cursor-pointer">
-                    +25 XP
-                  </button>
-                  <button type="button" (click)="rateUpdate(r.publicId, 50)"
-                    [class]="getPoints(r.publicId) === 50 ? 'bg-purple-100 text-purple-800 border-purple-300' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
-                    class="border px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-lg text-[10px] sm:text-[9px] font-bold transition shadow-sm cursor-pointer">
-                    +50 XP
-                  </button>
-                </div>
+                <span class="px-2 py-0.5 rounded bg-red-100 text-red-800 text-[10px] font-bold">{{
+                  UpdateStatusMapper.getLabel(r.status) }}</span>
                 } @else {
                 @if (getPoints(r.publicId) > 0) {
                 <span
                   class="px-2 py-0.5 rounded bg-[#E8842E]/10 border border-[#E8842E]/30 text-[#E8842E] text-[10px] font-bold w-fit">Valorado:
                   +{{ getPoints(r.publicId) }} XP</span>
+                } @else {
+                @if (isOwner()) {
+                <div
+                  class="flex flex-wrap items-center gap-1.5 bg-surface-container-low border border-outline-variant rounded-xl px-2.5 py-1.5 sm:px-2 sm:py-1 w-fit">
+                  <span class="text-[10px] sm:text-[9px] text-slate-400 font-bold uppercase mr-1">Puntuar:</span>
+                  @for (pv of pointValues(); track pv.points) {
+                  <button type="button" (click)="rateUpdate(r.publicId, pv.points)"
+                    class="border bg-white text-slate-600 hover:bg-slate-50 border-slate-200 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-lg text-[10px] sm:text-[9px] font-bold transition shadow-sm cursor-pointer">
+                    +{{ pv.points }} XP
+                  </button>
+                  }
+                </div>
                 } @else {
                 <span
                   class="px-2 py-0.5 rounded bg-yellow-50 border border-yellow-200 text-yellow-700 text-[10px] font-bold w-fit">Pendiente
