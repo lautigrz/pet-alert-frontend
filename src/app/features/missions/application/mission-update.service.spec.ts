@@ -10,12 +10,16 @@ describe('MissionUpdateService', () => {
   let mockUpdateHttp: {
     getUpdates: ReturnType<typeof vi.fn>;
     createUpdate: ReturnType<typeof vi.fn>;
+    scoreUpdate: ReturnType<typeof vi.fn>;
+    getCommentPointValues: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     mockUpdateHttp = {
       getUpdates: vi.fn(),
-      createUpdate: vi.fn()
+      createUpdate: vi.fn(),
+      scoreUpdate: vi.fn(),
+      getCommentPointValues: vi.fn()
     };
 
     TestBed.configureTestingModule({
@@ -87,6 +91,57 @@ describe('MissionUpdateService', () => {
       } catch (err) {
         const error = err as Error;
         expect(error.message).toBe('Error al crear actualización');
+      }
+    });
+  });
+
+  describe('scoreUpdate', () => {
+    it('debería valorar la actualización', async () => {
+      mockUpdateHttp.scoreUpdate.mockReturnValue(of(undefined));
+      await firstValueFrom(service.scoreUpdate('update-1', 25));
+      expect(mockUpdateHttp.scoreUpdate).toHaveBeenCalledWith('update-1', 25);
+    });
+
+    it('debería mapear el mensaje del backend ante un HttpErrorResponse al valorar', async () => {
+      const errorResponse = new HttpErrorResponse({
+        error: { message: 'Error al valorar' },
+        status: 400
+      });
+      mockUpdateHttp.scoreUpdate.mockReturnValue(throwError(() => errorResponse));
+
+      try {
+        await firstValueFrom(service.scoreUpdate('update-1', 25));
+        expect.fail('Debería haber fallado');
+      } catch (err) {
+        const error = err as Error;
+        expect(error.message).toBe('Error al valorar');
+      }
+    });
+  });
+
+  describe('getCommentPointValues', () => {
+    it('debería obtener los valores de puntuación', async () => {
+      const points = [{ points: 10, label: '+10 XP' }];
+      mockUpdateHttp.getCommentPointValues.mockReturnValue(of(points));
+
+      const res = await firstValueFrom(service.getCommentPointValues());
+      expect(mockUpdateHttp.getCommentPointValues).toHaveBeenCalled();
+      expect(res).toEqual(points);
+    });
+
+    it('debería mapear el mensaje del backend ante un HttpErrorResponse al obtener valores', async () => {
+      const errorResponse = new HttpErrorResponse({
+        error: { message: 'Error al obtener puntuaciones' },
+        status: 500
+      });
+      mockUpdateHttp.getCommentPointValues.mockReturnValue(throwError(() => errorResponse));
+
+      try {
+        await firstValueFrom(service.getCommentPointValues());
+        expect.fail('Debería haber fallado');
+      } catch (err) {
+        const error = err as Error;
+        expect(error.message).toBe('Error al obtener puntuaciones');
       }
     });
   });

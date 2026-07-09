@@ -37,6 +37,8 @@ describe('MissionDetailPage', () => {
   let mockMissionUpdateService: {
     getUpdates: Mock;
     createUpdate: Mock;
+    scoreUpdate: Mock;
+    getCommentPointValues: Mock;
   };
   let mockAuthService: {
     getCurrentUserId: Mock;
@@ -89,7 +91,13 @@ describe('MissionDetailPage', () => {
 
     mockMissionUpdateService = {
       getUpdates: vi.fn().mockReturnValue(of([])),
-      createUpdate: vi.fn().mockReturnValue(of({}))
+      createUpdate: vi.fn().mockReturnValue(of({})),
+      scoreUpdate: vi.fn().mockReturnValue(of({})),
+      getCommentPointValues: vi.fn().mockReturnValue(of([
+        { points: 10, label: '+10 XP' },
+        { points: 25, label: '+25 XP' },
+        { points: 50, label: '+50 XP' }
+      ]))
     };
 
     mockAuthService = {
@@ -319,10 +327,88 @@ describe('MissionDetailPage', () => {
   });
 
   describe('método rateUpdate y getPoints', () => {
-    it('debería puntuar una actualización y retornar los puntos', () => {
-      component.rateUpdate('update-1', 25);
+    it('debería puntuar una actualización y retornar los puntos', async () => {
+      await component.rateUpdate('update-1', 25);
       expect(component.getPoints('update-1')).toBe(25);
+      expect(mockMissionUpdateService.scoreUpdate).toHaveBeenCalledWith('update-1', 25);
       expect(mockToastService.award).toHaveBeenCalledWith('¡Valoración enviada! Se otorgaron +25 XP');
+    });
+  });
+
+  describe('valoración de comentarios (dueño vs otros)', () => {
+    beforeEach(() => {
+      component.mission.set({
+        publicId: 'mission-123',
+        title: 'Buscar a Firulais',
+        description: 'Se perdió en Palermo',
+        status: 'OPEN',
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+        searchArea: { latitude: -34.6037, longitude: -58.3816, radius: 500 },
+        report: { publicId: 'report-123', description: 'Perro perdido', type: 'LOST', status: 'ACTIVE', location: { latitude: -34.6037, longitude: -58.3816, address: 'Av Santa Fe 1234' } },
+        volunteers: []
+      } as unknown as MissionOutput);
+
+      component.responses.set([
+        {
+          publicId: 'update-1',
+          comment: 'Pista de prueba',
+          photoUrl: null,
+          status: 'PENDING',
+          createdAt: new Date().toISOString(),
+          user: {
+            publicId: 'user-volunteer',
+            username: 'voluntario1',
+            photoUrl: null,
+            name: 'Juan',
+            lastname: 'Perez'
+          },
+          pointValue: null
+        }
+      ]);
+
+      component.pointValues.set([
+        { points: 10, label: '+10 XP' },
+        { points: 25, label: '+25 XP' },
+        { points: 50, label: '+50 XP' }
+      ]);
+    });
+
+    it('debería mostrar los botones de puntuar al dueño si el comentario no ha sido valorado', () => {
+      component.isOwner.set(true);
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const buttons = compiled.querySelectorAll('button');
+      const rateButtons = Array.from(buttons).filter(b => b.textContent?.includes('+10 XP'));
+      expect(rateButtons.length).toBe(1);
+
+      const valLabel = compiled.textContent;
+      expect(valLabel).not.toContain('Valorado:');
+    });
+
+    it('debería ocultar los botones de puntuar al dueño y mostrar la valoración si el comentario ya fue valorado', () => {
+      component.isOwner.set(true);
+      component.scores.set({ 'update-1': 25 });
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const buttons = compiled.querySelectorAll('button');
+      const rateButtons = Array.from(buttons).filter(b => b.textContent?.includes('+10 XP'));
+      expect(rateButtons.length).toBe(0);
+
+      const text = compiled.textContent;
+      expect(text).toContain('Valorado: +25 XP');
+    });
+
+    it('debería mostrar "Pendiente de valoración" a usuarios comunes si el comentario no ha sido valorado', () => {
+      component.isOwner.set(false);
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const text = compiled.textContent;
+      expect(text).toContain('Pendiente de valoración');
+      expect(text).not.toContain('Valorado:');
     });
   });
 

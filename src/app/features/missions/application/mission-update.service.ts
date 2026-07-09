@@ -7,7 +7,8 @@ import {
   MissionUpdateHttp,
   MissionUpdateOutput,
   CreateMissionUpdateDTO,
-  CreateMissionUpdateResponse
+  CreateMissionUpdateResponse,
+  CommentPointValueOutput
 } from '../infrastructure/mission-update.http';
 
 @Injectable({
@@ -38,6 +39,34 @@ export class MissionUpdateService {
           return throwError(() => new Error(
             error.error?.message ??
             'No se pudo enviar la actualización'
+          ));
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  scoreUpdate(updatePublicId: string, points: number): Observable<void> {
+    return this.updateHttp.scoreUpdate(updatePublicId, points).pipe(
+      catchError((error) => {
+        if (error instanceof HttpErrorResponse) {
+          return throwError(() => new Error(
+            error.error?.message ??
+            'No se pudo valorar el comentario'
+          ));
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  getCommentPointValues(): Observable<CommentPointValueOutput[]> {
+    return this.updateHttp.getCommentPointValues().pipe(
+      catchError((error) => {
+        if (error instanceof HttpErrorResponse) {
+          return throwError(() => new Error(
+            error.error?.message ??
+            'No se pudieron obtener los valores de puntuación'
           ));
         }
         return throwError(() => error);
