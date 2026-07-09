@@ -67,3 +67,10 @@ export class InvalidResetTokenError extends Error {
     this.name = 'InvalidResetTokenError';
   }
 }
+
+export class GoogleSignInError extends Error {
+  constructor() {
+    super('No pudimos iniciar sesión con Google. Probá de nuevo.');
+    this.name = 'GoogleSignInError';
+  }
+}

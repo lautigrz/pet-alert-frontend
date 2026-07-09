@@ -16,6 +16,7 @@ import {
   SessionExpiredError,
   UnexpectedAuthError,
   InvalidVerificationTokenError,
+  GoogleSignInError,
 } from '../domain/auth.errors';
 
 const socketServiceMock = {
@@ -485,6 +486,70 @@ describe('AuthService.verifyEmail', () => {
       const accion = () => service.verifyEmail('tok');
 
       // Then se mapea a NetworkError
+      await expect(accion).rejects.toThrow(NetworkError);
+    });
+  });
+});
+
+describe('AuthService.loginWithGoogle', () => {
+  let authHttp: { googleLogin: ReturnType<typeof vi.fn> };
+  let tokenStorage: { save: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; read: ReturnType<typeof vi.fn> };
+  let service: AuthService;
+
+  beforeEach(() => {
+    authHttp = { googleLogin: vi.fn() };
+    tokenStorage = { save: vi.fn(), clear: vi.fn(), read: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        { provide: AuthHttp, useValue: authHttp },
+        { provide: TokenStorage, useValue: tokenStorage },
+        { provide: SocketService, useValue: socketServiceMock },
+      ],
+    });
+    service = TestBed.inject(AuthService);
+  });
+
+  describe('when the back accepts the Google code', () => {
+    it('returns the tokens, persists them and connects the socket', async () => {
+      authHttp.googleLogin.mockResolvedValue({ accessToken: 'jwt-access', refreshToken: 'refresh-string' });
+
+      const tokens = await service.loginWithGoogle('auth-code');
+
+      expect(tokens).toEqual({ accessToken: 'jwt-access', refreshToken: 'refresh-string' });
+      expect(authHttp.googleLogin).toHaveBeenCalledWith({ code: 'auth-code' });
+      expect(tokenStorage.save).toHaveBeenCalledWith({ accessToken: 'jwt-access', refreshToken: 'refresh-string' });
+      expect(socketServiceMock.connect).toHaveBeenCalledWith('jwt-access', expect.any(Function));
+    });
+  });
+
+  describe('when the back rejects the Google identity', () => {
+    it('throws GoogleSignInError and does NOT save tokens', async () => {
+      authHttp.googleLogin.mockRejectedValue(new HttpErrorResponse({ status: 401 }));
+
+      const accion = () => service.loginWithGoogle('auth-code');
+
+      await expect(accion).rejects.toThrow(GoogleSignInError);
+      expect(tokenStorage.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when the back returns 429 Too Many Requests', () => {
+    it('throws RateLimitedError', async () => {
+      authHttp.googleLogin.mockRejectedValue(new HttpErrorResponse({ status: 429 }));
+
+      const accion = () => service.loginWithGoogle('auth-code');
+
+      await expect(accion).rejects.toThrow(RateLimitedError);
+    });
+  });
+
+  describe('when there is no network', () => {
+    it('throws NetworkError', async () => {
+      authHttp.googleLogin.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+
+      const accion = () => service.loginWithGoogle('auth-code');
+
       await expect(accion).rejects.toThrow(NetworkError);
     });
   });
