@@ -31,7 +31,6 @@ export interface UpdateSightingReportDetailsCommand {
   breed?: string | null;
   hasIdCollar?: boolean;
   color?: string;
-  isInTransit?: boolean;
 }
 
 export interface UpdateLostReportDetailsCommand {

@@ -1,16 +1,16 @@
-@if (mostrarFiltros()) {
-<button type="button" aria-label="Cerrar filtros" (click)="cerrarFiltros()"
+@if (showFilters()) {
+<button type="button" aria-label="Cerrar filtros" (click)="closeFilters()"
   class="fixed inset-0 bg-black/40 z-[1090] lg:hidden"></button>
 }
 
 <aside
   class="hidden fixed left-1/2 top-1/2 z-[1100] w-[90%] max-w-md max-h-[85vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto bg-white rounded-2xl shadow-xl lg:block lg:static lg:translate-x-0 lg:translate-y-0 lg:w-[430px] lg:max-w-none lg:max-h-none lg:rounded-none lg:shadow-none lg:border-r lg:border-slate-200 shrink-0"
-  [class.!block]="mostrarFiltros()">
+  [class.!block]="showFilters()">
   <div class="px-5 py-5">
     <app-notification-prompt />
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-bold text-[#12355B]">Filtros</h2>
-      <button type="button" (click)="cerrarFiltros()" aria-label="Cerrar filtros"
+      <button type="button" (click)="closeFilters()" aria-label="Cerrar filtros"
         class="lg:hidden text-slate-400 hover:text-[#12355B]">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -23,26 +23,26 @@
     <div class="mb-4">
       <p class="text-xs font-semibold text-slate-500 mb-2">Tipo de reporte</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="seleccionarTipo('todos')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'todos'
+        <button type="button" (click)="selectType('ALL')"
+          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="filterType() === 'ALL'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
           Todos
         </button>
 
-        <button type="button" (click)="seleccionarTipo('perdidos')"
-          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'perdidos'
+        <button type="button" (click)="selectType('LOST')"
+          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="filterType() === 'LOST'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          <img src="Icono-mascota-perdida.png" alt="" class="w-4 h-4 shrink-0 scale-[0.82]" [class.brightness-0]="tipoFiltro() !== 'perdidos'">
+          <img src="Icono-mascota-perdida.png" alt="" class="w-4 h-4 shrink-0 scale-[0.82]" [class.brightness-0]="filterType() !== 'LOST'">
           <span>Perdidos</span>
         </button>
 
-        <button type="button" (click)="seleccionarTipo('avistados')"
-          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="tipoFiltro() === 'avistados'
+        <button type="button" (click)="selectType('SIGHTING')"
+          class="flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="filterType() === 'SIGHTING'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          <img src="Icono-mascota-encontrada.png" alt="" class="w-4 h-4 shrink-0" [class.brightness-0]="tipoFiltro() !== 'avistados'">
+          <img src="Icono-mascota-encontrada.png" alt="" class="w-4 h-4 shrink-0" [class.brightness-0]="filterType() !== 'SIGHTING'">
           <span>Encontrados</span>
         </button>
 
@@ -53,77 +53,92 @@
       <p class="text-xs font-semibold text-slate-500 mb-2">Cercanía </p>
       <div class="flex flex-wrap gap-2">
         <div class="flex justify-between text-xs text-slate-500">
-    <span></span>
-    <span>{{ radioRadar() }} km</span>
-    <span></span>
-  </div>
+          <span></span>
+          <span>{{ radioRadar() }} km</span>
+          <span></span>
+        </div>
 
-<input
-  type="range"
-  min="1"
-  max="20"
-  step="1"
-  [value]="radioRadar()"
-  (input)="cambiarRadar($event)"
-  class="w-full slider-orange"
-  [style.background]="'linear-gradient(to right, #E8842E 0%, #E8842E ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb 100%)'"
-/>
+        <input
+          type="range"
+          min="1"
+          max="20"
+          step="1"
+          [value]="radioRadar()"
+          (input)="replaceRadar($event)"
+          class="w-full slider-orange"
+          [style.background]="'linear-gradient(to right, #E8842E 0%, #E8842E ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb ' + ((radioRadar() - 1) / 19 * 100) + '%, #e5e7eb 100%)'"
+        />
       </div>
     </div>
 
     <div class="mb-4">
       <p class="text-xs font-semibold text-slate-500 mb-2">Mascota</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="seleccionarMascota('todos')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="mascotaFiltro() === 'todos'
+        <button type="button" (click)="selectPet('ALL')"
+          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="petFilter() === 'ALL'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
           Todos
         </button>
 
-       <button
-  type="button"
-  (click)="seleccionarMascota('perro')"
-  class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
-  [class]="mascotaFiltro() === 'perro'
+        <button
+          type="button"
+          (click)="selectPet('DOG')"
+          class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+          [class]="petFilter() === 'DOG'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
-  <app-pet-icon
-    name="perro"
-    class="w-4 h-4">
-  </app-pet-icon>
+          <app-pet-icon name="perro" class="w-4 h-4">
+          </app-pet-icon>
 
-  <span>Perro</span>
+          <span>Perro</span>
 
-</button>
+        </button>
 
-       <button
-  type="button"
-  (click)="seleccionarMascota('gato')"
-  class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
-  [class]="mascotaFiltro() === 'gato'
+        <button
+          type="button"
+          (click)="selectPet('CAT')"
+          class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+          [class]="petFilter() === 'CAT'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
-  <app-pet-icon
-    name="gato"
-    class="w-4 h-4">
-  </app-pet-icon>
+          <app-pet-icon name="gato" class="w-4 h-4">
+          </app-pet-icon>
 
-  <span>Gato</span>
+          <span>Gato</span>
 
-</button>
+        </button>
       </div>
+
+      <div class="mt-6 mb-5 border-t border-slate-200 pt-5">
+
+        <p class="text-xs font-semibold text-slate-500 mb-2">
+          Misiones
+        </p>
+
+        <div class="flex gap-2">
+
+          <button type="button" (click)="toggleMissions()"
+            class="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold border transition" [class]="showMissions()
+         ? 'bg-[#E8842E] text-white border-[#E8842E]'
+    : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+
+            {{ showMissions() ? 'Ocultar misiones' : 'Mostrar misiones' }}
+
+          </button>
+
+        </div>
+
+      </div>
+
     </div>
 
     <div>
       <div class="mb-2 w-fit flex items-center gap-1.5">
         <span class="text-xs font-semibold text-slate-500">Centros</span>
-        <app-info-tooltip
-          tooltipTitle="¿Para qué sirven?"
-          [ariaLabel]="'¿Qué son los centros?'"
-        >
+        <app-info-tooltip tooltipTitle="¿Para qué sirven?" [ariaLabel]="'¿Qué son los centros?'">
           <p class="text-xs text-slate-500 leading-relaxed">
             Muestran en el mapa los
             <span class="font-semibold text-[#12355B]">puntos de ayuda</span>
@@ -143,52 +158,54 @@
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <button type="button" (click)="seleccionarCentros('todos')"
-          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="centrosFiltro() === 'todos'
+        <button type="button" (click)="selectCenters('ALL')"
+          class="px-3 py-1 rounded-md text-xs font-semibold border transition" [class]="centerFilter() === 'ALL'
         ? 'bg-[#E8842E] text-white border-[#E8842E]'
         : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
           Ninguno
         </button>
 
-      <button
-  type="button"
-  (click)="seleccionarCentros('comisarias')"
-  class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
-  [class]="centrosFiltro() === 'comisarias'
+        <button
+          type="button"
+          (click)="selectCenters('POLICE')"
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+          [class]="centerFilter() === 'POLICE'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
-  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-  </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+          </svg>
 
-  <span>Comisarías</span>
+          <span>Comisarías</span>
 
-</button>
+        </button>
 
-<button
-  type="button"
-  (click)="seleccionarCentros('veterinarias')"
-  class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
-  [class]="centrosFiltro() === 'veterinarias'
+        <button
+          type="button"
+          (click)="selectCenters('VETERINARY')"
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold border transition"
+          [class]="centerFilter() === 'VETERINARY'
     ? 'bg-[#E8842E] text-white border-[#E8842E]'
     : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
 
-  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
-    <path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4" />
-    <circle cx="20" cy="10" r="2" />
-  </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
+            <path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4" />
+            <circle cx="20" cy="10" r="2" />
+          </svg>
 
-  <span>Veterinarias</span>
+          <span>Veterinarias</span>
 
-</button>
+        </button>
 
       </div>
 
-      @if (centrosCargando()) {
+      @if (loadingCenters()) {
       <div class="hidden lg:block mt-4 border border-slate-200 rounded-lg bg-white px-3 py-3">
         <p class="text-sm text-slate-500">
           Buscando centros cercanos...
@@ -196,15 +213,15 @@
       </div>
       }
 
-      @if (centrosError()) {
+      @if (errorCenters()) {
       <div class="hidden lg:block mt-4 border border-red-100 rounded-lg bg-red-50 px-3 py-3">
         <p class="text-sm text-red-600">
-          {{ centrosError() }}
+          {{ errorCenters() }}
         </p>
       </div>
       }
 
-      @if (lugares().length > 0) {
+      @if (places().length > 0) {
 
       <div class="hidden lg:block mt-4 border border-slate-200 rounded-lg overflow-hidden">
 
@@ -214,10 +231,10 @@
           </h4>
         </div>
 
-        @for (lugar of lugares(); track $index) {
+        @for (lugar of places(); track $index) {
 
         <button type="button" class="w-full text-left px-3 py-3 hover:bg-slate-50 border-b last:border-b-0 transition"
-          (click)="irALugar(lugar.lat, lugar.lng)">
+          (click)="goToAPlace(lugar.lat, lugar.lng)">
 
           <div class="flex items-center gap-2 font-medium text-slate-700">
 
@@ -254,14 +271,14 @@
     <div class="flex items-center justify-between mb-2">
       <h3 class="text-base font-bold text-[#12355B]">Mis reportes</h3>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
-        {{ badgeMisReportes() }}
+        {{ badgeMyReports() }}
       </span>
     </div>
     <a routerLink="/reports" [queryParams]="{ tab: 'mis-reportes' }"
       class="text-xs text-[#E8842E] font-semibold hover:underline">
       Ver todos mis reportes
     </a>
-    @for (r of misReportes(); track r.publicId) {
+    @for (r of myReports(); track r.publicId) {
     <div class="home-card mt-3">
       <app-home-report-card [reporte]="r"></app-home-report-card>
     </div>
@@ -292,10 +309,10 @@
         </app-info-tooltip>
       </div>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
-        {{ badgeDestacados() }}
+        {{ featuredBadges() }}
       </span>
     </div>
-    @for (r of reportesDestacados(); track r.publicId) {
+    @for (r of featuredReports(); track r.publicId) {
     <div class="home-card mt-3">
       <app-home-report-card [reporte]="r"></app-home-report-card>
     </div>
@@ -306,13 +323,13 @@
     <div class="flex items-center justify-between">
       <h3 class="text-base font-bold text-[#12355B]">Reportes cercanos</h3>
       <span class="bg-[#12355B] text-white text-xs font-bold rounded-md px-2 py-0.5">
-        {{ badgeCercanos() }}
+        {{ nearbyBadges() }}
       </span>
     </div>
     <a routerLink="/reports" class="text-xs text-[#E8842E] font-semibold mb-1 block hover:underline">
       Ver todos los reportes
     </a>
-    @for (r of reportesCercanos(); track r.publicId) {
+    @for (r of nearbyReports(); track r.publicId) {
     <div class="home-card mt-3">
       <app-home-report-card [reporte]="r"></app-home-report-card>
     </div>
@@ -324,7 +341,7 @@
 <div class="flex-1 relative min-w-0 h-full">
   <div id="map" class="absolute inset-0 h-full w-full"></div>
 
-  <button type="button" (click)="abrirFiltros()" aria-label="Filtros"
+  <button type="button" (click)="openFilters()" aria-label="Filtros"
     class="lg:hidden absolute top-4 right-4 z-[1000] w-11 h-11 rounded-full bg-[#E8842E] hover:bg-[#d57821] text-white shadow-lg flex items-center justify-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -384,11 +401,11 @@
     </div>
   </div>
 
-  @if (reporteSeleccionado(); as r) {
+  @if (selectedReport(); as r) {
   <div
     class="lg:hidden fixed inset-x-0 bottom-0 z-[1000] bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.15)] px-3 pt-2 pb-[5.5rem]">
     <div class="flex justify-end mb-1">
-      <button type="button" (click)="reporteSeleccionado.set(null)" aria-label="Cerrar"
+      <button type="button" (click)="selectedReport.set(null)" aria-label="Cerrar"
         class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-[#12355B]">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -403,6 +420,92 @@
       Ver detalle
     </a>
   </div>
+  }
+
+  @if (selectedMission(); as m) {
+
+  <div
+    class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-[340px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+
+    <button type="button" (click)="selectedMission.set(null)"
+      class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center hover:bg-slate-100">
+
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2">
+
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+
+      </svg>
+
+    </button>
+
+    <img [src]="
+      m.report.photoUrl ??
+      m.report.petDetails?.photoUrl ??
+      m.report.lost_report_detail?.pet?.petImages?.[0]?.photoUrl ??
+      m.report.reportImages?.[0]?.photoUrl ??
+      'assets/default-pet.png'
+    " class="w-full h-44 object-cover" alt="Foto de la mascota">
+
+    <div class="p-4">
+
+      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#2563eb] text-white text-xs font-bold">
+
+        Misión
+
+      </span>
+
+      <h2 class="mt-3 text-xl font-bold text-[#12355B]">
+
+        {{ m.report.petDetails?.name ?? m.report.title ?? m.report.lost_report_detail?.pet?.name ?? 'Mascota' }}
+
+      </h2>
+
+      <div class="mt-3 flex items-start gap-2">
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#E8842E] shrink-0 mt-0.5" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2">
+
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+          <circle cx="12" cy="10" r="3" />
+
+        </svg>
+
+        <span class="text-sm text-slate-500">
+
+          {{ m.report.location?.address ?? m.report.location_address ?? 'Sin dirección' }}
+
+        </span>
+
+      </div>
+
+      <div class="mt-3 flex items-center justify-between">
+
+        <span class="text-sm text-slate-500">
+
+          Radio
+
+        </span>
+
+        <span class="font-semibold text-[#12355B]">
+
+          {{ m.searchArea?.radius ?? m.radius }} m
+
+        </span>
+
+      </div>
+
+      <button type="button" (click)="openMission(m)"
+        class="mt-5 flex items-center justify-center w-full rounded-xl bg-[#12355B] hover:bg-[#0f2d4d] text-white font-semibold py-3 transition">
+
+        Ver misión
+
+      </button>
+    </div>
+
+  </div>
+
   }
 
   @if (successReportId()) {
@@ -432,14 +535,14 @@
         <p class="text-sm font-bold text-[#12355B]">Enterate de las novedades</p>
         <p class="mt-0.5 text-[13px] text-slate-500">Activá las notificaciones y te avisamos al toque de coincidencias y
           avistamientos cerca.</p>
-        <button type="button" (click)="activarNotificaciones()" [disabled]="notifBusy()"
+        <button type="button" (click)="turnOnNotifications()" [disabled]="notifBusy()"
           class="mt-3 w-full rounded-lg bg-[#E8842E] hover:bg-[#d57821] disabled:opacity-60 text-white font-bold text-sm py-2.5 transition">
           {{ notifBusy() ? 'Activando…' : 'Activar notificaciones' }}
         </button>
       </div>
       }
 
-      <button type="button" (click)="verReporte()"
+      <button type="button" (click)="viewReport()"
         class="w-full bg-[#12355B] hover:bg-[#0e2a4a] text-white font-semibold py-3 rounded-md transition">
         Ver reporte
       </button>

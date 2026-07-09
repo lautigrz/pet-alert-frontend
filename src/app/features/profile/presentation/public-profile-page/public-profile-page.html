@@ -170,25 +170,217 @@
       }
 
       @if (activeTab() === 'missions') {
-      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-        <h2 class="text-lg font-bold text-[#12355B] mb-2">
-          Misiones
-        </h2>
-        <p class="text-sm text-slate-500">
-          Este usuario todavía no tiene misiones disponibles.
-        </p>
-      </div>
+      @if (experienceLoading()) {
+      <section class="mb-6 rounded-2xl bg-[#12355B] px-5 py-4 text-white shadow-sm">
+        <p class="text-sm text-slate-300">Cargando progreso...</p>
+      </section>
+      } @else if (experience()) {
+      <section class="mb-6 rounded-2xl bg-[#12355B] px-5 py-4 text-white shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8842E] text-white">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
+              stroke-linejoin="round" class="h-6 w-6" aria-hidden="true">
+              <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold">Nivel {{ experience()?.level ?? 1 }}</p>
+            <p class="text-xs text-slate-300">
+              {{ totalXp() }} XP · {{ xpToNextLevel() }} XP para el siguiente nivel
+            </p>
+          </div>
+
+          <p class="shrink-0 text-xs text-slate-300">
+            {{ levelProgressPercent() }}% completado
+          </p>
+        </div>
+
+        <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+          <div class="h-1.5 rounded-full bg-[#E8842E] transition-all duration-500"
+            [style.width.%]="levelProgressPercent()"></div>
+        </div>
+      </section>
+      }
+
+      <section class="mt-6">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-[#12355B]">
+              Misiones a las que está unido
+            </h2>
+
+            <p class="text-sm text-slate-500">
+              Acá podés ver las misiones en las que participa este usuario.
+            </p>
+          </div>
+
+          <span
+            class="inline-flex items-center gap-2 rounded-full bg-[#E8842E]/10 px-3 py-1 text-xs font-bold text-[#E8842E]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+              stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
+              <path d="M9 18h6" />
+              <path d="M10 22h4" />
+              <path d="M12 2a7 7 0 0 0-4 12.74V16h8v-1.26A7 7 0 0 0 12 2z" />
+            </svg>
+
+            {{ missions().length }} {{ missions().length === 1 ? 'misión' : 'misiones' }}
+          </span>
+        </div>
+
+        @if (missionsLoading()) {
+        <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+          Cargando misiones...
+        </div>
+        } @else if (missionsError()) {
+        <div role="alert" class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded">
+          {{ missionsError() }}
+        </div>
+        } @else if (missions().length === 0) {
+        <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+          <div
+            class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#12355B]/5 text-[#12355B]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+              stroke-linejoin="round" class="h-7 w-7" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+          </div>
+
+          <h3 class="text-lg font-bold text-[#12355B] mb-2">
+            Este usuario todavía no está unido a ninguna misión
+          </h3>
+
+          <p class="text-sm text-slate-500">
+            Cuando participe en una misión de búsqueda, va a aparecer acá.
+          </p>
+        </div>
+        } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          @for (mission of missions(); track mission.publicId; let missionIndex = $index) {
+          <article
+            class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#E8842E]/40 transition-all">
+            <div class="flex items-start gap-4">
+              <div
+                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#12355B] text-white shadow-sm">
+                <span class="text-sm font-bold">
+                  {{ missionIndex + 1 }}
+                </span>
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-[11px] font-bold uppercase tracking-wide text-[#E8842E]">
+                      Misión #{{ missionIndex + 1 }}
+                    </p>
+
+                    <h3 class="mt-1 font-bold text-[#12355B] truncate">
+                      {{ mission.title }}
+                    </h3>
+                  </div>
+
+                  <span
+                    class="inline-flex shrink-0 items-center rounded-full bg-[#12355B]/5 px-2.5 py-1 text-[11px] font-semibold text-[#12355B]">
+                    {{ missionStatusLabel(mission.status) }}
+                  </span>
+                </div>
+
+                <div class="mt-3 flex items-start gap-2 text-xs text-slate-500">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" class="mt-0.5 h-4 w-4 shrink-0 text-[#E8842E]" aria-hidden="true">
+                    <path d="M12 21s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z" />
+                    <circle cx="12" cy="10" r="2.5" />
+                  </svg>
+
+                  <span class="truncate">
+                    {{ mission.report.location.address || 'Sin ubicación' }}
+                  </span>
+                </div>
+
+                <p class="mt-3 text-sm text-slate-600 line-clamp-2">
+                  {{ mission.description }}
+                </p>
+
+                <div class="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                  <span class="text-xs text-slate-400">
+                    Creada el {{ missionDate(mission.createdAt) }}
+                  </span>
+
+                  <a [routerLink]="['/missions', mission.publicId]"
+                    class="inline-flex items-center gap-1 text-sm font-semibold text-[#E8842E] hover:underline">
+                    Ver misión
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
+          }
+        </div>
+        }
+      </section>
       }
 
       @if (activeTab() === 'achievements') {
-      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-        <h2 class="text-lg font-bold text-[#12355B] mb-2">
-          Logros
-        </h2>
-        <p class="text-sm text-slate-500">
-          Este usuario todavía no tiene logros obtenidos.
-        </p>
+      @if (experienceLoading()) {
+      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+        Cargando logros...
       </div>
+      } @else if (achievements().length === 0) {
+      <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+        <h2 class="text-lg font-bold text-[#12355B] mb-2">Logros</h2>
+        <p class="text-sm text-slate-500">Este usuario todavía no tiene logros disponibles.</p>
+      </div>
+      } @else {
+      <div class="space-y-8">
+        <div>
+          <h2 class="text-lg font-bold text-[#12355B] mb-3">Logros obtenidos</h2>
+          @if (unlockedAchievementsList().length > 0) {
+          <div class="relative">
+            <div #achievementsTrack
+              class="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              @for (achievement of unlockedAchievementsList(); track achievement.code) {
+              <div
+                class="snap-start shrink-0 w-44 sm:w-52 rounded-2xl border border-[#12355B]/10 bg-white p-6 text-center shadow-sm">
+                <div
+                  class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#E8842E] text-white">
+                  <app-achievement-icon [code]="achievement.code" class="h-10 w-10" />
+                </div>
+                <p class="font-bold text-[#E8842E]">{{ achievement.name }}</p>
+                <p class="mt-1 text-xs text-[#12355B]/50">{{ achievement.description }}</p>
+              </div>
+              }
+            </div>
+            @if (unlockedAchievementsList().length > 4) {
+            <button type="button" (click)="scrollAchievements(-1)" aria-label="Ver anteriores"
+              class="absolute left-1 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#12355B]/10 bg-white text-[#12355B] shadow-md hover:bg-[#12355B]/5 sm:flex">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" class="h-5 w-5">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <button type="button" (click)="scrollAchievements(1)" aria-label="Ver siguientes"
+              class="absolute right-1 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#12355B]/10 bg-white text-[#12355B] shadow-md hover:bg-[#12355B]/5 sm:flex">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" class="h-5 w-5">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </button>
+            }
+          </div>
+          } @else {
+          <div class="rounded-2xl border border-[#12355B]/10 bg-white p-8 text-center">
+            <p class="font-bold text-[#12355B]">Todavía no tiene logros</p>
+            <p class="mx-auto mt-1 max-w-sm text-sm text-[#12355B]/55">
+              {{ displayName() }} todavía no desbloqueó ningún logro.
+            </p>
+          </div>
+          }
+        </div>
+
+      </div>
+      }
       }
 
       @if (activeTab() === 'reviews') {
@@ -206,26 +398,28 @@
         <p class="text-sm text-slate-500">Este usuario todavía no tiene reseñas.</p>
       </div>
       } @else {
-      <div class="space-y-3">
+      <h2 class="text-lg font-bold text-[#12355B] mb-3">Opiniones de la comunidad</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         @for (review of reviews(); track review.id) {
         <article class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-          <div class="flex items-start gap-3">
-            <img [src]="reviewerPhotoUrl(review)" alt="Foto del usuario que reseñó"
-              class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200" />
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <h3 class="font-bold text-[#12355B]">{{ reviewerName(review) }}</h3>
-                <div class="text-[#E8842E] text-sm" aria-label="Calificación">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <img [src]="reviewerPhotoUrl(review)" alt="Foto del usuario que reseñó"
+                class="w-11 h-11 rounded-full object-cover bg-slate-100 border border-slate-200 shrink-0" />
+              <div class="min-w-0">
+                <h3 class="font-bold text-[#12355B] truncate">{{ reviewerName(review) }}</h3>
+                <div class="text-[#E8842E] text-sm leading-none" aria-label="Calificación">
                   @for (star of [1, 2, 3, 4, 5]; track star) {
                   <span>{{ star <= review.rating ? '★' : '☆' }}</span>
-                  }
+                      }
                 </div>
               </div>
-              @if (review.description) {
-              <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">{{ review.description }}</p>
-              }
             </div>
+            <span class="text-xs text-slate-400 whitespace-nowrap shrink-0">{{ timeAgo(review.createdAt) }}</span>
           </div>
+          @if (review.description) {
+          <p class="mt-3 text-sm text-slate-600 whitespace-pre-line">{{ review.description }}</p>
+          }
         </article>
         }
       </div>
@@ -236,66 +430,55 @@
   </section>
 
   @if (reviewSheetOpen() && profile()) {
-  <div
-    class="fixed inset-0 z-[1200] flex items-end justify-center bg-black/40 px-3"
-    (click)="cerrarReviewSheet()"
-    (keyup.escape)="cerrarReviewSheet()"
-    tabindex="-1"
-    role="button"
-    aria-label="Cerrar reseña"
-  >
-    <section
-      class="w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:mb-6 sm:rounded-3xl"
-      (click)="$event.stopPropagation()"
-      (keyup)="$event.stopPropagation()"
-      role="presentation"
-    >
-      <div class="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-200"></div>
-      <h2 class="text-xl font-bold text-[#12355B]">Dejar reseña</h2>
-
-      <div class="mt-4 flex items-center gap-3">
-        <img [src]="profilePhotoUrl()" alt="Foto del usuario calificado"
-          class="h-14 w-14 rounded-full object-cover border border-slate-200 bg-slate-100" />
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Vas a calificar a</p>
-          <p class="font-bold text-[#12355B]">{{ displayName() }}</p>
-        </div>
+  <div class="fixed inset-0 z-[1200] flex items-center justify-center bg-black/40 p-4" (click)="cerrarReviewSheet()"
+    (keyup.escape)="cerrarReviewSheet()" tabindex="-1" role="button" aria-label="Cerrar reseña">
+    <section class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" (click)="$event.stopPropagation()"
+      (keyup)="$event.stopPropagation()" role="presentation">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-[#12355B]">Dejar reseña</h2>
+        <button type="button" (click)="cerrarReviewSheet()" aria-label="Cerrar"
+          class="text-slate-400 transition hover:text-[#12355B]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
       </div>
 
-      <div class="mt-5">
-        <p class="text-sm font-semibold text-[#12355B]">Toca para calificar</p>
-        <div class="mt-1 flex gap-1 text-4xl text-[#E8842E]" role="radiogroup" aria-label="Calificación">
+      <div class="mt-5 flex flex-col items-center text-center">
+        <img [src]="profilePhotoUrl()" alt="Foto del usuario calificado"
+          class="h-20 w-20 rounded-full object-cover border border-slate-200 bg-slate-100" />
+        <p class="mt-3 font-bold text-[#12355B]">{{ displayName() }}</p>
+      </div>
+
+      <div class="mt-5 flex flex-col items-center">
+        <div class="flex gap-1 text-4xl text-[#E8842E]" role="radiogroup" aria-label="Calificación">
           @for (star of [1, 2, 3, 4, 5]; track star) {
           <button type="button" (click)="setReviewRating(star)" class="leading-none transition hover:scale-110"
             [attr.aria-label]="star + ' estrellas'">
-            {{ star <= reviewRating() ? '★' : '☆' }}
-          </button>
-          }
+            {{ star <= reviewRating() ? '★' : '☆' }} </button>
+              }
         </div>
+        <p class="mt-2 text-xs text-slate-400">Tocá para calificar</p>
       </div>
 
       <label class="mt-5 block">
-        <span class="text-sm font-semibold text-[#12355B]">Comentario</span>
+        <span class="text-sm font-semibold text-[#12355B]">Tu comentario</span>
         <textarea [ngModel]="reviewDescription()" (ngModelChange)="reviewDescription.set($event)" rows="4"
           maxlength="1000"
           class="mt-2 w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#E8842E] focus:ring-2 focus:ring-[#E8842E]/20"
-          placeholder="Contá cómo fue tu experiencia con este usuario"></textarea>
+          placeholder="Escribí tu opinión aquí…"></textarea>
       </label>
 
       @if (reviewSubmitError()) {
       <p class="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ reviewSubmitError() }}</p>
       }
 
-      <div class="mt-5 flex gap-3">
-        <button type="button" (click)="cerrarReviewSheet()"
-          class="flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-[#12355B] hover:bg-slate-50 transition">
-          Cancelar
-        </button>
-        <button type="button" (click)="enviarReview()" [disabled]="reviewSubmitting() || reviewRating() < 1"
-          class="flex-1 rounded-xl bg-[#E8842E] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#d97728] disabled:cursor-not-allowed disabled:opacity-50">
-          {{ reviewSubmitting() ? 'Enviando...' : 'Enviar reseña' }}
-        </button>
-      </div>
+      <button type="button" (click)="enviarReview()" [disabled]="reviewSubmitting() || reviewRating() < 1"
+        class="mt-5 w-full rounded-xl bg-[#E8842E] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#d97728] disabled:cursor-not-allowed disabled:opacity-50">
+        {{ reviewSubmitting() ? 'Enviando…' : 'Enviar reseña' }}
+      </button>
     </section>
   </div>
   }

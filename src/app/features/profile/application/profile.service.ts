@@ -96,6 +96,14 @@ export class ProfileService {
     }
   }
 
+  async getPublicUserExperience(publicId: string): Promise<UserExperienceSummary> {
+    try {
+      return await this.profileHttp.getPublicUserExperience(publicId);
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+
   async createUserReview(command: CreateUserReviewCommand): Promise<UserReview> {
     try {
       return await this.profileHttp.createUserReview(command.reviewedUserId, {

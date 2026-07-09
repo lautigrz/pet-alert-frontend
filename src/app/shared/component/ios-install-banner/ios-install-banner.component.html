@@ -1,0 +1,37 @@
+@if (visible()) {
+<div class="fixed inset-x-4 bottom-20 sm:bottom-16 sm:left-auto sm:right-4 sm:max-w-sm z-[2500]">
+  <div class="relative bg-[#12355B] text-white rounded-2xl shadow-xl px-4 py-3 flex items-start gap-3">
+    <span class="shrink-0 mt-0.5 text-[#E8842E]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15V3" />
+        <path d="m8 7 4-4 4 4" />
+        <path d="M8 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2" />
+      </svg>
+    </span>
+
+    <div class="min-w-0 flex-1 text-sm leading-snug">
+      <p class="font-bold">Instalá PetFinder</p>
+      <p class="text-white/80">
+        Tocá
+        <span class="inline-flex align-middle text-[#E8842E]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Compartir">
+            <path d="M12 15V3" />
+            <path d="m8 7 4-4 4 4" />
+            <path d="M8 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2" />
+          </svg>
+        </span>
+        y elegí “Añadir a pantalla de inicio”.
+      </p>
+    </div>
+
+    <button type="button" (click)="dismiss()" aria-label="Cerrar" class="shrink-0 -mr-1 -mt-1 p-1 text-white/60 hover:text-white transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+      </svg>
+    </button>
+
+    <span class="sm:hidden absolute left-1/2 -bottom-2 -translate-x-1/2 w-4 h-4 rotate-45 bg-[#12355B]"></span>
+  </div>
+</div>
+}

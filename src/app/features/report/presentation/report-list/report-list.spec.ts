@@ -121,9 +121,8 @@ const reporteGato: Reporte = {
 
 describe('ReportListPage', () => {
   let reportListService: {
-    getGenerales: ReturnType<typeof vi.fn>;
-    getMisReportes: ReturnType<typeof vi.fn>;
-    getMisReportesPaginado: ReturnType<typeof vi.fn>;
+    getGenerals: ReturnType<typeof vi.fn>;
+    getPaginatedMyReports: ReturnType<typeof vi.fn>;
   };
 
   let fixture: ComponentFixture<ReportListPage>;
@@ -131,23 +130,23 @@ describe('ReportListPage', () => {
 
   beforeEach(() => {
     reportListService = {
-      getGenerales: vi.fn(),
-      getMisReportes: vi.fn(),
-      getMisReportesPaginado: vi.fn(),
+      getGenerals: vi.fn(),
+      getPaginatedMyReports: vi.fn(),
     };
 
-    reportListService.getGenerales.mockResolvedValue([
+    reportListService.getGenerals.mockResolvedValue([
       reporteFacundo,
       reporteGato,
     ]);
 
-    reportListService.getMisReportes.mockResolvedValue([
-      reporteFacundo,
-    ]);
-
-    reportListService.getMisReportesPaginado.mockResolvedValue({
+    reportListService.getPaginatedMyReports.mockResolvedValue({
       data: [reporteFacundo],
-      pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+      pagination: {
+        page: 1,
+        limit: 10,
+        total: 1,
+        totalPages: 1,
+      },
     });
 
     TestBed.configureTestingModule({
@@ -179,11 +178,9 @@ describe('ReportListPage', () => {
 
   describe('initial loading', () => {
     it('loads active general reports on init', async () => {
-      // When
       await component.ngOnInit();
 
-      // Then
-      expect(reportListService.getGenerales).toHaveBeenCalledWith({
+      expect(reportListService.getGenerals).toHaveBeenCalledWith({
         status: 'ACTIVE',
       });
 
@@ -197,15 +194,12 @@ describe('ReportListPage', () => {
     });
 
     it('shows an error when reports cannot be loaded', async () => {
-      // Given
-      reportListService.getGenerales.mockRejectedValue(
+      reportListService.getGenerals.mockRejectedValue(
         new Error('No se pudieron cargar los reportes'),
       );
 
-      // When
       await component.ngOnInit();
 
-      // Then
       expect(component.error()).toBe(
         'No se pudieron cargar los reportes',
       );
@@ -217,14 +211,12 @@ describe('ReportListPage', () => {
 
   describe('description search', () => {
     it('sends q to the backend after the debounce', async () => {
-      // Given
       const { callbacks } = mockTimeouts();
 
-      reportListService.getGenerales.mockResolvedValue([
+      reportListService.getGenerals.mockResolvedValue([
         reporteFacundo,
       ]);
 
-      // When
       component.onDescriptionSearchInput('perrro marron');
 
       const callback = [...callbacks.values()][0];
@@ -234,12 +226,11 @@ describe('ReportListPage', () => {
       callback!();
       await flushPromises();
 
-      // Then
       expect(component.busquedaDescripcion()).toBe(
         'perrro marron',
       );
 
-      expect(reportListService.getGenerales).toHaveBeenCalledWith({
+      expect(reportListService.getGenerals).toHaveBeenCalledWith({
         q: 'perrro marron',
         status: 'ACTIVE',
       });
@@ -250,10 +241,8 @@ describe('ReportListPage', () => {
     });
 
     it('does not send q when the text has fewer than 2 characters', async () => {
-      // Given
       const { callbacks } = mockTimeouts();
 
-      // When
       component.onDescriptionSearchInput('p');
 
       const callback = [...callbacks.values()][0];
@@ -263,22 +252,19 @@ describe('ReportListPage', () => {
       callback!();
       await flushPromises();
 
-      // Then
-      expect(reportListService.getGenerales).toHaveBeenCalledWith({
+      expect(reportListService.getGenerals).toHaveBeenCalledWith({
         status: 'ACTIVE',
       });
 
-      expect(reportListService.getGenerales).not.toHaveBeenCalledWith({
+      expect(reportListService.getGenerals).not.toHaveBeenCalledWith({
         q: 'p',
         status: 'ACTIVE',
       });
     });
 
     it('trims the description query before sending it', async () => {
-      // Given
       const { callbacks } = mockTimeouts();
 
-      // When
       component.onDescriptionSearchInput(
         '  mancha blanca  ',
       );
@@ -290,33 +276,27 @@ describe('ReportListPage', () => {
       callback!();
       await flushPromises();
 
-      // Then
-      expect(reportListService.getGenerales).toHaveBeenCalledWith({
+      expect(reportListService.getGenerals).toHaveBeenCalledWith({
         q: 'mancha blanca',
         status: 'ACTIVE',
       });
     });
 
     it('cancels the previous debounce when the user keeps typing', async () => {
-      // Given
       const {
         callbacks,
         clearTimeoutSpy,
       } = mockTimeouts();
 
-      reportListService.getGenerales.mockClear();
+      reportListService.getGenerals.mockClear();
 
-      // When
       component.onDescriptionSearchInput('per');
 
       expect(callbacks.size).toBe(1);
 
       component.onDescriptionSearchInput('perrro');
 
-      // Then: se canceló el timeout anterior
       expect(clearTimeoutSpy).toHaveBeenCalledOnce();
-
-      // Solo queda pendiente la última búsqueda
       expect(callbacks.size).toBe(1);
 
       const remainingCallback = [...callbacks.values()][0];
@@ -326,39 +306,33 @@ describe('ReportListPage', () => {
       remainingCallback!();
       await flushPromises();
 
-      expect(reportListService.getGenerales).toHaveBeenCalledTimes(1);
+      expect(reportListService.getGenerals).toHaveBeenCalledTimes(1);
 
-      expect(reportListService.getGenerales).toHaveBeenCalledWith({
+      expect(reportListService.getGenerals).toHaveBeenCalledWith({
         q: 'perrro',
         status: 'ACTIVE',
       });
     });
 
     it('clears the description search and reloads without q', async () => {
-      // Given
       component.busquedaDescripcion.set('perro marrón');
 
-      // When
       await component.limpiarBusquedaDescripcion();
 
-      // Then
       expect(component.busquedaDescripcion()).toBe('');
 
-      expect(reportListService.getGenerales).toHaveBeenCalledWith({
+      expect(reportListService.getGenerals).toHaveBeenCalledWith({
         status: 'ACTIVE',
       });
     });
 
     it('combines q with the selected filters', async () => {
-      // Given
       component.busquedaDescripcion.set('collar rojo');
 
-      // When
       await component.setFiltroTipo('LOST');
       await component.setFiltroMascota('CAT');
 
-      // Then
-      expect(reportListService.getGenerales).toHaveBeenLastCalledWith({
+      expect(reportListService.getGenerals).toHaveBeenLastCalledWith({
         reportType: 'LOST',
         animalType: 'CAT',
         q: 'collar rojo',
@@ -369,20 +343,17 @@ describe('ReportListPage', () => {
 
   describe('search in my reports', () => {
     it('sends q when the user selects My Reports', async () => {
-      // Given
       component.busquedaDescripcion.set('mancha blanca');
 
-      // When
-      await component.seleccionarTab('mis-reportes');
+      await component.selectTab('mis-reportes');
 
-      // Then
-      expect(reportListService.getMisReportesPaginado).toHaveBeenCalledWith(
+      expect(reportListService.getPaginatedMyReports).toHaveBeenCalledWith(
         { q: 'mancha blanca' },
         1,
         10,
       );
 
-      expect(reportListService.getGenerales).not.toHaveBeenCalled();
+      expect(reportListService.getGenerals).not.toHaveBeenCalled();
 
       expect(component.reportes()).toEqual([
         reporteFacundo,
@@ -390,18 +361,30 @@ describe('ReportListPage', () => {
     });
 
     it('shows all the user reports including resolved and closed ones', async () => {
-      // Given
-      const resuelto = { ...reporteFacundo, publicId: 'mio-resuelto', status: 'RESOLVED' as const };
-      const cerrado = { ...reporteFacundo, publicId: 'mio-cerrado', status: 'CLOSED' as const };
-      reportListService.getMisReportesPaginado.mockResolvedValue({
+      const resuelto: Reporte = {
+        ...reporteFacundo,
+        publicId: 'mio-resuelto',
+        status: 'RESOLVED',
+      };
+
+      const cerrado: Reporte = {
+        ...reporteFacundo,
+        publicId: 'mio-cerrado',
+        status: 'CLOSED',
+      };
+
+      reportListService.getPaginatedMyReports.mockResolvedValue({
         data: [reporteFacundo, resuelto, cerrado],
-        pagination: { page: 1, limit: 10, total: 3, totalPages: 1 },
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 3,
+          totalPages: 1,
+        },
       });
 
-      // When
-      await component.seleccionarTab('mis-reportes');
+      await component.selectTab('mis-reportes');
 
-      // Then
       expect(component.reportes()).toEqual([
         reporteFacundo,
         resuelto,
@@ -412,68 +395,64 @@ describe('ReportListPage', () => {
 
   describe('pagination in my reports', () => {
     beforeEach(() => {
-      reportListService.getMisReportesPaginado.mockResolvedValue({
+      reportListService.getPaginatedMyReports.mockResolvedValue({
         data: [reporteFacundo],
-        pagination: { page: 1, limit: 10, total: 25, totalPages: 3 },
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 25,
+          totalPages: 3,
+        },
       });
     });
 
     it('keeps the applied filters when changing page', async () => {
-      // Given
       component.busquedaDescripcion.set('mancha');
-      await component.seleccionarTab('mis-reportes');
 
-      // When
+      await component.selectTab('mis-reportes');
       await component.goToPage(2);
 
-      // Then
-      expect(reportListService.getMisReportesPaginado).toHaveBeenLastCalledWith(
+      expect(reportListService.getPaginatedMyReports).toHaveBeenLastCalledWith(
         { q: 'mancha' },
         2,
         10,
       );
+
       expect(component.page()).toBe(2);
     });
 
     it('goes back to page 1 when a filter changes', async () => {
-      // Given
-      await component.seleccionarTab('mis-reportes');
+      await component.selectTab('mis-reportes');
+
       await component.goToPage(3);
+
       expect(component.page()).toBe(3);
 
-      // When
       await component.setFiltroTipo('LOST');
 
-      // Then
       expect(component.page()).toBe(1);
     });
   });
 
   describe('general reports pagination', () => {
     it('paginates the general reports on the client and caches the page', async () => {
-      // Given
-      const muchos = Array.from({ length: 25 }, (_, i) => ({
+      const muchos: Reporte[] = Array.from({ length: 25 }, (_, i) => ({
         ...reporteFacundo,
         publicId: `g-${i}`,
       }));
-      reportListService.getGenerales.mockResolvedValue(muchos);
 
-      // When
+      reportListService.getGenerals.mockResolvedValue(muchos);
+
       await component.ngOnInit();
 
-      // Then
       expect(component.totalPages()).toBe(3);
       expect(component.reportes().length).toBe(10);
       expect(component.reportes()[0].publicId).toBe('g-0');
 
-      // When
       await component.goToPage(2);
 
-      // Then
       expect(component.reportes()[0].publicId).toBe('g-10');
-      expect(reportListService.getGenerales).toHaveBeenCalledTimes(1);
+      expect(reportListService.getGenerals).toHaveBeenCalledTimes(1);
     });
   });
-
 });
-

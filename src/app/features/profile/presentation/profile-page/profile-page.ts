@@ -1,30 +1,35 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProfileService } from '../../application/profile.service';
 import { UpdatedProfile, UserExperienceAchievement, UserExperienceSummary } from '../../domain/profile.model';
 import { ReportListService } from '../../../report/application/report-list.service';
 import { Reporte } from '../../../report/domain/report-read.model';
 import { HomeReportCardComponent } from '../../../home-map/components/home-report-card/home-report-card';
+import { AchievementIconComponent } from '../achievement-icon/achievement-icon.component';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { NotificationService } from '../../../notifications/application/notification.service';
 import { GivenUserReview, UserRatingSummary, UserReview } from '../../domain/user-review.model';
+import { firstValueFrom } from 'rxjs';
+import { MissionService } from '../../../missions/application/mission.service';
+import { MissionOutput } from '../../../missions/infrastructure/models/mission.model';
 
 type ProfileTab = 'reports' | 'reviews' | 'missions' | 'achievements';
 
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  imports: [RouterLink, HomeReportCardComponent],
+  imports: [RouterLink, HomeReportCardComponent, AchievementIconComponent],
   templateUrl: './profile-page.html',
   styleUrls: ['./profile-page.css'],
 })
 
 
-export class ProfilePage implements OnInit  {
+export class ProfilePage implements OnInit {
   private readonly profileService = inject(ProfileService);
   private readonly reportListService = inject(ReportListService);
   private readonly toastService = inject(ToastService);
   private readonly notificationService = inject(NotificationService);
+  private readonly missionService = inject(MissionService);
 
   readonly rutaMiPerfil = '/profile/edit';
   readonly profile = signal<UpdatedProfile | null>(null);
@@ -36,15 +41,15 @@ export class ProfilePage implements OnInit  {
   readonly reportsLoading = signal(true);
   readonly reportsError = signal<string | null>(null);
   readonly ratingSummary = signal<UserRatingSummary>({
-  average: 0,
-  count: 0,
-});
+    average: 0,
+    count: 0,
+  });
 
-readonly receivedReviews = signal<UserReview[]>([]);
-readonly givenReviews = signal<GivenUserReview[]>([]);
-readonly reviewsLoading = signal(true);
-readonly reviewsError = signal<string | null>(null);
-  
+  readonly receivedReviews = signal<UserReview[]>([]);
+  readonly givenReviews = signal<GivenUserReview[]>([]);
+  readonly reviewsLoading = signal(true);
+  readonly reviewsError = signal<string | null>(null);
+
 
   readonly experience = signal<UserExperienceSummary | null>(null);
   readonly experienceLoading = signal(true);
@@ -52,44 +57,48 @@ readonly reviewsError = signal<string | null>(null);
   readonly levelUpPulse = signal(false);
   readonly showLevelUpToast = signal(false);
   readonly showExperienceWidget = signal(true);
+  readonly missions = signal<MissionOutput[]>([]);
+  readonly missionsLoading = signal(true);
+  readonly missionsError = signal<string | null>(null);
 
   readonly defaultPhotoUrl = 'https://ui-avatars.com/api/?name=Perfil&background=e2e8f0&color=12355B&size=128';
 
   private readonly lastSeenLevelKey = 'petfinder.profile.last-seen-level';
   private previousLevel: number | null = this.readLastSeenLevel();
 
-  async ngOnInit(): Promise<void>{
-  await Promise.all([
+  async ngOnInit(): Promise<void> {
+    await Promise.all([
       this.loadProfile(),
       this.loadReports(),
       this.loadRating(),
       this.loadReviews(),
       this.loadExperience(),
+      this.loadMissions(),
     ]);
   }
 
-  async loadProfile(): Promise<void>{
+  async loadProfile(): Promise<void> {
     this.loading.set(true);
     this.serverError.set(null);
 
-    try{
+    try {
       const profile = await this.profileService.getProfile();
       this.profile.set(profile);
-    } catch(error){
+    } catch (error) {
       this.serverError.set(error instanceof Error ? error.message : 'No se pudo cargar el perfil');
     } finally {
       this.loading.set(false);
     }
   }
 
-  async loadReports(): Promise<void>{
+  async loadReports(): Promise<void> {
     this.reportsLoading.set(true);
     this.reportsError.set(null);
 
-    try{
-      const reports = await this.reportListService.getMisReportes();
+    try {
+      const reports = await this.reportListService.getMyReports();
       this.reports.set(reports);
-    } catch(error){
+    } catch (error) {
       this.reportsError.set(error instanceof Error ? error.message : 'No se pudieron cargar los reportes');
     } finally {
       this.reportsLoading.set(false);
@@ -121,8 +130,8 @@ readonly reviewsError = signal<string | null>(null);
       this.reviewsLoading.set(false);
     }
   }
-  
-  async loadExperience(): Promise<void>{
+
+  async loadExperience(): Promise<void> {
     this.experienceLoading.set(true);
     this.experienceError.set(null);
 
@@ -144,6 +153,25 @@ readonly reviewsError = signal<string | null>(null);
     }
   }
 
+  async loadMissions(): Promise<void> {
+    this.missionsLoading.set(true);
+    this.missionsError.set(null);
+    try {
+      const profile = this.profile() ?? await this.profileService.getProfile();
+      const missions = await firstValueFrom(this.missionService.getJoinedMissionsByUser(profile.id));
+
+      this.missions.set(
+        missions.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
+      );
+    } catch (error) {
+      this.missionsError.set(error instanceof Error ? error.message : 'No se pudieron cargar tus misiones');
+    } finally {
+      this.missionsLoading.set(false);
+    }
+  }
   private handleLevelUp(experience: UserExperienceSummary): void {
     this.levelUpPulse.set(true);
     this.showLevelUpToast.set(true);
@@ -191,21 +219,30 @@ readonly reviewsError = signal<string | null>(null);
     return this.achievements().filter((achievement) => achievement.unlocked ?? true).length;
   }
 
-  profilePhotoUrl(): string{
+  profilePhotoUrl(): string {
     return this.profile()?.photoUrl || this.defaultPhotoUrl;
   }
 
   displayName(): string {
     const profile = this.profile();
 
-    if(!profile) return '';
+    if (!profile) return '';
     const fullName = `${profile.name ?? ''} ${profile.lastname ?? ''}`.trim();
 
     return fullName || profile.username;
   }
 
-  setTab(tab: ProfileTab): void{
+  setTab(tab: ProfileTab): void {
     this.activeTab.set(tab);
+  }
+
+  @ViewChild('achievementsTrack') achievementsTrack?: ElementRef<HTMLDivElement>;
+
+  scrollAchievements(direction: number): void {
+    const track = this.achievementsTrack?.nativeElement;
+    if (!track) return;
+
+    track.scrollBy({ left: direction * track.clientWidth * 0.8, behavior: 'smooth' });
   }
 
   private currentXp(experience: UserExperienceSummary): number {
@@ -248,7 +285,43 @@ readonly reviewsError = signal<string | null>(null);
       }));
   }
 
-  achievementIcon(achievement: UserExperienceAchievement): string {
-    return achievement.icon ?? '⭐';
+  timeAgo(date: string): string {
+    const days = Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+    if (days <= 0) return 'Hoy';
+    if (days === 1) return 'Ayer';
+    if (days < 7) return `Hace ${days} días`;
+    if (days < 30) {
+      const weeks = Math.floor(days / 7);
+      return `Hace ${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`;
+    }
+    if (days < 365) {
+      const months = Math.floor(days / 30);
+      return `Hace ${months} ${months === 1 ? 'mes' : 'meses'}`;
+    }
+    const years = Math.floor(days / 365);
+    return `Hace ${years} ${years === 1 ? 'año' : 'años'}`;
+  }
+
+  missionStatusLabel(status: string): string {
+    const normalizedStatus = status.toUpperCase();
+
+    if (normalizedStatus === 'OPEN') return 'Abierta';
+    if (normalizedStatus === 'IN_PROGRESS') return 'En progreso';
+    if (normalizedStatus === 'CLOSED') return 'Cerrada';
+    return status;
+  }
+
+  missionDate(date: Date | string): string {
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return 'Sin fecha';
+    }
+
+    return parsedDate.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   }
 }

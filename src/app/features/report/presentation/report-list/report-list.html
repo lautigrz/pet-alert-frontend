@@ -1,17 +1,17 @@
-@if (mostrarFiltros()) {
-<button type="button" aria-label="Cerrar filtros" (click)="cerrarFiltros()" class="fixed inset-0 bg-black/40 z-[1090] lg:hidden"></button>
+@if (showFilters()) {
+<button type="button" aria-label="Cerrar filtros" (click)="closeFilters()" class="fixed inset-0 bg-black/40 z-[1090] lg:hidden"></button>
 }
 
 <aside
   class="fixed inset-y-0 left-0 z-[1100] w-[88%] max-w-[380px] bg-white overflow-y-auto px-5 py-5 -translate-x-full transition-transform duration-300 lg:static lg:z-auto lg:w-[430px] lg:max-w-none lg:translate-x-0 lg:transition-none shrink-0"
-  [class.!translate-x-0]="mostrarFiltros()">
+  [class.!translate-x-0]="showFilters()">
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-lg font-bold text-[#12355B]">Filtros</h2>
     <div class="flex items-center gap-3">
       <button type="button" (click)="limpiarTodo()" class="text-xs font-semibold text-[#E8842E] hover:underline">
         Limpiar
       </button>
-      <button type="button" (click)="cerrarFiltros()" aria-label="Cerrar filtros"
+      <button type="button" (click)="closeFilters()" aria-label="Cerrar filtros"
         class="lg:hidden text-slate-400 hover:text-[#12355B]">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -73,7 +73,7 @@
     <div class="flex items-center justify-between mb-2">
       <p class="text-xs font-semibold text-slate-500">Fecha</p>
       @if (fechaDesde() || fechaHasta()) {
-      <button type="button" (click)="limpiarFechas()"
+      <button type="button" (click)="clearDates()"
         class="text-xs font-semibold text-[#E8842E] hover:underline">Limpiar</button>
       }
     </div>
@@ -100,7 +100,7 @@
       <div class="flex items-center justify-between gap-3 mb-5">
         <h1 class="text-2xl font-extrabold text-[#12355B]">Reportes</h1>
 
-        <button type="button" (click)="abrirFiltros()"
+        <button type="button" (click)="openFilters()"
           class="lg:hidden inline-flex items-center gap-1.5 text-sm font-semibold text-[#E8842E]">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -115,19 +115,19 @@
         <button
           class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'todos' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
-          (click)="seleccionarTab('todos')">Todos</button>
+          (click)="selectTab('todos')">Todos</button>
         <button
           class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'recientes' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
-          (click)="seleccionarTab('recientes')">Recientes</button>
+          (click)="selectTab('recientes')">Recientes</button>
         <button
           class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'cercanos' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
-          (click)="seleccionarTab('cercanos')">Cercanos</button>
+          (click)="selectTab('cercanos')">Cercanos</button>
         <button
           class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
           [class]="tab() === 'mis-reportes' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
-          (click)="seleccionarTab('mis-reportes')">Mis Reportes</button>
+          (click)="selectTab('mis-reportes')">Mis Reportes</button>
       </div>
 
       <div class="relative mb-5">
@@ -163,7 +163,7 @@
       } @else if (error()) {
       <div class="py-12 px-6 text-center text-[15px] rounded-2xl border border-[#f3c4ba] bg-[#fbeae6] text-[#b04632]">{{
         error() }}</div>
-      } @else if (tab() === 'cercanos' && ubicacionDenegada()) {
+      } @else if (tab() === 'cercanos' && locationDenied()) {
       <div
         class="py-12 px-6 text-center text-slate-500 text-[15px] bg-white border border-dashed border-slate-200 rounded-2xl">
         Necesitamos tu ubicación para mostrar reportes cercanos. Activá el permiso de ubicación en tu navegador y volvé

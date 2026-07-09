@@ -57,9 +57,9 @@ export class ReportListPage implements OnInit {
   private descriptionSearchDebounce?: ReturnType<typeof setTimeout>;
 
   readonly ubicacion = signal<Coordenadas | null>(null);
-  readonly ubicacionDenegada = signal(false);
+  readonly locationDenied = signal(false);
 
-  readonly mostrarFiltros = signal(false);
+  readonly showFilters = signal(false);
 
   readonly sinResultados = computed(
     () => !this.cargando() && !this.error() && this.reportes().length === 0,
@@ -73,7 +73,7 @@ export class ReportListPage implements OnInit {
     await this.reload();
   }
 
-  async seleccionarTab(tab: Tab): Promise<void> {
+  async selectTab(tab: Tab): Promise<void> {
     if (this.tab() === tab) return;
     this.tab.set(tab);
     await this.reload();
@@ -106,7 +106,7 @@ export class ReportListPage implements OnInit {
     if (actual) return Promise.resolve(actual);
 
     if (!navigator.geolocation) {
-      this.ubicacionDenegada.set(true);
+      this.locationDenied.set(true);
       return Promise.resolve(null);
     }
 
@@ -115,11 +115,11 @@ export class ReportListPage implements OnInit {
         (pos) => {
           const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           this.ubicacion.set(coords);
-          this.ubicacionDenegada.set(false);
+          this.locationDenied.set(false);
           resolve(coords);
         },
         () => {
-          this.ubicacionDenegada.set(true);
+          this.locationDenied.set(true);
           resolve(null);
         },
       );
@@ -151,18 +151,18 @@ export class ReportListPage implements OnInit {
     await this.reload();
   }
 
-  async limpiarFechas(): Promise<void> {
+  async clearDates(): Promise<void> {
     this.fechaDesde.set('');
     this.fechaHasta.set('');
     await this.reload();
   }
 
-  abrirFiltros(): void {
-    this.mostrarFiltros.set(true);
+  openFilters(): void {
+    this.showFilters.set(true);
   }
 
-  cerrarFiltros(): void {
-    this.mostrarFiltros.set(false);
+  closeFilters(): void {
+    this.showFilters.set(false);
   }
 
   async limpiarTodo(): Promise<void> {
@@ -225,7 +225,7 @@ export class ReportListPage implements OnInit {
     }
 
     if (this.tab() === 'mis-reportes') {
-      const { data, pagination } = await this.reportesService.getMisReportesPaginado(
+      const { data, pagination } = await this.reportesService.getPaginatedMyReports(
         filtros,
         this.page(),
         REPORTS_PER_PAGE,
@@ -236,7 +236,7 @@ export class ReportListPage implements OnInit {
 
     filtros.status = 'ACTIVE';
     if (this.generalReportsCache === null) {
-      this.generalReportsCache = await this.reportesService.getGenerales(filtros);
+      this.generalReportsCache = await this.reportesService.getGenerals(filtros);
     }
     this.totalPages.set(Math.max(1, Math.ceil(this.generalReportsCache.length / REPORTS_PER_PAGE)));
     const start = (this.page() - 1) * REPORTS_PER_PAGE;
