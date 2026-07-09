@@ -4,7 +4,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LoginPage } from './login-page';
 import { AuthService } from '../../application/auth.service';
 import { ToastService } from '../../../../shared/application/toast.service';
-import { InvalidCredentialsError, NetworkError, RateLimitedError } from '../../domain/auth.errors';
+import { ProfileService } from '../../../profile/application/profile.service';
+import { GoogleIdentityClient } from '../../infrastructure/google-identity.client';
+import {
+  InvalidCredentialsError,
+  NetworkError,
+  RateLimitedError,
+  GoogleSignInError,
+} from '../../domain/auth.errors';
 
 describe('LoginPage', () => {
   let authService: { login: ReturnType<typeof vi.fn> };
@@ -211,5 +218,75 @@ describe('LoginPage', () => {
       expect(component.form.get('email')?.hasError('email')).toBe(true);
       expect(component.form.invalid).toBe(true);
     });
+  });
+});
+
+describe('LoginPage Google sign-in', () => {
+  let authService: { loginWithGoogle: ReturnType<typeof vi.fn> };
+  let toastService: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; info: ReturnType<typeof vi.fn> };
+  let profileService: { clearCache: ReturnType<typeof vi.fn> };
+  let googleClient: { requestAuthCode: ReturnType<typeof vi.fn> };
+  let router: Router;
+  let component: LoginPage;
+
+  beforeEach(() => {
+    authService = { loginWithGoogle: vi.fn() };
+    toastService = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
+    profileService = { clearCache: vi.fn() };
+    googleClient = { requestAuthCode: vi.fn() };
+    const activatedRoute = { snapshot: { queryParamMap: { get: () => null } } };
+    TestBed.configureTestingModule({
+      imports: [LoginPage],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: authService },
+        { provide: ToastService, useValue: toastService },
+        { provide: ProfileService, useValue: profileService },
+        { provide: GoogleIdentityClient, useValue: googleClient },
+        { provide: ActivatedRoute, useValue: activatedRoute },
+      ],
+    });
+    const fixture = TestBed.createComponent(LoginPage);
+    router = TestBed.inject(Router);
+    component = fixture.componentInstance;
+  });
+
+  it('requests a Google auth code, logs in and redirects to home', async () => {
+    // Given: el popup devuelve un code y el back acepta el login
+    googleClient.requestAuthCode.mockResolvedValue('auth-code');
+    authService.loginWithGoogle.mockResolvedValue({ accessToken: 'a', refreshToken: 'r' });
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
+
+    // When: toco "Continuar con Google"
+    await component.loginWithGoogle();
+
+    // Then: se envia el code al service y se redirige a la home
+    expect(authService.loginWithGoogle).toHaveBeenCalledWith('auth-code');
+    expect(navigateSpy).toHaveBeenCalledWith('/home');
+  });
+
+  it('shows a toast when Google sign-in fails on the back', async () => {
+    // Given: el back rechaza la identidad de Google
+    googleClient.requestAuthCode.mockResolvedValue('auth-code');
+    authService.loginWithGoogle.mockRejectedValue(new GoogleSignInError());
+
+    // When: toco el boton
+    await component.loginWithGoogle();
+
+    // Then: se muestra el toast y el estado de carga vuelve a false
+    expect(toastService.error).toHaveBeenCalledWith('No pudimos iniciar sesión con Google. Probá de nuevo.');
+    expect(component.googleSubmitting()).toBe(false);
+  });
+
+  it('stays silent when the user closes the Google popup', async () => {
+    // Given: el usuario cierra el popup sin autorizar
+    googleClient.requestAuthCode.mockRejectedValue(new Error('google_popup_closed'));
+
+    // When: toco el boton
+    await component.loginWithGoogle();
+
+    // Then: no se muestra error ni se llama al back
+    expect(toastService.error).not.toHaveBeenCalled();
+    expect(authService.loginWithGoogle).not.toHaveBeenCalled();
   });
 });
