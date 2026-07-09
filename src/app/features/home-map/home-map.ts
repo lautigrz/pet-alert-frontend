@@ -610,12 +610,15 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
         continue;
       }
 
+      const isLost =
+        this.reports().find(r => r.publicId === report.publicId)?.type === 'LOST';
+
       const circle = L.circle(
         [lat, lng],
         {
           radius: radius,
-          color: '#2563eb',
-          fillColor: '#3b82f6',
+          color: isLost ? '#E8842E' : '#12355B',
+          fillColor: isLost ? '#E8842E' : '#1D6FA3',
           fillOpacity: 0.18,
           weight: 3
         }
@@ -624,7 +627,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
       const marker = L.marker(
         [lat, lng],
         {
-          icon: this.buildMissionIcon(image)
+          icon: this.buildMissionIcon(image, isLost)
         }
       ).addTo(this.map);
 
@@ -645,7 +648,10 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     }
 
   }
-  private buildMissionIcon(imageUrl?: string): L.DivIcon {
+  private buildMissionIcon(imageUrl?: string, isLost = false): L.DivIcon {
+
+    const color = isLost ? '#E8842E' : '#12355B';
+    const glow = isLost ? 'rgba(232,132,46,.45)' : 'rgba(18,53,91,.45)';
 
     return L.divIcon({
 
@@ -657,7 +663,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
           border-radius:50%;
           overflow:hidden;
           border:4px solid white;
-          box-shadow:0 0 10px rgba(37,99,235,.45);
+          box-shadow:0 0 10px ${glow};
       ">
           <img
               src="${imageUrl}"
@@ -674,7 +680,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
           width:52px;
           height:52px;
           border-radius:50%;
-          background:#2563eb;
+          background:${color};
           border:4px solid white;
           display:flex;
           justify-content:center;

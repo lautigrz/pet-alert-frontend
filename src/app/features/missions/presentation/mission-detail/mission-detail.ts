@@ -131,7 +131,7 @@ export class MissionDetailPage implements OnInit, OnDestroy {
 
     try {
       await firstValueFrom(this.missionService.joinMission(m.publicId));
-      this.toastService.success("Te uniste a la misión con éxito");
+      this.toastService.brand("Te uniste a la misión con éxito");
       await this.loadMission(m.publicId);
     } catch {
       this.toastService.error("No se pudo unir a la misión");
@@ -207,6 +207,14 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     this.router.navigate(['/missions/edit', m.publicId]);
   }
 
+  goToReport(): void {
+    const m = this.mission();
+    if (!m) return;
+    this.router.navigate(['/reports', m.report.publicId], {
+      state: { fromMission: m.publicId }
+    });
+  }
+
   initializeMap(m: MissionOutput): void {
     const lat = m.searchArea.latitude;
     const lng = m.searchArea.longitude;
@@ -224,10 +232,12 @@ export class MissionDetailPage implements OnInit, OnDestroy {
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
 
+      const isLost = m.report?.type === 'LOST';
+
       this.circle = L.circle([lat, lng], {
         radius: radius,
-        color: '#2563eb',
-        fillColor: '#3b82f6',
+        color: isLost ? '#E8842E' : '#12355B',
+        fillColor: isLost ? '#E8842E' : '#1D6FA3',
         fillOpacity: 0.15,
         weight: 2
       }).addTo(this.map);
@@ -235,20 +245,21 @@ export class MissionDetailPage implements OnInit, OnDestroy {
       const image = m.report.photoUrl ?? m.report.petDetails?.photoUrl ?? '';
 
       this.marker = L.marker([lat, lng], {
-        icon: this.buildMissionIcon(image)
+        icon: this.buildMissionIcon(image, isLost)
       }).addTo(this.map);
 
       this.map.fitBounds(this.circle.getBounds(), { padding: [20, 20] });
     }, 100);
   }
 
-  private buildMissionIcon(imageUrl: string): L.DivIcon {
+  private buildMissionIcon(imageUrl: string, isLost = false): L.DivIcon {
+    const color = isLost ? '#E8842E' : '#12355B';
     return L.divIcon({
       html: `
-        <div class="relative w-11 h-11 rounded-full border-3 border-[#2563eb] bg-white shadow-md overflow-hidden flex items-center justify-center">
+        <div class="relative w-11 h-11 rounded-full border-3 bg-white shadow-md overflow-hidden flex items-center justify-center" style="border-color:${color}">
           ${imageUrl
           ? `<img src="${imageUrl}" class="w-full h-full object-cover">`
-          : `<span class="text-sm font-bold text-[#2563eb]">🎯</span>`
+          : `<span class="text-sm font-bold" style="color:${color}">🎯</span>`
         }
         </div>
       `,
@@ -265,7 +276,7 @@ export class MissionDetailPage implements OnInit, OnDestroy {
       ...prev,
       [updatePublicId]: points
     }));
-    this.toastService.success(`¡Valoración enviada! Se otorgaron +${points} XP`);
+    this.toastService.award(`¡Valoración enviada! Se otorgaron +${points} XP`);
   }
 
   getPoints(updatePublicId: string): number {

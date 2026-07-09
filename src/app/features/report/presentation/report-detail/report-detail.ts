@@ -65,6 +65,7 @@ export class ReportDetailPage implements OnInit {
   actualizandoSeguimiento = signal(false);
   userRatingAverage = signal(0);
   userRatingCount = signal(0);
+  fromMissionId = signal<string | null>(null);
 
   associatedMission = signal<unknown | null>(null);
   missionOwner = signal<unknown | null>(null);
@@ -83,6 +84,11 @@ export class ReportDetailPage implements OnInit {
 
   async ngOnInit() {
     const publicId = this.route.snapshot.paramMap.get('publicId')!;
+
+    const fromMission = history.state?.fromMission;
+    if (fromMission) {
+      this.fromMissionId.set(fromMission);
+    }
 
     try {
       const report = await this.reportService.getReportByPublicId(publicId);
@@ -185,7 +191,18 @@ export class ReportDetailPage implements OnInit {
 
     return this.userRatingAverage().toFixed(1);
   }
+
+  ratingStars(): string[] {
+    const average = Math.round(this.userRatingAverage());
+    return [1, 2, 3, 4, 5].map((star) => (star <= average ? '★' : '☆'));
+  }
   private readonly router = inject(Router);
+
+  goBackToMission(): void {
+    const missionId = this.fromMissionId();
+    if (missionId) this.router.navigate(['/missions', missionId]);
+  }
+
   irAEditarDatos(): void {
     const r = this.report();
     if (r) this.router.navigate(['/reports', r.publicId, 'edit', 'datos']);

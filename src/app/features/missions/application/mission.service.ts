@@ -143,4 +143,31 @@ export class MissionService {
       }),
     );
   }
+
+  getActiveMissionsWithDetails(): Observable<MissionOutput[]> {
+    return this.getMissions().pipe(
+      switchMap((missions) => {
+        if (missions.length === 0) {
+          return of([]);
+        }
+
+        return forkJoin(
+          missions.map((mission) => this.getMissionDetail(mission.publicId)),
+        );
+      }),
+      catchError((error) => {
+        if (error instanceof HttpErrorResponse) {
+          return throwError(
+            () =>
+              new Error(
+                error.error?.message ??
+                'No se pudieron obtener las misiones del usuario',
+              ),
+          );
+        }
+
+        return throwError(() => error);
+      }),
+    );
+  }
 }

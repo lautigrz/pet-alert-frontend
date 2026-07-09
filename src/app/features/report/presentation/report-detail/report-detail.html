@@ -14,6 +14,18 @@
         (r.details.isInTransit ? 'En tránsito' : 'Avistamiento')) }}</span>
     </nav>
 
+    @if (fromMissionId()) {
+    <button type="button" (click)="goBackToMission()"
+      class="inline-flex items-center gap-1.5 rounded-lg bg-[#12355B] text-white hover:brightness-95 text-sm font-semibold px-4 py-2 mb-4 transition">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 19-7-7 7-7" />
+        <path d="M19 12H5" />
+      </svg>
+      Volver a la misión
+    </button>
+    }
+
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
       <div class="flex flex-col gap-5 min-w-0">
         <app-report-gallery [report]="r" />
@@ -103,13 +115,17 @@
               </p>
 
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-2xl font-bold text-[#12355B]">
-                  {{ valoracionUsuario() }}@if (userRatingCount() > 0) {/5.0}
-                </span>
+                <div class="flex text-[#E8842E] text-lg leading-none">
+                  @for (star of ratingStars(); track $index) {
+                  <span>{{ star }}</span>
+                  }
+                </div>
 
-                <span class="text-yellow-400 text-lg leading-none">
-                  ★
-                </span>
+                @if (sinValoraciones()) {
+                <span class="text-sm font-semibold text-slate-500">Sin calificar</span>
+                } @else {
+                <span class="text-2xl font-bold text-[#12355B]">{{ valoracionUsuario() }}/5.0</span>
+                }
               </div>
             </div>
 
@@ -120,12 +136,12 @@
             </span>
             } @else if (esUsuarioBajaValoracion()) {
             <span
-              class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 border border-red-100">
+              class="inline-flex items-center rounded-full bg-[#E8842E]/10 px-2.5 py-1 text-xs font-semibold text-[#E8842E] border border-[#E8842E]/20">
               Baja
             </span>
             } @else {
             <span
-              class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-600 border border-green-100">
+              class="inline-flex items-center rounded-full bg-[#12355B]/10 px-2.5 py-1 text-xs font-semibold text-[#12355B] border border-[#12355B]/20">
               Alta
             </span>
             }
@@ -180,12 +196,17 @@
           </div>
 
           @if (!hasActiveMission()) {
-          <button (click)="createMission()"
-            class="mt-3 w-full rounded-xl bg-blue-600 py-3 text-white font-medium hover:bg-blue-700 transition">
-
-            Crear misión de búsqueda
-
-          </button>
+          <div class="mt-2.5">
+            <button type="button" (click)="createMission()"
+              class="w-full inline-flex items-center justify-center gap-1.5 bg-[#12355B] text-white hover:bg-[#0e2a49] text-sm font-semibold py-2.5 rounded-lg transition disabled:opacity-50">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              Crear misión de búsqueda
+            </button>
+          </div>
           }
 
           }

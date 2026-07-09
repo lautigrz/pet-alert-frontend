@@ -1,4 +1,5 @@
 import { Component, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProfileService } from '../../application/profile.service';
 import { UpdatedProfile, UserExperienceAchievement, UserExperienceSummary } from '../../domain/profile.model';
@@ -6,7 +7,6 @@ import { ReportListService } from '../../../report/application/report-list.servi
 import { Reporte } from '../../../report/domain/report-read.model';
 import { HomeReportCardComponent } from '../../../home-map/components/home-report-card/home-report-card';
 import { AchievementIconComponent } from '../achievement-icon/achievement-icon.component';
-import { ToastService } from '../../../../shared/application/toast.service';
 import { NotificationService } from '../../../notifications/application/notification.service';
 import { GivenUserReview, UserRatingSummary, UserReview } from '../../domain/user-review.model';
 import { firstValueFrom } from 'rxjs';
@@ -15,10 +15,17 @@ import { MissionOutput } from '../../../missions/infrastructure/models/mission.m
 
 type ProfileTab = 'reports' | 'reviews' | 'missions' | 'achievements';
 
+interface Celebration {
+  type: 'level' | 'achievement';
+  title: string;
+  subtitle: string;
+  code?: string;
+}
+
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  imports: [RouterLink, HomeReportCardComponent, AchievementIconComponent],
+  imports: [NgTemplateOutlet, RouterLink, HomeReportCardComponent, AchievementIconComponent],
   templateUrl: './profile-page.html',
   styleUrls: ['./profile-page.css'],
 })
@@ -27,7 +34,6 @@ type ProfileTab = 'reports' | 'reviews' | 'missions' | 'achievements';
 export class ProfilePage implements OnInit {
   private readonly profileService = inject(ProfileService);
   private readonly reportListService = inject(ReportListService);
-  private readonly toastService = inject(ToastService);
   private readonly notificationService = inject(NotificationService);
   private readonly missionService = inject(MissionService);
 
@@ -55,9 +61,11 @@ export class ProfilePage implements OnInit {
   readonly experienceLoading = signal(true);
   readonly experienceError = signal<string | null>(null);
   readonly levelUpPulse = signal(false);
-  readonly showLevelUpToast = signal(false);
+  readonly currentCelebration = signal<Celebration | null>(null);
   readonly showExperienceWidget = signal(true);
-  readonly missions = signal<MissionOutput[]>([]);
+  private celebrationQueue: Celebration[] = [];
+  readonly ownMissions = signal<MissionOutput[]>([]);
+  readonly joinedMissions = signal<MissionOutput[]>([]);
   readonly missionsLoading = signal(true);
   readonly missionsError = signal<string | null>(null);
 
@@ -65,6 +73,9 @@ export class ProfilePage implements OnInit {
 
   private readonly lastSeenLevelKey = 'petfinder.profile.last-seen-level';
   private previousLevel: number | null = this.readLastSeenLevel();
+
+  private readonly lastSeenAchievementsKey = 'petfinder.profile.last-seen-achievements';
+  private previousAchievementCodes: string[] | null = this.readLastSeenAchievements();
 
   async ngOnInit(): Promise<void> {
     await Promise.all([
@@ -145,6 +156,8 @@ export class ProfilePage implements OnInit {
 
       this.previousLevel = response.level;
       this.storeLastSeenLevel(response.level);
+
+      this.handleUnlockedAchievements();
     } catch (error) {
       this.experienceError.set(error instanceof Error ? error.message : 'No se pudo cargar tu progreso');
       this.showExperienceWidget.set(false);
@@ -158,13 +171,27 @@ export class ProfilePage implements OnInit {
     this.missionsError.set(null);
     try {
       const profile = this.profile() ?? await this.profileService.getProfile();
-      const missions = await firstValueFrom(this.missionService.getJoinedMissionsByUser(profile.id));
+      const myReports = await this.reportListService.getMyReports();
+      const ownedReportPublicIds = myReports.map((report) => report.publicId);
+      const allMissions = await firstValueFrom(
+        this.missionService.getActiveMissionsWithDetails(),
+      );
 
-      this.missions.set(
-        missions.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        ),
+      const byNewest = (a: MissionOutput, b: MissionOutput): number =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
+      this.ownMissions.set(
+        allMissions
+          .filter((mission) => ownedReportPublicIds.includes(mission.report.publicId))
+          .sort(byNewest),
+      );
+
+      this.joinedMissions.set(
+        allMissions
+          .filter((mission) =>
+            mission.volunteers.some((volunteer) => volunteer.publicId === profile.id),
+          )
+          .sort(byNewest),
       );
     } catch (error) {
       this.missionsError.set(error instanceof Error ? error.message : 'No se pudieron cargar tus misiones');
@@ -174,12 +201,59 @@ export class ProfilePage implements OnInit {
   }
   private handleLevelUp(experience: UserExperienceSummary): void {
     this.levelUpPulse.set(true);
-    this.showLevelUpToast.set(true);
-    this.toastService.brand(`¡Subiste al nivel ${experience.level}! Tu progreso quedó actualizado.`, 4000);
     this.notificationService.showLocal('¡Subiste de nivel!', `Ahora estás en el nivel ${experience.level}.`);
 
+    this.enqueueCelebration({
+      type: 'level',
+      title: '¡Subiste de nivel!',
+      subtitle: `Ahora estás en el nivel ${experience.level}.`,
+    });
+
     window.setTimeout(() => this.levelUpPulse.set(false), 1200);
-    window.setTimeout(() => this.showLevelUpToast.set(false), 2600);
+  }
+
+  private handleUnlockedAchievements(): void {
+    const unlocked = this.achievements().filter(
+      (achievement) => achievement.unlocked ?? true,
+    );
+    const unlockedCodes = unlocked.map((achievement) => achievement.code);
+
+    if (this.previousAchievementCodes !== null) {
+      const newlyUnlocked = unlocked.filter(
+        (achievement) => !this.previousAchievementCodes!.includes(achievement.code),
+      );
+
+      for (const achievement of newlyUnlocked) {
+        this.enqueueCelebration({
+          type: 'achievement',
+          title: '¡Logro desbloqueado!',
+          subtitle: achievement.name,
+          code: achievement.code,
+        });
+      }
+    }
+
+    this.previousAchievementCodes = unlockedCodes;
+    this.storeLastSeenAchievements(unlockedCodes);
+  }
+
+  private enqueueCelebration(celebration: Celebration): void {
+    this.celebrationQueue.push(celebration);
+    this.processCelebrationQueue();
+  }
+
+  private processCelebrationQueue(): void {
+    if (this.currentCelebration() !== null) return;
+
+    const next = this.celebrationQueue.shift();
+    if (!next) return;
+
+    this.currentCelebration.set(next);
+
+    window.setTimeout(() => {
+      this.currentCelebration.set(null);
+      window.setTimeout(() => this.processCelebrationQueue(), 400);
+    }, 2600);
   }
 
   levelProgressPercent(): number {
@@ -260,6 +334,25 @@ export class ProfilePage implements OnInit {
   private storeLastSeenLevel(level: number): void {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(this.lastSeenLevelKey, String(level));
+  }
+
+  private readLastSeenAchievements(): string[] | null {
+    if (typeof localStorage === 'undefined') return null;
+
+    const value = localStorage.getItem(this.lastSeenAchievementsKey);
+    if (value === null) return null;
+
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private storeLastSeenAchievements(codes: string[]): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(this.lastSeenAchievementsKey, JSON.stringify(codes));
   }
 
   ratingStars(): string[] {

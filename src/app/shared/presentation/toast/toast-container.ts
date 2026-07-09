@@ -7,6 +7,7 @@ const KIND_CLASSES: Record<ToastKind, string> = {
   error: 'bg-red-50 border-red-200 text-red-800',
   info: 'bg-slate-50 border-slate-200 text-slate-800',
   brand: 'bg-[#12355B] border-[#12355B] text-white',
+  award: 'bg-[#E8842E] border-[#E8842E] text-white',
 };
 
 @Component({

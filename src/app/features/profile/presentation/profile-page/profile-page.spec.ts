@@ -71,7 +71,7 @@ describe('ProfilePage', () => {
   };
 
   let missionService: {
-    getJoinedMissionsByUser: ReturnType<typeof vi.fn>;
+    getActiveMissionsWithDetails: ReturnType<typeof vi.fn>;
   };
 
   let toastService: {
@@ -99,7 +99,7 @@ describe('ProfilePage', () => {
     };
 
     missionService = {
-      getJoinedMissionsByUser: vi.fn().mockReturnValue(of([])),
+      getActiveMissionsWithDetails: vi.fn().mockReturnValue(of([])),
     };
 
     toastService = {
@@ -289,14 +289,33 @@ describe('ProfilePage', () => {
       await component.loadExperience();
 
       expect(component.levelUpPulse()).toBe(true);
-      expect(toastService.brand).toHaveBeenCalledWith(
-        '¡Subiste al nivel 2! Tu progreso quedó actualizado.',
-        4000,
-      );
+      expect(component.currentCelebration()?.title).toBe('¡Subiste de nivel!');
       expect(notificationService.showLocal).toHaveBeenCalledWith(
         '¡Subiste de nivel!',
         'Ahora estás en el nivel 2.',
       );
+    });
+
+    it('queues a celebration when a new achievement is unlocked', async () => {
+      profileService.getUserExperience.mockResolvedValueOnce({
+        xp: 0,
+        level: 1,
+        unlockedAchievements: [],
+      } as UserExperienceSummary);
+
+      profileService.getUserExperience.mockResolvedValueOnce({
+        xp: 10,
+        level: 1,
+        unlockedAchievements: [
+          { code: 'FIRST_RESCUE', name: 'Primer rescate', description: '', requiredXp: 10, icon: '🐾', unlocked: true },
+        ],
+      } as UserExperienceSummary);
+
+      await component.loadExperience();
+      await component.loadExperience();
+
+      expect(component.currentCelebration()?.title).toBe('¡Logro desbloqueado!');
+      expect(component.currentCelebration()?.subtitle).toBe('Primer rescate');
     });
 
     it('lists every achievement under locked when the user has none unlocked', async () => {
@@ -344,21 +363,35 @@ describe('ProfilePage', () => {
   });
 
   describe('missions', () => {
-    it('loads the missions joined by the current user', async () => {
-      const mission = mockMission();
+    it('splits missions into own (created) and joined', async () => {
+      const ownMission = mockMission({
+        publicId: 'mission-own',
+        report: { ...mockMission().report, publicId: 'report-1' },
+        volunteers: [],
+      });
+      const joinedMission = mockMission({
+        publicId: 'mission-joined',
+        report: { ...mockMission().report, publicId: 'report-2' },
+        volunteers: [
+          { publicId: 'user-123', username: 'fran', photoUrl: null, name: null, lastname: null },
+        ],
+      });
 
-      missionService.getJoinedMissionsByUser.mockReturnValue(of([mission]));
+      reportListService.getMyReports.mockResolvedValue([{ publicId: 'report-1' }]);
+      missionService.getActiveMissionsWithDetails.mockReturnValue(
+        of([ownMission, joinedMission]),
+      );
 
       await component.ngOnInit();
 
-      expect(missionService.getJoinedMissionsByUser).toHaveBeenCalledWith('user-123');
-      expect(component.missions()).toEqual([mission]);
+      expect(component.ownMissions()).toEqual([ownMission]);
+      expect(component.joinedMissions()).toEqual([joinedMission]);
       expect(component.missionsLoading()).toBe(false);
       expect(component.missionsError()).toBeNull();
     });
 
     it('shows an error when missions loading fails', async () => {
-      missionService.getJoinedMissionsByUser.mockReturnValue(
+      missionService.getActiveMissionsWithDetails.mockReturnValue(
         throwError(() => new Error('No se pudieron cargar tus misiones')),
       );
 
@@ -366,7 +399,8 @@ describe('ProfilePage', () => {
 
       expect(component.missionsError()).toBe('No se pudieron cargar tus misiones');
       expect(component.missionsLoading()).toBe(false);
-      expect(component.missions()).toEqual([]);
+      expect(component.ownMissions()).toEqual([]);
+      expect(component.joinedMissions()).toEqual([]);
     });
 
     it('translates mission statuses', () => {
