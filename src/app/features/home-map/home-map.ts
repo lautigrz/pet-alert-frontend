@@ -923,6 +923,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.markSearchResult(suggestion.lat, suggestion.lng);
     this.drawRadar();
     this.filterByRadar();
+    this.centerFilter.set('ALL');
     this.applyFilterCenters();
   }
 
@@ -941,6 +942,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     this.searchLatLng = undefined;
     this.drawRadar();
     this.filterByRadar();
+    this.centerFilter.set('ALL');
     this.applyFilterCenters();
   }
 

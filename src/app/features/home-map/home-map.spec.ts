@@ -494,6 +494,14 @@ describe('HomeMapComponent', () => {
       expect(component.searchTerm()).toBe('');
       expect(component.suggestions()).toEqual([]);
     });
+
+    it('resets the center filter to ALL so stale centers disappear', () => {
+      component.centerFilter.set('POLICE');
+
+      component.clearSearch();
+
+      expect(component.centerFilter()).toBe('ALL');
+    });
   });
 
   describe('selectSuggestion', () => {
@@ -519,6 +527,20 @@ describe('HomeMapComponent', () => {
         [-34.9, -57.9],
         15,
       );
+    });
+
+    it('resets the center filter to ALL when a new location is picked', () => {
+      const suggestion = mockSuggestion({ lat: -34.9, lng: -57.9 });
+      component.suggestions.set([suggestion]);
+      testingComponent().map = mockMap();
+      vi.spyOn(testingComponent(), 'markSearchResult').mockImplementation(
+        (): void => undefined,
+      );
+      component.centerFilter.set('VETERINARY');
+
+      component.selectSuggestion(suggestion);
+
+      expect(component.centerFilter()).toBe('ALL');
     });
   });
 
