@@ -118,4 +118,19 @@ export class ProfileHttp {
       this.http.get<UserRatingSummary>(`${this.baseUrl}/users/${publicId}/rating`),
     );
   }
+
+  updateCurrentLocation(
+    latitude: number,
+    longitude: number,
+  ): Promise<void> {
+    return firstValueFrom(
+      this.http.patch<void>(
+        `${this.baseUrl}/users/me/location`,
+        {
+          latitude,
+          longitude,
+        },
+      ),
+    );
+  }
 }

@@ -160,6 +160,20 @@ export class ProfileService {
 
   }
 
+  async updateCurrentLocation(
+    latitude: number,
+    longitude: number,
+  ): Promise<void> {
+    try {
+      await this.profileHttp.updateCurrentLocation(
+        latitude,
+        longitude,
+      );
+    } catch (error) {
+      throw this.mapUpdateProfileError(error);
+    }
+  }
+  
   clearCache(): void {
     this.cachedProfile = null;
     this.inFlight = null;

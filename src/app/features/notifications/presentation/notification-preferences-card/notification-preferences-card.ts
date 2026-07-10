@@ -78,6 +78,10 @@ export class NotificationPreferencesCard implements OnInit {
     this.sightingReportsEnabled.update((value) => !value);
   }
 
+  toggleLostReports(): void {
+    this.lostReportsEnabled.update((value) => !value);
+  }
+
   toggleMatches(): void {
     this.matchesEnabled.update((value) => !value);
   }
