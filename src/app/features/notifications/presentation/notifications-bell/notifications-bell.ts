@@ -63,14 +63,29 @@ export class NotificationsBell implements OnInit {
     return this.notificationsService.esNueva(notificacion.matchPublicId);
   }
 
-  goToMatches(notificacion: NotificacionCoincidencia): void {
-    this.cerrar();
-    const reportId =
-      notificacion.rol === 'avistador'
-        ? notificacion.matchedReportPublicId
-        : notificacion.lostReportPublicId;
-    this.router.navigate(['/reports', reportId, 'matches']);
+  async goToMatches(
+  notificacion: NotificacionCoincidencia,
+): Promise<void> {
+
+  if (this.esNueva(notificacion)) {
+    await this.notificationsService.markSeen(
+      notificacion.matchPublicId,
+    );
   }
+
+  this.cerrar();
+
+  const reportId =
+    notificacion.rol === 'avistador'
+      ? notificacion.matchedReportPublicId
+      : notificacion.lostReportPublicId;
+
+  await this.router.navigate([
+    '/reports',
+    reportId,
+    'matches',
+  ]);
+}
 
   imagenDe(notificacion: NotificacionCoincidencia): string | null {
     return notificacion.rol === 'avistador' ? notificacion.lostPetImage : notificacion.matchedImage;
