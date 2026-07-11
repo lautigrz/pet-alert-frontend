@@ -80,3 +80,34 @@ app-root {
   margin: 0;
   width: 300px !important;
 }
+
+/* Custom User Location Marker Styling */
+.custom-user-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.user-marker-pulse {
+  width: 14px;
+  height: 14px;
+  background-color: #3b82f6;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+  position: relative;
+}
+.user-marker-pulse::after {
+  content: '';
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: rgba(59, 130, 246, 0.4);
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
