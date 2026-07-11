@@ -9,6 +9,7 @@ import {
   ReportType,
 } from '../../domain/report-read.model';
 import { ReportCardComponent } from '../components/report-card/report-card';
+import { PetIconComponent } from '../../../../shared/component/pet-icon/pet-icon.component';
 
 type Tab = 'todos' | 'recientes' | 'cercanos' | 'mis-reportes';
 type FiltroTipo = 'TODOS' | ReportType;
@@ -25,7 +26,7 @@ const REPORTS_PER_PAGE = 10;
 @Component({
   selector: 'app-report-list',
   standalone: true,
-  imports: [CommonModule, ReportCardComponent],
+  imports: [CommonModule, ReportCardComponent, PetIconComponent],
   host: { class: 'flex flex-1 min-h-0 overflow-hidden' },
   templateUrl: './report-list.html',
 })
