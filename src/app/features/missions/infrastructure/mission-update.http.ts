@@ -31,6 +31,7 @@ export interface CreateMissionUpdateDTO {
   missionPublicId: string;
   comment: string;
   photoUrl?: string;
+  photo?: File;
 }
 
 export interface CreateMissionUpdateResponse {
@@ -53,9 +54,18 @@ export class MissionUpdateHttp {
   }
 
   createUpdate(body: CreateMissionUpdateDTO): Observable<CreateMissionUpdateResponse> {
+    const formData = new FormData();
+    formData.append('missionPublicId', body.missionPublicId);
+    formData.append('comment', body.comment);
+    if (body.photoUrl) {
+      formData.append('photoUrl', body.photoUrl);
+    }
+    if (body.photo) {
+      formData.append('photos', body.photo);
+    }
     return this.http.post<CreateMissionUpdateResponse>(
       `${this.baseUrl}/mission-updates`,
-      body
+      formData
     );
   }
 

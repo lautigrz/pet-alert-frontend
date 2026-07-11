@@ -114,6 +114,7 @@ export class MissionDetailPage implements OnInit, OnDestroy {
   });
 
   readonly isTrackingActive = signal<boolean>(false);
+  readonly activeImage = signal<string | null>(null);
 
   private map?: L.Map;
   private circle?: L.Circle;
@@ -273,11 +274,16 @@ export class MissionDetailPage implements OnInit, OnDestroy {
         this.missionUpdateService.createUpdate({
           missionPublicId: m.publicId,
           comment: this.comment,
-          photoUrl: undefined
+          photoUrl: undefined,
+          photo: this.image
         })
       );
       this.comment = '';
       this.image = undefined;
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
       this.toastService.success("Actualización enviada correctamente");
       await this.loadResponses(m.publicId);
     } catch (error) {
@@ -408,6 +414,14 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     } catch {
       this.toastService.error('No se pudo abrir el chat');
     }
+  }
+
+  openImageModal(url: string): void {
+    this.activeImage.set(url);
+  }
+
+  closeImageModal(): void {
+    this.activeImage.set(null);
   }
 
 }
