@@ -417,4 +417,18 @@ export class ProfilePage implements OnInit {
       year: 'numeric',
     });
   }
+
+
+  missionPetPhotoUrl(mission: MissionOutput): string {
+    return (
+      mission.report.petDetails?.photoUrl ||
+      mission.report.photoUrl ||
+      'https://ui-avatars.com/api/?name=Mascota&background=e2e8f0&color=12355B&size=128'
+    );
+  }
+
+  missionPetAlt(mission:MissionOutput): string {
+    const petName = mission.report.petDetails?.name || mission.report.title || 'mascota';
+    return `Foto de ${petName}`;
+  }
 }

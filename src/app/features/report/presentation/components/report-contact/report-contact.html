@@ -1,40 +1,65 @@
 <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5">
   <h3 class="text-base font-bold text-[#12355B] mb-4">Contacto</h3>
 
-  <button
-    type="button"
-    (click)="verPerfil()"
-    [disabled]="esPropio()"
-    class="flex items-center gap-3 mb-4 w-full text-left enabled:cursor-pointer disabled:cursor-default disabled:pointer-events-none"
-  >
-    <img [src]="imagenUsuario()" alt="" class="w-11 h-11 rounded-full object-cover bg-slate-100 shrink-0 transition hover:ring-2 hover:ring-[#E8842E] hover:ring-offset-2" />
+  <button type="button" (click)="verPerfil()" [disabled]="esPropio()"
+    class="flex items-center gap-3 mb-4 w-full text-left enabled:cursor-pointer disabled:cursor-default disabled:pointer-events-none">
+    <img [src]="imagenUsuario()" alt=""
+      class="w-11 h-11 rounded-full object-cover bg-slate-100 shrink-0 transition hover:ring-2 hover:ring-[#E8842E] hover:ring-offset-2" />
     <div class="min-w-0">
       <span class="block text-sm font-semibold text-[#E8842E] truncate transition hover:font-bold">
         <span class="capitalize">{{ username() }}</span>@if (esPropio()) { (tú) }
       </span>
+
+      <div class="mt-1 flex flex-wrap items-center gap-1.5">
+        @if (userLevel(); as level) {
+        <span
+          class="inline-flex items-center rounded-full bg-[#12355B]/10 px-2 py-0.5 text-[11px] font-bold text-[#12355B]">
+          Nivel {{ level }}
+        </span>
+        }
+
+        @if (topAchievement(); as achievement) {
+        <span class="relative inline-flex group/achievement" [attr.title]="achievementTooltip()">
+          <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#E8842E] text-white shadow-sm"
+            aria-label="Mayor logro alcanzado">
+            <app-achievement-icon [code]="achievement.code" class="h-3.5 w-3.5" />
+          </span>
+
+          <span
+            class="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-30 hidden w-64 -translate-x-1/2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-xs text-slate-600 shadow-xl group-hover/achievement:block">
+            <span class="block font-bold text-[#12355B]">
+              {{ achievement.name }}
+            </span>
+
+            <span class="mt-1 block leading-relaxed">
+              {{ achievement.description }}
+            </span>
+
+            <span class="mt-1 block font-semibold text-[#E8842E]">
+              Requiere {{ achievement.requiredXp }} XP
+            </span>
+          </span>
+        </span>
+        }
+      </div>
+
       @if (miembroDesde()) {
-        <span class="block text-xs text-slate-400">{{ miembroDesde() }}</span>
+      <span class="block text-xs text-slate-400 mt-1">{{ miembroDesde() }}</span>
       }
     </div>
   </button>
 
   @if (esPropio()) {
-    <button
-      type="button"
-      (click)="goToMatches()"
-      class="w-full inline-flex items-center justify-center gap-2 bg-[#1D6FA3] hover:bg-[#185c87] text-white text-sm font-semibold py-2.5 rounded-lg transition"
-    >
-      <app-pet-icon name="sparks" class="w-4 h-4" />
-      Coincidencias
-    </button>
+  <button type="button" (click)="goToMatches()"
+    class="w-full inline-flex items-center justify-center gap-2 bg-[#1D6FA3] hover:bg-[#185c87] text-white text-sm font-semibold py-2.5 rounded-lg transition">
+    <app-pet-icon name="sparks" class="w-4 h-4" />
+    Coincidencias
+  </button>
   } @else {
-    <button
-      type="button"
-      (click)="sendMessage()"
-      class="w-full bg-[#12355B] hover:bg-[#0e2a4a] text-white text-sm font-semibold py-2.5 rounded-lg transition"
-    >
-      Enviar mensaje
-    </button>
+  <button type="button" (click)="sendMessage()"
+    class="w-full bg-[#12355B] hover:bg-[#0e2a4a] text-white text-sm font-semibold py-2.5 rounded-lg transition">
+    Enviar mensaje
+  </button>
   }
 
   <ng-content></ng-content>

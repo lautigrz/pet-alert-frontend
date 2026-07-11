@@ -164,7 +164,8 @@
         </section>
         }
 
-        <app-report-contact [report]="r" [esPropio]="esPropio()">
+        <app-report-contact [report]="r" [esPropio]="esPropio()" [userLevel]="userLevel()"
+          [topAchievement]="topAchievement()" [achievementTooltip]="topAchievementTooltip()">
           @if (esPropio() && r.status === 'ACTIVE') {
           <div class="mt-2.5">
             <button type="button" (click)="abrirConfirmacion()" [disabled]="actualizando()"

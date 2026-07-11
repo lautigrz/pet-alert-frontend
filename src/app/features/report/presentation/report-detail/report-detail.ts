@@ -16,6 +16,7 @@ import { ReportModalComponent } from '../../../../shared/component/report-modal/
 import { CloseReportModalComponent } from '../components/close-report-modal/close-report-modal';
 import { MissionService } from '../../../missions/application/mission.service';
 import { ChatsService } from '../../../chats/application/chats.service';
+import { UserExperienceAchievement, UserExperienceSummary } from '../../../profile/domain/profile.model';
 
 import { InfoTooltipComponent } from "../../../../shared/component/info-tooltip/info-tooltip.component";
 
@@ -48,7 +49,6 @@ export class ReportDetailPage implements OnInit {
   private readonly profileService = inject(ProfileService);
   private readonly missionService = inject(MissionService);
   private readonly chatsService = inject(ChatsService);
-  private readonly USUARIO_BAJA_VALORACION_PUBLIC_ID = '70867c26-8c5c-40d2-b3df-08036823ff16';
 
 
 
@@ -66,6 +66,11 @@ export class ReportDetailPage implements OnInit {
   userRatingAverage = signal(0);
   userRatingCount = signal(0);
   fromMissionId = signal<string | null>(null);
+  userExperience = signal<UserExperienceSummary | null>(null);
+  userExperienceLoading = signal(false);
+  userExperienceError = signal<string | null>(null);
+
+  userLevel = computed(() => this.userExperience()?.level ?? null);
 
   associatedMission = signal<unknown | null>(null);
   missionOwner = signal<unknown | null>(null);
@@ -82,6 +87,26 @@ export class ReportDetailPage implements OnInit {
     return !!r && !this.esPropio() && r.status === 'ACTIVE';
   });
 
+
+  topAchievement = computed(() => {
+    const experience = this.userExperience();
+
+    if (!experience) return null;
+
+    const achievements = this.userAchievements(experience);
+
+    const unlockedAchievements = achievements.filter(
+      (achievement) => achievement.unlocked ?? true,
+    );
+
+    if (unlockedAchievements.length === 0) return null;
+
+    return unlockedAchievements.reduce((highest, current) =>
+      (current.requiredXp ?? 0) > (highest.requiredXp ?? 0)
+        ? current
+        : highest,
+    );
+  });
   async ngOnInit() {
     const publicId = this.route.snapshot.paramMap.get('publicId')!;
 
@@ -93,7 +118,11 @@ export class ReportDetailPage implements OnInit {
     try {
       const report = await this.reportService.getReportByPublicId(publicId);
       this.report.set(report);
-      await this.cargarRatingUsuario(report.user.publicId);
+
+      await Promise.all([
+        this.cargarRatingUsuario(report.user.publicId),
+        this.chargeUserExperience(report.user.publicId),
+      ]);
     } catch {
       this.error.set('No se pudo cargar el reporte');
     }
@@ -303,5 +332,38 @@ export class ReportDetailPage implements OnInit {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
+  }
+
+  private async chargeUserExperience(userPublicId: string): Promise<void> {
+    this.userExperienceLoading.set(true);
+    this.userExperienceError.set(null);
+
+    try {
+      const experience = await this.profileService.getPublicUserExperience(userPublicId);
+      this.userExperience.set(experience);
+    } catch (error) {
+      this.userExperience.set(null);
+      this.userExperienceError.set(error instanceof Error ? error.message : 'No se pudo cargar la experiencia del usuario');
+    } finally {
+      this.userExperienceLoading.set(false);
+    }
+  }
+
+  private userAchievements(experience: UserExperienceSummary): UserExperienceAchievement[] {
+    if (Array.isArray(experience.achievements) && experience.achievements.length > 0) {
+      return experience.achievements;
+    }
+
+    return Array.isArray(experience.unlockedAchievements)
+      ? experience.unlockedAchievements
+      : [];
+  }
+
+  topAchievementTooltip(): string {
+    const achievement = this.topAchievement();
+    if (!achievement) {
+      return 'Este usuario todavía no desbloqueó logros.';
+    }
+    return `${achievement.name}: ${achievement.description} · Se desbloquea al alcanzar ${achievement.requiredXp} XP`;
   }
 }
