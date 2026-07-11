@@ -129,6 +129,7 @@ describe('MissionDetailPage', () => {
 
     fixture = TestBed.createComponent(MissionDetailPage);
     component = fixture.componentInstance;
+    vi.spyOn(component, 'initializeMap').mockImplementation((): void => undefined);
   });
 
   it('debería crear el componente', () => {

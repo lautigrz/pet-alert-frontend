@@ -134,6 +134,7 @@ interface ReportListServiceMock {
 
 interface ProfileServiceMock {
   getProfile: ReturnType<typeof vi.fn>;
+  updateCurrentLocation: ReturnType<typeof vi.fn>;
 }
 
 interface RouterMock {
@@ -286,6 +287,7 @@ describe('HomeMapComponent', () => {
 
     profileService = {
       getProfile: vi.fn(),
+      updateCurrentLocation: vi.fn().mockResolvedValue(undefined),
     };
 
     notificationService = {
