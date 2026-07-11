@@ -1,10 +1,12 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import * as L from 'leaflet';
+import 'leaflet.heat';
 import { MissionService } from '../../application/mission.service';
 import { MissionUpdateService } from '../../application/mission-update.service';
+import { MissionCoverageService } from '../../application/mission-coverage.service';
 import { AuthService } from '../../../auth/application/auth.service';
 import { ReportService } from '../../../report/application/report.service';
 import { ToastService } from '../../../../shared/application/toast.service';
@@ -34,6 +36,43 @@ export class MissionDetailPage implements OnInit, OnDestroy {
   private readonly reportService = inject(ReportService);
   private readonly toastService = inject(ToastService);
   private readonly chatsService = inject(ChatsService);
+  protected readonly missionCoverageService = inject(MissionCoverageService);
+
+  constructor() {
+    effect(() => {
+      const points = this.missionCoverageService.coveragePoints();
+      if (this.heatLayer) {
+        this.heatLayer.setLatLngs(points);
+        this.heatLayer.redraw();
+      }
+    });
+
+    effect(() => {
+      const loc = this.missionCoverageService.userLocation();
+      if (!this.map) return;
+
+      if (loc) {
+        const [lat, lng] = loc;
+        if (this.userMarker) {
+          this.userMarker.setLatLng([lat, lng]);
+        } else {
+
+          const userIcon = L.divIcon({
+            className: 'custom-user-marker',
+            html: '<div class="user-marker-pulse"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+          this.userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(this.map);
+        }
+      } else {
+        if (this.userMarker) {
+          this.userMarker.remove();
+          this.userMarker = undefined;
+        }
+      }
+    });
+  }
 
   readonly mission = signal<MissionOutput | null>(null);
   readonly responses = signal<MissionUpdateOutput[]>([]);
@@ -48,6 +87,8 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     photoUrl: string | null;
   } | null>(null);
   readonly animalType = signal<'DOG' | 'CAT' | null>(null);
+  readonly visitedCount = computed(() => this.missionCoverageService.visitedCount());
+  readonly allCellsCount = computed(() => this.missionCoverageService.allCellsCount());
 
   readonly elapsedTime = computed(() => {
     const m = this.mission();
@@ -72,9 +113,13 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     }
   });
 
+  readonly isTrackingActive = signal<boolean>(false);
+
   private map?: L.Map;
   private circle?: L.Circle;
   private marker?: L.Marker;
+  private heatLayer?: L.HeatLayer;
+  private userMarker?: L.Marker;
 
   comment = '';
   image?: File;
@@ -106,6 +151,15 @@ export class MissionDetailPage implements OnInit, OnDestroy {
       this.animalType.set(reportDetail.details.animalType);
 
       this.initializeMap(m);
+      if ((this.isVolunteer() || this.isOwner()) && !MissionStatusMapper.isClosed(m.status)) {
+        this.missionCoverageService.startTracking(
+          m.publicId,
+          m.searchArea.latitude,
+          m.searchArea.longitude,
+          m.searchArea.radius,
+          this.isTrackingActive()
+        );
+      }
     } catch (error) {
       console.error('Error loading mission details:', error);
     }
@@ -155,6 +209,8 @@ export class MissionDetailPage implements OnInit, OnDestroy {
 
     try {
       await firstValueFrom(this.missionService.leaveMission(m.publicId));
+      this.isTrackingActive.set(false);
+      this.missionCoverageService.stopTracking();
       this.toastService.success("Abandonaste la misión");
       await this.loadMission(m.publicId);
     } catch (error) {
@@ -171,11 +227,35 @@ export class MissionDetailPage implements OnInit, OnDestroy {
 
     try {
       await firstValueFrom(this.missionService.cancelMission(m.publicId));
+      this.isTrackingActive.set(false);
+      this.missionCoverageService.stopTracking();
       this.toastService.success("Misión cancelada con éxito");
       await this.loadMission(m.publicId);
     } catch (error) {
       console.error(error);
       this.toastService.error(error instanceof Error ? error.message : "No se pudo cancelar la misión");
+    }
+  }
+
+  toggleTracking(): void {
+    const m = this.mission();
+    if (!m) return;
+
+    const nextState = !this.isTrackingActive();
+    this.isTrackingActive.set(nextState);
+
+    this.missionCoverageService.startTracking(
+      m.publicId,
+      m.searchArea.latitude,
+      m.searchArea.longitude,
+      m.searchArea.radius,
+      nextState
+    );
+
+    if (nextState) {
+      this.toastService.brand("Búsqueda iniciada. Tu GPS registrará tu recorrido.");
+    } else {
+      this.toastService.success("Búsqueda pausada. Se detuvo el GPS.");
     }
   }
 
@@ -210,6 +290,7 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     if (this.map) {
       this.map.remove();
     }
+    this.missionCoverageService.stopTracking();
   }
 
   editMission(): void {
@@ -264,6 +345,13 @@ export class MissionDetailPage implements OnInit, OnDestroy {
         icon: this.buildMissionIcon(image, isLost)
       }).addTo(this.map);
 
+      const points = this.missionCoverageService.coveragePoints();
+      this.heatLayer = L.heatLayer(points, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17
+      }).addTo(this.map);
+
       this.map.fitBounds(this.circle.getBounds(), { padding: [20, 20] });
     }, 100);
   }
@@ -291,7 +379,7 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     try {
       await firstValueFrom(this.missionUpdateService.scoreUpdate(updatePublicId, points));
       this.toastService.award(`¡Valoración enviada! Se otorgaron +${points} XP`);
-      
+
       this.scores.update(prev => ({
         ...prev,
         [updatePublicId]: points
