@@ -6,6 +6,7 @@ import { ReportContactComponent } from './report-contact';
 import { ChatsService } from '../../../../chats/application/chats.service';
 import { ToastService } from '../../../../../shared/application/toast.service';
 import { ReportDetail } from '../../../infrastructure/report.http';
+import { UserExperienceAchievement } from '../../../../profile/domain/profile.model';
 
 function makeReportDetail(overrides: Partial<ReportDetail> = {}): ReportDetail {
   return {
@@ -84,5 +85,42 @@ describe('ReportContactComponent', () => {
     );
 
     expect(component.miembroDesde()).toBe('Miembro desde marzo 2024');
+  });
+
+  it('muestra el nivel y el mayor logro del usuario cuando recibe la experiencia', () => {
+    const achievement: UserExperienceAchievement = {
+      code: 'FIRST_RESCUE',
+      name: 'Primer rescate',
+      description: 'Participaste en tu primera ayuda',
+      requiredXp: 100,
+      unlocked: true,
+    };
+
+    fixture.componentRef.setInput('report', makeReportDetail());
+    fixture.componentRef.setInput('userLevel', 3);
+    fixture.componentRef.setInput('topAchievement', achievement);
+    fixture.componentRef.setInput(
+      'achievementTooltip',
+      'Primer rescate: Participaste en tu primera ayuda · Se desbloquea al alcanzar 100 XP',
+    );
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).toContain('Nivel 3');
+    expect(compiled.textContent).toContain('Primer rescate');
+    expect(compiled.textContent).toContain('Participaste en tu primera ayuda');
+    expect(compiled.textContent).toContain('Requiere 100 XP');
+  });
+  it('no muestra nivel ni logro cuando no recibe experiencia del usuario', () => {
+    fixture.componentRef.setInput('report', makeReportDetail());
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).not.toContain('Nivel');
+    expect(compiled.textContent).not.toContain('Requiere');
   });
 });

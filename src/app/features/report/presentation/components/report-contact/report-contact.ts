@@ -4,11 +4,13 @@ import { ReportDetail } from '../../../infrastructure/report.http';
 import { PetIconComponent } from '../../../../../shared/component/pet-icon/pet-icon.component';
 import { ChatsService } from '../../../../chats/application/chats.service';
 import { ToastService } from '../../../../../shared/application/toast.service';
+import { AchievementIconComponent } from '../../../../profile/presentation/achievement-icon/achievement-icon.component';
+import type { UserExperienceAchievement } from '../../../../profile/domain/profile.model';
 
 @Component({
   selector: 'app-report-contact',
   standalone: true,
-  imports: [PetIconComponent],
+  imports: [PetIconComponent, AchievementIconComponent],
   templateUrl: './report-contact.html',
 })
 export class ReportContactComponent {
@@ -23,6 +25,9 @@ export class ReportContactComponent {
 
   report = input.required<ReportDetail>();
   esPropio = input(false);
+  userLevel = input<number | null>(null);
+  topAchievement = input<UserExperienceAchievement | null>(null);
+  achievementTooltip = input('');
 
   userPublicId = computed(() => this.report().user);
   username = computed(() => this.report().user.username);
