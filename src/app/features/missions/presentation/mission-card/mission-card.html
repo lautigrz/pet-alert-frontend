@@ -1,0 +1,52 @@
+@if (data(); as mission) {
+  <a
+    class="flex gap-3 sm:gap-4 p-3 sm:p-3.5 bg-white border border-slate-100 rounded-2xl shadow-sm no-underline text-inherit transition-all duration-200 hover:border-[#E8842E] hover:shadow-[0_6px_20px_-6px_rgba(18,53,91,0.18)]"
+    [routerLink]="['/missions', mission.publicId]"
+  >
+    <div class="shrink-0 self-start w-28 aspect-square sm:w-40 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">
+      @if (image()) {
+        <img [src]="image()" [alt]="title()" class="w-full h-full object-cover" />
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
+        </svg>
+      }
+    </div>
+
+    <div class="flex-1 min-w-0 flex flex-col gap-0.5 sm:gap-1.5">
+      <h3 class="text-base sm:text-lg font-extrabold text-[#12355B] truncate">{{ title() }}</h3>
+
+      <div class="flex items-center gap-2 text-[11px] sm:text-xs">
+        <span class="inline-flex items-center gap-1.5 font-semibold text-slate-500">
+          <span class="w-2 h-2 rounded-full" [style.background-color]="statusColor()"></span>
+          {{ statusLabel() }}
+        </span>
+        <span class="text-slate-400">{{ elapsed() }}</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-[13px] font-bold text-white bg-[#12355B] whitespace-nowrap">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
+          </svg>
+          Misión de búsqueda
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-1 min-w-0 text-[11px] sm:text-[13px] text-slate-500">
+        <span class="inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 text-[#E8842E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" /><path d="M12 12 8.5 8.5" />
+          </svg>
+          Radio de búsqueda {{ radiusKm() }} km
+        </span>
+        <span class="inline-flex items-start gap-1.5 min-w-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 mt-0.5 text-[#E8842E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+          </svg>
+          <span class="line-clamp-2 min-w-0">{{ address() }}</span>
+        </span>
+      </div>
+    </div>
+  </a>
+}

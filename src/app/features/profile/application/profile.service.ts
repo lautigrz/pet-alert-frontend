@@ -1,9 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ProfileHttp } from '../infrastructure/profile.http';
-import { UpdatedProfile, UserExperienceSummary } from '../domain/profile.model';
+import { UpdatedProfile, UserExperienceAchievement, UserExperienceSummary } from '../domain/profile.model';
 import { PublicProfile } from '../domain/public-profile';
 import { CreateUserReviewCommand, MyUserReviews,  PaginatedUserReviews,  UserRatingSummary,  UserReview,} from '../domain/user-review.model';import { InvalidProfileDataError,  NetworkError,  UnexpectedProfileError,  UserNotFoundError,} from '../domain/profile.errors';
+const ACHIEVEMENT_NAME_OVERRIDES: Record<string, string> = {
+  FIRST_RESCUE: 'Primeros pasos',
+};
+
 export interface UpdateProfileCommand{
   name?: string;
   lastname?: string;
@@ -90,7 +94,7 @@ export class ProfileService {
 
   async getUserExperience(): Promise<UserExperienceSummary> {
     try {
-      return await this.profileHttp.getUserExperience();
+      return this.withAchievementNames(await this.profileHttp.getUserExperience());
     } catch (error) {
       throw this.mapUpdateProfileError(error);
     }
@@ -98,10 +102,23 @@ export class ProfileService {
 
   async getPublicUserExperience(publicId: string): Promise<UserExperienceSummary> {
     try {
-      return await this.profileHttp.getPublicUserExperience(publicId);
+      return this.withAchievementNames(await this.profileHttp.getPublicUserExperience(publicId));
     } catch (error) {
       throw this.mapUpdateProfileError(error);
     }
+  }
+
+  private withAchievementNames(summary: UserExperienceSummary): UserExperienceSummary {
+    const rename = (achievement: UserExperienceAchievement): UserExperienceAchievement => ({
+      ...achievement,
+      name: ACHIEVEMENT_NAME_OVERRIDES[achievement.code] ?? achievement.name,
+    });
+
+    return {
+      ...summary,
+      achievements: summary.achievements?.map(rename),
+      unlockedAchievements: summary.unlockedAchievements.map(rename),
+    };
   }
 
   async createUserReview(command: CreateUserReviewCommand): Promise<UserReview> {
