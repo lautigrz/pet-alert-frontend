@@ -158,7 +158,7 @@ export class ReportDetailPage implements OnInit {
     this.mostrandoModalDenuncia.set(false);
   }
 
-  async resolverReporte(payload: { resolved: boolean; resolvedAt: string }): Promise<void> {
+  async resolverReporte(payload: { resolved: boolean; resolvedAt?: string }): Promise<void> {
     const r = this.report();
     if (!r || !this.esPropio()) return;
 

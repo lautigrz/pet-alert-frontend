@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 
 interface CloseMotivo {
   label: string;
@@ -15,7 +15,7 @@ export class CloseReportModalComponent {
   readonly enviando = input(false);
   readonly minDate = input<string | null>(null);
   readonly cerrar = output<void>();
-  readonly confirmar = output<{ resolved: boolean; resolvedAt: string }>();
+  readonly confirmar = output<{ resolved: boolean; resolvedAt?: string }>();
 
   readonly motivos: CloseMotivo[] = [
     { label: '¡La mascota volvió a casa! 🧡', descripcion: 'El caso se resolvió', resolved: true },
@@ -28,6 +28,11 @@ export class CloseReportModalComponent {
   readonly today = this.buildToday();
   readonly resolvedAt = signal<string>(this.today);
 
+  readonly isReunion = computed(() => {
+    const i = this.motivoSeleccionado();
+    return i !== null && this.motivos[i].resolved;
+  });
+
   seleccionar(i: number): void {
     this.motivoSeleccionado.set(i);
   }
@@ -35,7 +40,8 @@ export class CloseReportModalComponent {
   onConfirmar(): void {
     const i = this.motivoSeleccionado();
     if (i === null) return;
-    this.confirmar.emit({ resolved: this.motivos[i].resolved, resolvedAt: this.resolvedAt() });
+    const resolved = this.motivos[i].resolved;
+    this.confirmar.emit({ resolved, resolvedAt: resolved ? this.resolvedAt() : undefined });
   }
 
   private buildToday(): string {
