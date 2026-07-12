@@ -115,6 +115,7 @@ export class MissionDetailPage implements OnInit, OnDestroy {
 
   readonly isTrackingActive = signal<boolean>(false);
   readonly activeImage = signal<string | null>(null);
+  readonly removingVolunteerId = signal<string | null>(null);
 
   private map?: L.Map;
   private circle?: L.Circle;
@@ -217,6 +218,38 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     } catch (error) {
       console.error(error);
       this.toastService.error(error instanceof Error ? error.message : "No se pudo abandonar la misión");
+    }
+  }
+
+  async removeVolunteer(volunteerPublicId: string): Promise<void> {
+    const m = this.mission();
+
+    if(!m || !this.isOwner() || MissionStatusMapper.isClosed(m.status)){
+      return;
+    }
+
+    const confirmed = confirm("¿Estás seguro de que deseas eliminar a este voluntario de la misión?");
+    if (!confirmed) {
+      return;
+    }
+    this.removingVolunteerId.set(volunteerPublicId);
+
+    try{
+      await firstValueFrom(this.missionService.removeVolunteer(m.publicId, volunteerPublicId));
+      this.toastService.success("Voluntario eliminado de la misión");
+
+      this.mission.update((current) =>
+      current
+        ? {
+            ...current,
+            volunteers: current.volunteers.filter((volunteer) => volunteer.publicId !== volunteerPublicId),
+        }
+        : current
+      );
+    } catch (error) {
+      this.toastService.error(error instanceof Error ? error.message : "No se pudo eliminar al voluntario de la misión");
+    } finally {
+      this.removingVolunteerId.set(null);
     }
   }
 

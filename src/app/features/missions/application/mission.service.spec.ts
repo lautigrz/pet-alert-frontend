@@ -14,6 +14,7 @@ describe('MissionService', () => {
     getMissionDetail: ReturnType<typeof vi.fn>;
     joinMission: ReturnType<typeof vi.fn>;
     leaveMission: ReturnType<typeof vi.fn>;
+    removeVolunteer: ReturnType<typeof vi.fn>;
     cancelMission: ReturnType<typeof vi.fn>;
   };
 
@@ -24,6 +25,7 @@ describe('MissionService', () => {
       getMissionDetail: vi.fn(),
       joinMission: vi.fn(),
       leaveMission: vi.fn(),
+      removeVolunteer: vi.fn(),
       cancelMission: vi.fn()
     };
 
@@ -121,6 +123,52 @@ describe('MissionService', () => {
     });
   });
 
+  describe('removeVolunteer', () => {
+    it('debería llamar a eliminar voluntario y retornar el estado', async () => {
+      const statusRes = {
+        status: 'success',
+        message: 'Volunteer removed from mission',
+      };
+
+      mockMissionHttp.removeVolunteer.mockReturnValue(of(statusRes));
+
+      const res = await firstValueFrom(
+        service.removeVolunteer('mission-1', 'volunteer-1'),
+      );
+
+      expect(mockMissionHttp.removeVolunteer).toHaveBeenCalledWith(
+        'mission-1',
+        'volunteer-1',
+      );
+      expect(res).toEqual(statusRes);
+    });
+
+    it('debería mapear el mensaje del backend si falla la eliminación del voluntario', async () => {
+      const errorResponse = new HttpErrorResponse({
+        error: { message: 'Solo el dueño de la misión puede eliminar voluntarios' },
+        status: 403,
+      });
+
+      mockMissionHttp.removeVolunteer.mockReturnValue(
+        throwError(() => errorResponse),
+      );
+
+      try {
+        await firstValueFrom(
+          service.removeVolunteer('mission-1', 'volunteer-1'),
+        );
+
+        expect.fail('Debería haber fallado');
+      } catch (err) {
+        const error = err as Error;
+
+        expect(error.message).toBe(
+          'Solo el dueño de la misión puede eliminar voluntarios',
+        );
+      }
+    });
+  });
+
   describe('cancelMission', () => {
     it('debería llamar a cancelar y retornar el estado', async () => {
       const statusRes = { status: 'success', message: 'Canceled' };
@@ -133,104 +181,104 @@ describe('MissionService', () => {
   });
 
   describe('getJoinedMissionsByUser', () => {
-  const missionJoined = {
-    publicId: 'm1',
-    title: 'Buscar a Milo',
-    description: 'Búsqueda comunitaria',
-    status: 'IN_PROGRESS',
-    createdAt: new Date('2026-07-08'),
-    updatedAt: null,
-    searchArea: {
-      latitude: -34.6,
-      longitude: -58.4,
-      radius: 1000,
-    },
-    report: {
-      publicId: 'r1',
-      description: 'Perro perdido',
-      location: {
-        address: 'San Justo',
+    const missionJoined = {
+      publicId: 'm1',
+      title: 'Buscar a Milo',
+      description: 'Búsqueda comunitaria',
+      status: 'IN_PROGRESS',
+      createdAt: new Date('2026-07-08'),
+      updatedAt: null,
+      searchArea: {
         latitude: -34.6,
         longitude: -58.4,
+        radius: 1000,
       },
-      photoUrl: null,
-      title: 'Milo',
-      type: 'LOST',
-      status: 'ACTIVE',
-    },
-    volunteers: [
-      {
-        publicId: 'u-1',
-        username: 'juan',
+      report: {
+        publicId: 'r1',
+        description: 'Perro perdido',
+        location: {
+          address: 'San Justo',
+          latitude: -34.6,
+          longitude: -58.4,
+        },
         photoUrl: null,
-        name: 'Juan',
-        lastname: 'Pérez',
+        title: 'Milo',
+        type: 'LOST',
+        status: 'ACTIVE',
       },
-    ],
-  } as MissionOutput;
+      volunteers: [
+        {
+          publicId: 'u-1',
+          username: 'juan',
+          photoUrl: null,
+          name: 'Juan',
+          lastname: 'Pérez',
+        },
+      ],
+    } as MissionOutput;
 
-  const missionNotJoined = {
-    ...missionJoined,
-    publicId: 'm2',
-    volunteers: [
-      {
-        publicId: 'u-2',
-        username: 'ana',
-        photoUrl: null,
-        name: 'Ana',
-        lastname: 'Gómez',
-      },
-    ],
-  } as MissionOutput;
+    const missionNotJoined = {
+      ...missionJoined,
+      publicId: 'm2',
+      volunteers: [
+        {
+          publicId: 'u-2',
+          username: 'ana',
+          photoUrl: null,
+          name: 'Ana',
+          lastname: 'Gómez',
+        },
+      ],
+    } as MissionOutput;
 
-  it('debería retornar solo las misiones donde participa el usuario', async () => {
-    const missionCards = [
-      { publicId: 'm1', status: 'IN_PROGRESS' },
-      { publicId: 'm2', status: 'OPEN' },
-    ] as unknown as MissionCardOutput[];
+    it('debería retornar solo las misiones donde participa el usuario', async () => {
+      const missionCards = [
+        { publicId: 'm1', status: 'IN_PROGRESS' },
+        { publicId: 'm2', status: 'OPEN' },
+      ] as unknown as MissionCardOutput[];
 
-    mockMissionHttp.getMissions.mockReturnValue(of(missionCards));
+      mockMissionHttp.getMissions.mockReturnValue(of(missionCards));
 
-    mockMissionHttp.getMissionDetail.mockImplementation((publicId: string) => {
-      if (publicId === 'm1') return of(missionJoined);
-      return of(missionNotJoined);
+      mockMissionHttp.getMissionDetail.mockImplementation((publicId: string) => {
+        if (publicId === 'm1') return of(missionJoined);
+        return of(missionNotJoined);
+      });
+
+      const res = await firstValueFrom(service.getJoinedMissionsByUser('u-1'));
+
+      expect(mockMissionHttp.getMissions).toHaveBeenCalled();
+      expect(mockMissionHttp.getMissionDetail).toHaveBeenCalledWith('m1');
+      expect(mockMissionHttp.getMissionDetail).toHaveBeenCalledWith('m2');
+      expect(res).toEqual([missionJoined]);
     });
 
-    const res = await firstValueFrom(service.getJoinedMissionsByUser('u-1'));
+    it('debería retornar un array vacío si no hay misiones', async () => {
+      mockMissionHttp.getMissions.mockReturnValue(of([]));
 
-    expect(mockMissionHttp.getMissions).toHaveBeenCalled();
-    expect(mockMissionHttp.getMissionDetail).toHaveBeenCalledWith('m1');
-    expect(mockMissionHttp.getMissionDetail).toHaveBeenCalledWith('m2');
-    expect(res).toEqual([missionJoined]);
-  });
+      const res = await firstValueFrom(service.getJoinedMissionsByUser('u-1'));
 
-  it('debería retornar un array vacío si no hay misiones', async () => {
-    mockMissionHttp.getMissions.mockReturnValue(of([]));
-
-    const res = await firstValueFrom(service.getJoinedMissionsByUser('u-1'));
-
-    expect(mockMissionHttp.getMissions).toHaveBeenCalled();
-    expect(mockMissionHttp.getMissionDetail).not.toHaveBeenCalled();
-    expect(res).toEqual([]);
-  });
-
-  it('debería mapear el error si falla la carga de misiones del usuario', async () => {
-    const errorResponse = new HttpErrorResponse({
-      error: { message: 'No se pudieron obtener las misiones del usuario' },
-      status: 500,
+      expect(mockMissionHttp.getMissions).toHaveBeenCalled();
+      expect(mockMissionHttp.getMissionDetail).not.toHaveBeenCalled();
+      expect(res).toEqual([]);
     });
 
-    mockMissionHttp.getMissions.mockReturnValue(
-      throwError(() => errorResponse),
-    );
+    it('debería mapear el error si falla la carga de misiones del usuario', async () => {
+      const errorResponse = new HttpErrorResponse({
+        error: { message: 'No se pudieron obtener las misiones del usuario' },
+        status: 500,
+      });
 
-    try {
-      await firstValueFrom(service.getJoinedMissionsByUser('u-1'));
-      expect.fail('Debería haber fallado');
-    } catch (err) {
-      const error = err as Error;
-      expect(error.message).toBe('No se pudieron obtener las misiones del usuario');
-    }
+      mockMissionHttp.getMissions.mockReturnValue(
+        throwError(() => errorResponse),
+      );
+
+      try {
+        await firstValueFrom(service.getJoinedMissionsByUser('u-1'));
+        expect.fail('Debería haber fallado');
+      } catch (err) {
+        const error = err as Error;
+        expect(error.message).toBe('No se pudieron obtener las misiones del usuario');
+      }
+    });
   });
-});
 });
