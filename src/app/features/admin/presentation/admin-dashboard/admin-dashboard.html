@@ -243,13 +243,22 @@
             <span class="text-xs text-slate-500">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }} hs</span>
           </div>
 
-          @if (item.targetType === 'POST') {
+          @if (item.targetType === 'POST' && item.status !== 'SUSPENDED' && item.status !== 'APPROVED') {
             <button type="button" (click)="openReportedPost(item)"
               class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold text-[#1D6FA3] transition hover:bg-slate-100">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
               </svg>
               Ver la publicación denunciada
+            </button>
+            <p class="-mt-2 text-center text-[11px] text-slate-400">Se abre en una pestaña nueva para verificar la denuncia.</p>
+          } @else if (item.targetType === 'USER' && item.status !== 'SUSPENDED' && item.status !== 'APPROVED') {
+            <button type="button" (click)="openReportedUser(item)"
+              class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold text-[#1D6FA3] transition hover:bg-slate-100">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              </svg>
+              Ver el perfil denunciado
             </button>
             <p class="-mt-2 text-center text-[11px] text-slate-400">Se abre en una pestaña nueva para verificar la denuncia.</p>
           }
