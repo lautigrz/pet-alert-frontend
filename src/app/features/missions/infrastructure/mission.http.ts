@@ -42,6 +42,15 @@ export class MissionHttp {
     );
   }
 
+  removeVolunteer(
+    missionPublicId: string,
+    volunteerPublicId: string,
+  ): Observable<{ status: string; message: string }> {
+    return this.http.delete<{ status: string; message: string }>(
+      `${this.baseUrl}/missions/${missionPublicId}/volunteers/${volunteerPublicId}`,
+    );
+  }
+
   cancelMission(publicId: string): Observable<{ status: string; message: string }> {
 
     return this.http.post<{ status: string; message: string }>(

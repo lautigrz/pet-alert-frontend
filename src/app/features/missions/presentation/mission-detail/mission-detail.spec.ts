@@ -8,7 +8,7 @@ import { AuthService } from '../../../auth/application/auth.service';
 import { ReportService } from '../../../report/application/report.service';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ChatsService } from '../../../chats/application/chats.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MissionOutput } from '../../infrastructure/models/mission.model';
 import { Mock } from 'vitest';
 
@@ -31,6 +31,7 @@ describe('MissionDetailPage', () => {
     getMissions: Mock;
     joinMission: Mock;
     leaveMission: Mock;
+    removeVolunteer: Mock;
     cancelMission: Mock;
     getMissionDetail: Mock;
   };
@@ -75,6 +76,7 @@ describe('MissionDetailPage', () => {
       getMissions: vi.fn().mockReturnValue(of([])),
       joinMission: vi.fn().mockReturnValue(of({ status: 'OK', message: 'Success' })),
       leaveMission: vi.fn().mockReturnValue(of({ status: 'OK', message: 'Success' })),
+      removeVolunteer: vi.fn().mockReturnValue(of({ status: 'OK', message: 'Success' })),
       cancelMission: vi.fn().mockReturnValue(of({ status: 'OK', message: 'Success' })),
       getMissionDetail: vi.fn().mockReturnValue(of({
         publicId: 'mission-123',
@@ -273,6 +275,169 @@ describe('MissionDetailPage', () => {
       expect(mockToastService.success).toHaveBeenCalledWith('Abandonaste la misión');
     });
   });
+
+  describe('método removeVolunteer', () => {
+  it('debería eliminar un voluntario si el usuario es dueño y confirma la acción', async () => {
+    const missionData = {
+      publicId: 'mission-123',
+      title: 'Buscar a Firulais',
+      description: 'Se perdió en Palermo',
+      status: 'OPEN',
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      searchArea: {
+        latitude: -34.6037,
+        longitude: -58.3816,
+        radius: 500,
+      },
+      report: {
+        publicId: 'report-123',
+        description: 'Perro perdido',
+        type: 'LOST',
+        status: 'ACTIVE',
+        location: {
+          latitude: -34.6037,
+          longitude: -58.3816,
+          address: 'Av Santa Fe 1234',
+        },
+      },
+      volunteers: [
+        {
+          publicId: 'volunteer-1',
+          username: 'voluntario1',
+          photoUrl: null,
+          name: 'Juan',
+          lastname: 'Pérez',
+        },
+      ],
+    } as unknown as MissionOutput;
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    component.mission.set(missionData);
+    component.isOwner.set(true);
+
+    await component.removeVolunteer('volunteer-1');
+
+    expect(mockMissionService.removeVolunteer).toHaveBeenCalledWith(
+      'mission-123',
+      'volunteer-1',
+    );
+
+    expect(mockToastService.success).toHaveBeenCalledWith(
+      'Voluntario eliminado de la misión',
+    );
+
+    expect(component.mission()?.volunteers).toEqual([]);
+    expect(component.removingVolunteerId()).toBeNull();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('no debería eliminar un voluntario si el usuario cancela la confirmación', async () => {
+    const missionData = {
+      publicId: 'mission-123',
+      title: 'Buscar a Firulais',
+      description: 'Se perdió en Palermo',
+      status: 'OPEN',
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      searchArea: {
+        latitude: -34.6037,
+        longitude: -58.3816,
+        radius: 500,
+      },
+      report: {
+        publicId: 'report-123',
+        description: 'Perro perdido',
+        type: 'LOST',
+        status: 'ACTIVE',
+        location: {
+          latitude: -34.6037,
+          longitude: -58.3816,
+          address: 'Av Santa Fe 1234',
+        },
+      },
+      volunteers: [
+        {
+          publicId: 'volunteer-1',
+          username: 'voluntario1',
+          photoUrl: null,
+          name: 'Juan',
+          lastname: 'Pérez',
+        },
+      ],
+    } as unknown as MissionOutput;
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    component.mission.set(missionData);
+    component.isOwner.set(true);
+
+    await component.removeVolunteer('volunteer-1');
+
+    expect(mockMissionService.removeVolunteer).not.toHaveBeenCalled();
+    expect(component.mission()?.volunteers).toHaveLength(1);
+
+    confirmSpy.mockRestore();
+  });
+
+  it('debería mostrar error si falla la eliminación del voluntario', async () => {
+    const missionData = {
+      publicId: 'mission-123',
+      title: 'Buscar a Firulais',
+      description: 'Se perdió en Palermo',
+      status: 'OPEN',
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      searchArea: {
+        latitude: -34.6037,
+        longitude: -58.3816,
+        radius: 500,
+      },
+      report: {
+        publicId: 'report-123',
+        description: 'Perro perdido',
+        type: 'LOST',
+        status: 'ACTIVE',
+        location: {
+          latitude: -34.6037,
+          longitude: -58.3816,
+          address: 'Av Santa Fe 1234',
+        },
+      },
+      volunteers: [
+        {
+          publicId: 'volunteer-1',
+          username: 'voluntario1',
+          photoUrl: null,
+          name: 'Juan',
+          lastname: 'Pérez',
+        },
+      ],
+    } as unknown as MissionOutput;
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    mockMissionService.removeVolunteer.mockReturnValueOnce(
+      throwError(() => new Error('No se pudo eliminar al voluntario')),
+    );
+
+    component.mission.set(missionData);
+    component.isOwner.set(true);
+
+    await component.removeVolunteer('volunteer-1');
+
+    expect(mockToastService.error).toHaveBeenCalledWith(
+      'No se pudo eliminar al voluntario',
+    );
+
+    expect(component.mission()?.volunteers).toHaveLength(1);
+    expect(component.removingVolunteerId()).toBeNull();
+
+    confirmSpy.mockRestore();
+  });
+});
 
   describe('método cancel', () => {
     it('debería cancelar la misión si el usuario confirma', async () => {

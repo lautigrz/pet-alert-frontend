@@ -81,6 +81,19 @@ export class MissionService {
     );
   }
 
+  removeVolunteer(missionPublicId: string, volunteerPublicId: string): Observable<{ status: string; message: string }> {
+    return this.missionHttp.removeVolunteer(missionPublicId, volunteerPublicId).pipe(
+      catchError((error) => {
+        if (error instanceof HttpErrorResponse) {
+          return throwError(() => new Error(
+            error.error?.message ?? 'No se pudo eliminar al voluntario de la misión'
+          ));
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
   cancelMission(publicId: string): Observable<{ status: string; message: string }> {
     return this.missionHttp.cancelMission(publicId).pipe(
       catchError((error) => {
