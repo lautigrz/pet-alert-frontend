@@ -46,9 +46,9 @@ export class ReportListService {
   }
 
 
-  async updateToResolved(publicId: string, resolved: boolean): Promise<void> {
+  async updateToResolved(publicId: string, resolved: boolean, resolvedAt?: string): Promise<void> {
     try {
-      await this.reportesHttp.updateStatus(publicId, 'RESOLVED', resolved);
+      await this.reportesHttp.updateStatus(publicId, 'RESOLVED', resolved, resolvedAt);
     } catch (error) {
       throw this.mapError(error);
     }
