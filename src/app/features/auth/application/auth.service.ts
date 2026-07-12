@@ -15,6 +15,7 @@ import {
   SessionExpiredError,
   InvalidVerificationTokenError,
   InvalidResetTokenError,
+  GoogleSignInError,
 } from '../domain/auth.errors';
 import { SocketService } from '../../../core/services/socket.service';
 import { NotificationsService } from '../../notifications/application/notifications.service';
@@ -67,6 +68,28 @@ export class AuthService {
     } catch (error) {
       throw this.mapLoginError(error);
     }
+  }
+
+  async loginWithGoogle(code: string): Promise<AuthTokens> {
+    try {
+      const response = await this.authHttp.googleLogin({ code });
+      const tokens: AuthTokens = {
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      };
+      this.tokenStorage.save(tokens);
+      this.socketService.connect(tokens.accessToken, () => this.refreshSession());
+      return tokens;
+    } catch (error) {
+      throw this.mapGoogleLoginError(error);
+    }
+  }
+
+  private mapGoogleLoginError(error: unknown): Error {
+    if (!(error instanceof HttpErrorResponse)) return new UnexpectedAuthError();
+    if (error.status === 0) return new NetworkError();
+    if (error.status === 429) return new RateLimitedError();
+    return new GoogleSignInError();
   }
 
   private refreshInFlight: Promise<string> | null = null;

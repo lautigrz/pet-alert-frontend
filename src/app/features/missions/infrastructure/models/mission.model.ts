@@ -1,3 +1,5 @@
+import { MissionUpdateOutput } from '../mission-update.http';
+
 export interface CreateMissionDTO {
 
     reportPublicId: string;
@@ -69,6 +71,7 @@ export interface MissionOutput {
     searchArea: SearchAreaOutput;
     report: MissionReportOutput;
     volunteers: VolunteerOutput[];
+    comments?: MissionUpdateOutput[];
 }
 
 export interface MissionCardReportOutput {

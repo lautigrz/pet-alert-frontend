@@ -285,10 +285,10 @@
         <div class="mb-4 flex items-center justify-between gap-3">
           <div>
             <h2 class="text-lg font-bold text-[#12355B]">
-              Misiones a las que estoy unido
+              Mis misiones
             </h2>
             <p class="text-sm text-slate-500">
-              Acá podés ver las misiones en las que estás participando.
+              Las misiones de búsqueda que creaste en tus reportes.
             </p>
           </div>
 
@@ -301,7 +301,7 @@
               <path d="M12 2a7 7 0 0 0-4 12.74V16h8v-1.26A7 7 0 0 0 12 2z" />
             </svg>
 
-            {{ missions().length }} {{ missions().length === 1 ? 'misión' : 'misiones' }}
+            {{ ownMissions().length }} {{ ownMissions().length === 1 ? 'misión' : 'misiones' }}
           </span>
         </div>
 
@@ -313,7 +313,68 @@
         <div role="alert" class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded">
           {{ missionsError() }}
         </div>
-        } @else if (missions().length === 0) {
+        } @else if (ownMissions().length === 0) {
+        <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+          <div
+            class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#12355B]/5 text-[#12355B]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+              stroke-linejoin="round" class="h-7 w-7" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+          </div>
+
+          <h3 class="text-lg font-bold text-[#12355B] mb-2">
+            Todavía no creaste misiones
+          </h3>
+
+          <p class="text-sm text-slate-500">
+            Cuando crees una misión de búsqueda en uno de tus reportes, va a aparecer acá.
+          </p>
+        </div>
+        } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          @for (mission of ownMissions(); track mission.publicId; let missionIndex = $index) {
+          <ng-container
+            *ngTemplateOutlet="missionCard; context: { $implicit: mission, index: missionIndex }"></ng-container>
+          }
+        </div>
+        }
+      </section>
+
+      <section class="mt-8">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-[#12355B]">
+              Misiones a las que estoy unido
+            </h2>
+            <p class="text-sm text-slate-500">
+              Las misiones en las que estás participando como voluntario.
+            </p>
+          </div>
+
+          <span
+            class="inline-flex items-center gap-2 rounded-full bg-[#E8842E]/10 px-3 py-1 text-xs font-bold text-[#E8842E]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+              stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
+              <path d="M9 18h6" />
+              <path d="M10 22h4" />
+              <path d="M12 2a7 7 0 0 0-4 12.74V16h8v-1.26A7 7 0 0 0 12 2z" />
+            </svg>
+
+            {{ joinedMissions().length }} {{ joinedMissions().length === 1 ? 'misión' : 'misiones' }}
+          </span>
+        </div>
+
+        @if (missionsLoading()) {
+        <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+          Cargando misiones...
+        </div>
+        } @else if (missionsError()) {
+        <div role="alert" class="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded">
+          {{ missionsError() }}
+        </div>
+        } @else if (joinedMissions().length === 0) {
         <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
           <div
             class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#12355B]/5 text-[#12355B]">
@@ -334,72 +395,116 @@
         </div>
         } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          @for (mission of missions(); track mission.publicId; let missionIndex = $index) {
-          <article
-            class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#E8842E]/40 transition-all">
-            <div class="flex items-start gap-4">
-              <div
-                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#12355B] text-white shadow-sm">
-                <span class="text-sm font-bold">
-                  {{ missionIndex + 1 }}
-                </span>
-              </div>
-
-              <div class="min-w-0 flex-1">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-[11px] font-bold uppercase tracking-wide text-[#E8842E]">
-                      Misión #{{ missionIndex + 1 }}
-                    </p>
-
-                    <h3 class="mt-1 font-bold text-[#12355B] truncate">
-                      {{ mission.title }}
-                    </h3>
-                  </div>
-
-                  <span
-                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#12355B]/5 px-2.5 py-1 text-[11px] font-semibold text-[#12355B]">
-                    {{ missionStatusLabel(mission.status) }}
-                  </span>
-                </div>
-
-                <div class="mt-3 flex items-start gap-2 text-xs text-slate-500">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round" class="mt-0.5 h-4 w-4 shrink-0 text-[#E8842E]" aria-hidden="true">
-                    <path d="M12 21s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z" />
-                    <circle cx="12" cy="10" r="2.5" />
-                  </svg>
-
-                  <span class="truncate">
-                    {{ mission.report.location.address || 'Sin ubicación' }}
-                  </span>
-                </div>
-
-                <p class="mt-3 text-sm text-slate-600 line-clamp-2">
-                  {{ mission.description }}
-                </p>
-
-                <div class="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                  <span class="text-xs text-slate-400">
-                    Creada el {{ missionDate(mission.createdAt) }}
-                  </span>
-
-                  <a [routerLink]="['/missions', mission.publicId]"
-                    class="inline-flex items-center gap-1 text-sm font-semibold text-[#E8842E] hover:underline">
-                    Ver misión
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </article>
+          @for (mission of joinedMissions(); track mission.publicId; let missionIndex = $index) {
+          <ng-container
+            *ngTemplateOutlet="missionCard; context: { $implicit: mission, index: missionIndex }"></ng-container>
           }
         </div>
         }
       </section>
+
+      <ng-template #missionCard let-mission let-index="index">
+        <article
+          class="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-[#E8842E]/40 transition-all">
+          <div class="flex flex-col sm:flex-row">
+            <div class="relative h-40 sm:h-auto sm:w-40 shrink-0 bg-slate-100">
+              <img [src]="missionPetPhotoUrl(mission)" [alt]="missionPetAlt(mission)"
+                class="h-full w-full object-cover" />
+
+              <div
+                class="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#12355B] text-white shadow-sm">
+                <span class="text-sm font-bold">
+                  {{ index + 1 }}
+                </span>
+              </div>
+            </div>
+
+            <div class="min-w-0 flex-1 p-5">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-[11px] font-bold uppercase tracking-wide text-[#E8842E]">
+                    Misión #{{ index + 1 }}
+                  </p>
+
+                  <h3 class="mt-1 font-bold text-[#12355B] truncate">
+                    {{ mission.title }}
+                  </h3>
+                </div>
+
+                <span
+                  [class]="mission.status === 'CLOSED' ? 'bg-[#12355B]/10 text-[#12355B]' : 'bg-[#E8842E]/10 text-[#E8842E]'"
+                  class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold">
+                  {{ missionStatusLabel(mission.status) }}
+                </span>
+              </div>
+
+              <div class="mt-3 flex items-start gap-2 text-xs text-slate-500">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" class="mt-0.5 h-4 w-4 shrink-0 text-[#E8842E]" aria-hidden="true">
+                  <path d="M12 21s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z" />
+                  <circle cx="12" cy="10" r="2.5" />
+                </svg>
+
+                <span class="truncate">
+                  {{ mission.report.location.address || 'Sin ubicación' }}
+                </span>
+              </div>
+
+              <p class="mt-3 text-sm text-slate-600 line-clamp-2">
+                {{ mission.description }}
+              </p>
+
+              <div class="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <span class="text-xs text-slate-400">
+                  Creada el {{ missionDate(mission.createdAt) }}
+                </span>
+
+                <a [routerLink]="['/missions', mission.publicId]"
+                  class="inline-flex items-center gap-1.5 rounded-lg bg-[#12355B] text-white hover:brightness-95 text-sm font-semibold px-4 py-2 transition">
+                  Ver misión
+                  <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </ng-template>
       }
 
       @if (activeTab() === 'achievements') {
+      @if (showExperienceWidget() && experience()) {
+      <section class="mb-6 rounded-2xl bg-[#12355B] px-5 py-4 text-white shadow-sm"
+        [class.level-up-pulse]="levelUpPulse()">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8842E] text-white">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
+              stroke-linejoin="round" class="h-6 w-6" aria-hidden="true">
+              <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold">Nivel {{ experience()?.level ?? 1 }}</p>
+            <p class="text-xs text-slate-300">
+              {{ totalXp() }} XP · {{ xpToNextLevel() }} XP para el siguiente nivel
+            </p>
+          </div>
+
+          <p class="shrink-0 text-xs text-slate-300">
+            {{ levelProgressPercent() }}% completado
+          </p>
+        </div>
+
+        <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+          <div class="h-1.5 rounded-full bg-[#E8842E] transition-all duration-500"
+            [style.width.%]="levelProgressPercent()"></div>
+        </div>
+      </section>
+      } @else if (showExperienceWidget() && experienceLoading()) {
+      <section class="mb-6 rounded-2xl bg-[#12355B] px-5 py-4 text-white shadow-sm">
+        <p class="text-sm text-slate-300">Cargando tu progreso...</p>
+      </section>
+      }
       @if (experienceLoading()) {
       <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
         Cargando logros...
@@ -494,10 +599,24 @@
     </section>
     }
 
-    @if (showLevelUpToast()) {
-    <div class="fixed inset-x-4 bottom-6 z-50 flex justify-center">
-      <div class="level-up-toast rounded-full bg-[#12355B] px-4 py-3 text-sm font-semibold text-white shadow-lg">
-        ¡Subiste de nivel! Tu progreso quedó actualizado.
+    @if (currentCelebration(); as celebration) {
+    <div class="fixed inset-x-4 bottom-28 md:bottom-14 z-[1100] flex justify-center">
+      <div
+        class="level-up-toast flex items-center gap-3 rounded-full bg-[#12355B] px-5 py-3 text-white shadow-lg max-w-[92vw]">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8842E] text-white">
+          @if (celebration.type === 'level') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
+            stroke-linejoin="round" class="h-5 w-5" aria-hidden="true">
+            <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+          } @else {
+          <app-achievement-icon [code]="celebration.code!" class="h-5 w-5" />
+          }
+        </span>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold leading-tight">{{ celebration.title }}</p>
+          <p class="text-xs font-normal text-slate-300 leading-tight truncate">{{ celebration.subtitle }}</p>
+        </div>
       </div>
     </div>
     }

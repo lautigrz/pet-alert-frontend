@@ -28,10 +28,10 @@
           </button>
           <button
             type="button"
-            disabled
-            title="Próximamente"
-            aria-label="Continuar con Google (próximamente)"
-            class="w-full bg-[#12355B] disabled:cursor-not-allowed text-white font-semibold py-3 rounded-md inline-flex items-center justify-center gap-2"
+            (click)="loginWithGoogle()"
+            [disabled]="googleSubmitting()"
+            aria-label="Continuar con Google"
+            class="w-full bg-[#12355B] hover:bg-[#0e2a49] disabled:cursor-not-allowed disabled:opacity-70 text-white font-semibold py-3 rounded-md inline-flex items-center justify-center gap-2 transition-colors"
           >
             <svg class="w-5 h-5 bg-white rounded-sm p-0.5" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
               <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
@@ -136,10 +136,10 @@
 
           <button
             type="button"
-            disabled
-            title="Próximamente"
-            aria-label="Continuar con Google (próximamente)"
-            class="hidden sm:inline-flex w-full bg-[#12355B] disabled:cursor-not-allowed text-white font-semibold py-3 rounded-md items-center justify-center gap-2"
+            (click)="loginWithGoogle()"
+            [disabled]="googleSubmitting()"
+            aria-label="Continuar con Google"
+            class="hidden sm:inline-flex w-full bg-[#12355B] hover:bg-[#0e2a49] disabled:cursor-not-allowed disabled:opacity-70 text-white font-semibold py-3 rounded-md items-center justify-center gap-2 transition-colors"
           >
             <svg class="w-5 h-5 bg-white rounded-sm p-0.5" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
               <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>

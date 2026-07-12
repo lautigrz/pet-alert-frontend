@@ -21,9 +21,9 @@ export class ReportDataPage {
 
   readonly maxPhotos = 4;
   readonly slots = [0, 1, 2, 3];
-  
-  
-  
+
+
+
   petName = signal('');
   petSpecies = signal<'perro' | 'gato'>('perro');
   petBreed = signal('');
@@ -36,10 +36,9 @@ export class ReportDataPage {
 
   private readonly catalog = inject(CatalogService);
   readonly colorOptions = signal<string[]>(PET_COLORS);
-  readonly isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   readonly breedOptions = signal<string[]>(DOG_BREEDS);
 
-  
+
 
   onFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement;

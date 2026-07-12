@@ -1,6 +1,7 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000/api',
+  googleClientId: '865991019769-410qe0dtmuu00nd3gb5sb2gjgkj9n17d.apps.googleusercontent.com',
   firebase: {
     apiKey: "AIzaSyDj5FubORs5b2mR-e_rW3Vy2Cuz47JUxsc",
     authDomain: "petfinder-32e6a.firebaseapp.com",

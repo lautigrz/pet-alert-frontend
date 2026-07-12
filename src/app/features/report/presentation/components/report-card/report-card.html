@@ -3,7 +3,7 @@
     class="flex gap-3 sm:gap-4 p-3 sm:p-3.5 bg-white border border-slate-100 rounded-2xl shadow-sm no-underline text-inherit transition-all duration-200 hover:border-[#E8842E] hover:shadow-[0_6px_20px_-6px_rgba(18,53,91,0.18)]"
     [routerLink]="['/reports', r.publicId]"
   >
-    <div class="shrink-0 self-stretch w-28 sm:self-start sm:w-40 sm:aspect-square rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">
+    <div class="shrink-0 self-start w-28 aspect-square sm:w-40 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">
       @if (imagen()) {
         <img [src]="imagen()" [alt]="titulo()" class="w-full h-full object-cover" />
       } @else {

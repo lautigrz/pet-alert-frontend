@@ -125,6 +125,13 @@ export const routes: Routes = [
           ).then((m) => m.ReportListPage),
       },
       {
+        path: 'missions',
+        loadComponent: () =>
+          import(
+            './features/missions/presentation/mission-list/mission-list'
+          ).then((m) => m.MissionListPage),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import(

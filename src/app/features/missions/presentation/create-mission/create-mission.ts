@@ -144,20 +144,25 @@ export class CreateMissionPage implements OnInit, AfterViewInit {
   }
 
   private centerOnCoordinates(lat: number, lng: number): void {
+    const isLost = this.report?.type === 'LOST';
+
     this.missionCircle = L.circle(
       [lat, lng],
       {
         radius: this.radius,
-        color: '#2563eb',
-        fillColor: '#3b82f6',
+        color: isLost ? '#E8842E' : '#12355B',
+        fillColor: isLost ? '#E8842E' : '#1D6FA3',
         fillOpacity: 0.20,
         weight: 3
       }
     ).addTo(this.map);
 
+    const markerColor = isLost ? '#E8842E' : '#12355B';
+    const markerShadow = isLost ? 'rgba(232,132,46,.5)' : 'rgba(18,53,91,.5)';
+
     const missionIcon = L.divIcon({
       html: `
-        <div style="width:24px; height:24px; border-radius:50%; background:#2563eb; border:4px solid white; box-shadow:0 0 12px rgba(37,99,235,.5);"></div>
+        <div style="width:24px; height:24px; border-radius:50%; background:${markerColor}; box-shadow:0 0 12px ${markerShadow};"></div>
       `,
       className: '',
       iconSize: [24, 24],

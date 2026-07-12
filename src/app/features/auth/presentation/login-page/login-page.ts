@@ -2,7 +2,13 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../application/auth.service';
-import { NetworkError, UnexpectedAuthError } from '../../domain/auth.errors';
+import { GoogleIdentityClient } from '../../infrastructure/google-identity.client';
+import {
+  NetworkError,
+  UnexpectedAuthError,
+  RateLimitedError,
+  GoogleSignInError,
+} from '../../domain/auth.errors';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ProfileService } from '../../../profile/application/profile.service';
 
@@ -20,9 +26,11 @@ export class LoginPage {
   private readonly route = inject(ActivatedRoute);
   private readonly toastService = inject(ToastService);
   private readonly profileService = inject(ProfileService);
+  private readonly googleIdentityClient = inject(GoogleIdentityClient);
 
   readonly mobileView = signal<'landing' | 'form'>('landing');
   readonly submitting = signal(false);
+  readonly googleSubmitting = signal(false);
   readonly serverError = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
@@ -65,6 +73,31 @@ export class LoginPage {
   hasError(controlName: string, errorName: string): boolean {
     const control = this.form.get(controlName);
     return !!control && control.touched && control.hasError(errorName);
+  }
+
+  async loginWithGoogle(): Promise<void> {
+    if (this.googleSubmitting()) return;
+    this.googleSubmitting.set(true);
+    this.serverError.set(null);
+    try {
+      const code = await this.googleIdentityClient.requestAuthCode();
+      await this.authService.loginWithGoogle(code);
+      this.profileService.clearCache();
+      await this.router.navigateByUrl('/home');
+    } catch (error) {
+      this.handleGoogleError(error);
+    } finally {
+      this.googleSubmitting.set(false);
+    }
+  }
+
+  private handleGoogleError(error: unknown): void {
+    const shown =
+      error instanceof GoogleSignInError ||
+      error instanceof NetworkError ||
+      error instanceof RateLimitedError ||
+      error instanceof UnexpectedAuthError;
+    if (shown) this.toastService.error((error as Error).message);
   }
 
   async submit(): Promise<void> {

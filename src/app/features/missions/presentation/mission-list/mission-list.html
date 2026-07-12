@@ -8,7 +8,7 @@
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-lg font-bold text-[#12355B]">Filtros</h2>
     <div class="flex items-center gap-3">
-      <button type="button" (click)="limpiarTodo()" class="text-xs font-semibold text-[#E8842E] hover:underline">
+      <button type="button" (click)="clearAll()" class="text-xs font-semibold text-[#E8842E] hover:underline">
         Limpiar
       </button>
       <button type="button" (click)="closeFilters()" aria-label="Cerrar filtros"
@@ -22,69 +22,27 @@
   </div>
 
   <div class="mb-4">
-    <p class="text-xs font-semibold text-slate-500 mb-2">Tipo de reporte</p>
-    <div class="flex flex-wrap gap-2">
-      <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroTipo() === 'TODOS' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroTipo('TODOS')">Todos</button>
-      <button class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroTipo() === 'LOST' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroTipo('LOST')">
-        <img src="Icono-mascota-perdida.png" alt="" class="w-4 h-4 shrink-0 scale-[0.82]" [class.brightness-0]="filtroTipo() !== 'LOST'">
-        <span>Perdidos</span>
-      </button>
-      <button class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroTipo() === 'SIGHTING' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroTipo('SIGHTING')">
-        <img src="Icono-mascota-encontrada.png" alt="" class="w-4 h-4 shrink-0" [class.brightness-0]="filtroTipo() !== 'SIGHTING'">
-        <span>Avistados</span>
-      </button>
-    </div>
-  </div>
-
-  <div class="mb-4">
     <p class="text-xs font-semibold text-slate-500 mb-2">Cercanía</p>
     <div class="flex flex-wrap gap-2">
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroCercania() === 'TODOS' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroCercania('TODOS')">Todos</button>
+        [class]="nearnessFilter() === 'ALL' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
+        (click)="setNearness('ALL')">Todas</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroCercania() === '5' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroCercania('5')">5km</button>
+        [class]="nearnessFilter() === '5' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
+        (click)="setNearness('5')">5km</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroCercania() === '10' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroCercania('10')">10km</button>
+        [class]="nearnessFilter() === '10' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
+        (click)="setNearness('10')">10km</button>
       <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroCercania() === '20' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroCercania('20')">20km</button>
-    </div>
-  </div>
-
-  <div class="mb-4">
-    <p class="text-xs font-semibold text-slate-500 mb-2">Mascota</p>
-    <div class="flex flex-wrap gap-2">
-      <button class="px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroMascota() === 'TODOS' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroMascota('TODOS')">Todos</button>
-      <button class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroMascota() === 'DOG' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroMascota('DOG')">
-        <app-pet-icon name="perro" class="w-4 h-4" />
-        <span>Perro</span>
-      </button>
-      <button class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border transition"
-        [class]="filtroMascota() === 'CAT' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
-        (click)="setFiltroMascota('CAT')">
-        <app-pet-icon name="gato" class="w-4 h-4" />
-        <span>Gato</span>
-      </button>
+        [class]="nearnessFilter() === '20' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'"
+        (click)="setNearness('20')">20km</button>
     </div>
   </div>
 
   <div class="pb-4 border-b border-slate-200">
     <div class="flex items-center justify-between mb-2">
       <p class="text-xs font-semibold text-slate-500">Fecha</p>
-      @if (fechaDesde() || fechaHasta()) {
+      @if (dateFrom() || dateTo()) {
       <button type="button" (click)="clearDates()"
         class="text-xs font-semibold text-[#E8842E] hover:underline">Limpiar</button>
       }
@@ -92,14 +50,14 @@
     <div class="grid grid-cols-2 gap-2">
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs text-slate-500">Desde</span>
-        <input type="date" [value]="fechaDesde()" [max]="fechaHasta()"
-          (change)="setFechaDesde($any($event.target).value)"
+        <input type="date" [value]="dateFrom()" [max]="dateTo()"
+          (change)="setDateFrom($any($event.target).value)"
           class="w-full px-2 py-2.5 rounded-md text-xs border border-slate-300 text-slate-600 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]" />
       </label>
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs text-slate-500">Hasta</span>
-        <input type="date" [value]="fechaHasta()" [min]="fechaDesde()"
-          (change)="setFechaHasta($any($event.target).value)"
+        <input type="date" [value]="dateTo()" [min]="dateFrom()"
+          (change)="setDateTo($any($event.target).value)"
           class="w-full px-2 py-2.5 rounded-md text-xs border border-slate-300 text-slate-600 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]" />
       </label>
     </div>
@@ -110,7 +68,7 @@
   <div class="shrink-0 overflow-y-auto [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 pt-5 lg:pt-7">
     <div class="max-w-[1180px]">
       <div class="flex items-center justify-between gap-3 mb-5">
-        <h1 class="text-2xl font-extrabold text-[#12355B]">Reportes</h1>
+        <h1 class="text-2xl font-extrabold text-[#12355B]">Misiones</h1>
 
         <button type="button" (click)="openFilters()"
           class="lg:hidden inline-flex items-center gap-1.5 text-sm font-semibold text-[#E8842E]">
@@ -126,20 +84,20 @@
         class="flex items-stretch mb-5 bg-white border border-slate-200 rounded-xl overflow-hidden divide-x divide-slate-200 lg:inline-flex">
         <button
           class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
-          [class]="tab() === 'todos' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
-          (click)="selectTab('todos')">Todos</button>
+          [class]="tab() === 'all' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
+          (click)="selectTab('all')">Todas</button>
         <button
           class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
-          [class]="tab() === 'recientes' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
-          (click)="selectTab('recientes')">Recientes</button>
+          [class]="tab() === 'recent' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
+          (click)="selectTab('recent')">Recientes</button>
         <button
           class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
-          [class]="tab() === 'cercanos' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
-          (click)="selectTab('cercanos')">Cercanos</button>
+          [class]="tab() === 'nearby' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
+          (click)="selectTab('nearby')">Cercanas</button>
         <button
           class="flex-1 px-2 py-2 text-xs font-semibold whitespace-nowrap text-center transition lg:flex-none lg:px-6 lg:py-2.5 lg:text-sm"
-          [class]="tab() === 'mis-reportes' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
-          (click)="selectTab('mis-reportes')">Mis Reportes</button>
+          [class]="tab() === 'mine' ? 'bg-[#E8842E] text-white' : 'text-[#12355B] hover:bg-slate-50'"
+          (click)="selectTab('mine')">Mis misiones</button>
       </div>
 
       <div class="relative mb-5">
@@ -153,11 +111,11 @@
 
         <input type="text"
           class="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg text-sm text-[#12355B] bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#E8842E] focus:ring-1 focus:ring-[#E8842E]"
-          placeholder="Buscar por nombre, raza, color, ubicación…" autocomplete="off" [value]="busquedaDescripcion()"
-          (input)="onDescriptionSearchInput($any($event.target).value)" />
+          placeholder="Buscar por mascota, título o ubicación…" autocomplete="off" [value]="search()"
+          (input)="onSearchInput($any($event.target).value)" />
 
-        @if (busquedaDescripcion()) {
-        <button type="button" aria-label="Limpiar búsqueda" (click)="limpiarBusquedaDescripcion()"
+        @if (search()) {
+        <button type="button" aria-label="Limpiar búsqueda" (click)="clearSearch()"
           class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#12355B]">
           ✕
         </button>
@@ -168,40 +126,46 @@
 
   <div class="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 pb-7">
     <div class="max-w-[1180px]">
-      @if (cargando()) {
+      @if (loading()) {
       <div
         class="py-12 px-6 text-center text-slate-500 text-[15px] bg-white border border-dashed border-slate-200 rounded-2xl">
-        Cargando reportes…</div>
+        Cargando misiones…</div>
       } @else if (error()) {
       <div class="py-12 px-6 text-center text-[15px] rounded-2xl border border-[#f3c4ba] bg-[#fbeae6] text-[#b04632]">{{
         error() }}</div>
-      } @else if (tab() === 'cercanos' && locationDenied()) {
+      } @else if (tab() === 'nearby' && locationDenied()) {
       <div
         class="py-12 px-6 text-center text-slate-500 text-[15px] bg-white border border-dashed border-slate-200 rounded-2xl">
-        Necesitamos tu ubicación para mostrar reportes cercanos. Activá el permiso de ubicación en tu navegador y volvé
+        Necesitamos tu ubicación para mostrar misiones cercanas. Activá el permiso de ubicación en tu navegador y volvé
         a intentar.
       </div>
-      } @else if (tab() === 'cercanos' && !ubicacion()) {
+      } @else if (tab() === 'nearby' && !location()) {
       <div
         class="py-12 px-6 text-center text-slate-500 text-[15px] bg-white border border-dashed border-slate-200 rounded-2xl">
         Obteniendo tu ubicación…</div>
-      } @else if (sinResultados()) {
+      } @else if (tab() === 'mine') {
+      <div class="inline-flex mb-5 bg-white border border-slate-200 rounded-xl overflow-hidden divide-x divide-slate-200">
+        <button class="px-4 py-2 text-xs sm:text-sm font-semibold whitespace-nowrap transition"
+          [class]="mineFilter() === 'created' ? 'bg-[#12355B] text-white' : 'text-[#12355B] hover:bg-slate-50'"
+          (click)="setMineFilter('created')">Creadas por mí</button>
+        <button class="px-4 py-2 text-xs sm:text-sm font-semibold whitespace-nowrap transition"
+          [class]="mineFilter() === 'joined' ? 'bg-[#12355B] text-white' : 'text-[#12355B] hover:bg-slate-50'"
+          (click)="setMineFilter('joined')">En las que participo</button>
+      </div>
+
+      @if (mineActiveList().length === 0) {
       <div
         class="py-12 px-6 text-center text-slate-500 text-[15px] bg-white border border-dashed border-slate-200 rounded-2xl">
-        @if (tab() === 'mis-reportes') {
-        Todavía no creaste ningún reporte.
-        } @else if (tab() === 'cercanos') {
-        No hay reportes cerca de tu ubicación.
-        } @else if (tab() === 'recientes') {
-        Todavía no hay reportes publicados.
+        @if (mineFilter() === 'created') {
+        Todavía no creaste ninguna misión.
         } @else {
-        No hay reportes para mostrar.
+        Todavía no te uniste a ninguna misión.
         }
       </div>
       } @else {
       <div class="grid grid-cols-1 xl:grid-cols-2 items-start gap-4">
-        @for (reporte of reportes(); track reporte.publicId) {
-        <app-report-card [reporte]="reporte" />
+        @for (mission of missions(); track mission.publicId) {
+        <app-mission-card [mission]="mission" />
         }
       </div>
 
@@ -211,12 +175,51 @@
           class="px-3 py-1.5 rounded-md text-sm font-semibold border border-neutral-300 text-slate-600 transition hover:border-[#E8842E] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-neutral-300">
           Anterior
         </button>
-        @for (p of pages(); track p) {
-        <button type="button" (click)="goToPage(p)"
-          class="min-w-9 px-3 py-1.5 rounded-md text-sm font-semibold border transition" [class]="p === page()
+        @for (pageNumber of pages(); track pageNumber) {
+        <button type="button" (click)="goToPage(pageNumber)"
+          class="min-w-9 px-3 py-1.5 rounded-md text-sm font-semibold border transition" [class]="pageNumber === page()
             ? 'bg-[#E8842E] text-white border-[#E8842E]'
             : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
-          {{ p }}
+          {{ pageNumber }}
+        </button>
+        }
+        <button type="button" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()"
+          class="px-3 py-1.5 rounded-md text-sm font-semibold border border-neutral-300 text-slate-600 transition hover:border-[#E8842E] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-neutral-300">
+          Siguiente
+        </button>
+      </nav>
+      }
+      }
+      } @else if (noResults()) {
+      <div
+        class="py-12 px-6 text-center text-slate-500 text-[15px] bg-white border border-dashed border-slate-200 rounded-2xl">
+        @if (tab() === 'nearby') {
+        No hay misiones cerca de tu ubicación.
+        } @else if (tab() === 'recent') {
+        Todavía no hay misiones publicadas.
+        } @else {
+        No hay misiones para mostrar.
+        }
+      </div>
+      } @else {
+      <div class="grid grid-cols-1 xl:grid-cols-2 items-start gap-4">
+        @for (mission of missions(); track mission.publicId) {
+        <app-mission-card [mission]="mission" />
+        }
+      </div>
+
+      @if (showPagination()) {
+      <nav class="flex flex-wrap items-center justify-center gap-1.5 mt-6">
+        <button type="button" (click)="goToPage(page() - 1)" [disabled]="page() === 1"
+          class="px-3 py-1.5 rounded-md text-sm font-semibold border border-neutral-300 text-slate-600 transition hover:border-[#E8842E] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-neutral-300">
+          Anterior
+        </button>
+        @for (pageNumber of pages(); track pageNumber) {
+        <button type="button" (click)="goToPage(pageNumber)"
+          class="min-w-9 px-3 py-1.5 rounded-md text-sm font-semibold border transition" [class]="pageNumber === page()
+            ? 'bg-[#E8842E] text-white border-[#E8842E]'
+            : 'bg-neutral-100 text-slate-600 border-neutral-300 hover:border-[#E8842E]'">
+          {{ pageNumber }}
         </button>
         }
         <button type="button" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()"

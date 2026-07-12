@@ -8,7 +8,7 @@ import { AuthService } from '../../../auth/application/auth.service';
 import { ReportService } from '../../../report/application/report.service';
 import { ToastService } from '../../../../shared/application/toast.service';
 import { ChatsService } from '../../../chats/application/chats.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MissionOutput } from '../../infrastructure/models/mission.model';
 import { Mock } from 'vitest';
 
@@ -31,12 +31,15 @@ describe('MissionDetailPage', () => {
     getMissions: Mock;
     joinMission: Mock;
     leaveMission: Mock;
+    removeVolunteer: Mock;
     cancelMission: Mock;
     getMissionDetail: Mock;
   };
   let mockMissionUpdateService: {
     getUpdates: Mock;
     createUpdate: Mock;
+    scoreUpdate: Mock;
+    getCommentPointValues: Mock;
   };
   let mockAuthService: {
     getCurrentUserId: Mock;
@@ -47,6 +50,8 @@ describe('MissionDetailPage', () => {
   let mockToastService: {
     success: Mock;
     error: Mock;
+    award: Mock;
+    brand: Mock;
   };
   let mockChatsService: {
     getOrCreateConversation: Mock;
@@ -71,6 +76,7 @@ describe('MissionDetailPage', () => {
       getMissions: vi.fn().mockReturnValue(of([])),
       joinMission: vi.fn().mockReturnValue(of({ status: 'OK', message: 'Success' })),
       leaveMission: vi.fn().mockReturnValue(of({ status: 'OK', message: 'Success' })),
+      removeVolunteer: vi.fn().mockReturnValue(of({ status: 'OK', message: 'Success' })),
       cancelMission: vi.fn().mockReturnValue(of({ status: 'OK', message: 'Success' })),
       getMissionDetail: vi.fn().mockReturnValue(of({
         publicId: 'mission-123',
@@ -87,7 +93,13 @@ describe('MissionDetailPage', () => {
 
     mockMissionUpdateService = {
       getUpdates: vi.fn().mockReturnValue(of([])),
-      createUpdate: vi.fn().mockReturnValue(of({}))
+      createUpdate: vi.fn().mockReturnValue(of({})),
+      scoreUpdate: vi.fn().mockReturnValue(of({})),
+      getCommentPointValues: vi.fn().mockReturnValue(of([
+        { points: 10, label: '+10 XP' },
+        { points: 25, label: '+25 XP' },
+        { points: 50, label: '+50 XP' }
+      ]))
     };
 
     mockAuthService = {
@@ -106,7 +118,9 @@ describe('MissionDetailPage', () => {
 
     mockToastService = {
       success: vi.fn(),
-      error: vi.fn()
+      error: vi.fn(),
+      award: vi.fn(),
+      brand: vi.fn()
     };
 
     mockChatsService = {
@@ -248,7 +262,7 @@ describe('MissionDetailPage', () => {
       await component.join();
 
       expect(mockMissionService.joinMission).toHaveBeenCalledWith('mission-123');
-      expect(mockToastService.success).toHaveBeenCalledWith('Te uniste a la misión con éxito');
+      expect(mockToastService.brand).toHaveBeenCalledWith('Te uniste a la misión con éxito');
     });
 
     it('debería abandonar la misión correctamente', async () => {
@@ -261,6 +275,169 @@ describe('MissionDetailPage', () => {
       expect(mockToastService.success).toHaveBeenCalledWith('Abandonaste la misión');
     });
   });
+
+  describe('método removeVolunteer', () => {
+  it('debería eliminar un voluntario si el usuario es dueño y confirma la acción', async () => {
+    const missionData = {
+      publicId: 'mission-123',
+      title: 'Buscar a Firulais',
+      description: 'Se perdió en Palermo',
+      status: 'OPEN',
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      searchArea: {
+        latitude: -34.6037,
+        longitude: -58.3816,
+        radius: 500,
+      },
+      report: {
+        publicId: 'report-123',
+        description: 'Perro perdido',
+        type: 'LOST',
+        status: 'ACTIVE',
+        location: {
+          latitude: -34.6037,
+          longitude: -58.3816,
+          address: 'Av Santa Fe 1234',
+        },
+      },
+      volunteers: [
+        {
+          publicId: 'volunteer-1',
+          username: 'voluntario1',
+          photoUrl: null,
+          name: 'Juan',
+          lastname: 'Pérez',
+        },
+      ],
+    } as unknown as MissionOutput;
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    component.mission.set(missionData);
+    component.isOwner.set(true);
+
+    await component.removeVolunteer('volunteer-1');
+
+    expect(mockMissionService.removeVolunteer).toHaveBeenCalledWith(
+      'mission-123',
+      'volunteer-1',
+    );
+
+    expect(mockToastService.success).toHaveBeenCalledWith(
+      'Voluntario eliminado de la misión',
+    );
+
+    expect(component.mission()?.volunteers).toEqual([]);
+    expect(component.removingVolunteerId()).toBeNull();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('no debería eliminar un voluntario si el usuario cancela la confirmación', async () => {
+    const missionData = {
+      publicId: 'mission-123',
+      title: 'Buscar a Firulais',
+      description: 'Se perdió en Palermo',
+      status: 'OPEN',
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      searchArea: {
+        latitude: -34.6037,
+        longitude: -58.3816,
+        radius: 500,
+      },
+      report: {
+        publicId: 'report-123',
+        description: 'Perro perdido',
+        type: 'LOST',
+        status: 'ACTIVE',
+        location: {
+          latitude: -34.6037,
+          longitude: -58.3816,
+          address: 'Av Santa Fe 1234',
+        },
+      },
+      volunteers: [
+        {
+          publicId: 'volunteer-1',
+          username: 'voluntario1',
+          photoUrl: null,
+          name: 'Juan',
+          lastname: 'Pérez',
+        },
+      ],
+    } as unknown as MissionOutput;
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    component.mission.set(missionData);
+    component.isOwner.set(true);
+
+    await component.removeVolunteer('volunteer-1');
+
+    expect(mockMissionService.removeVolunteer).not.toHaveBeenCalled();
+    expect(component.mission()?.volunteers).toHaveLength(1);
+
+    confirmSpy.mockRestore();
+  });
+
+  it('debería mostrar error si falla la eliminación del voluntario', async () => {
+    const missionData = {
+      publicId: 'mission-123',
+      title: 'Buscar a Firulais',
+      description: 'Se perdió en Palermo',
+      status: 'OPEN',
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      searchArea: {
+        latitude: -34.6037,
+        longitude: -58.3816,
+        radius: 500,
+      },
+      report: {
+        publicId: 'report-123',
+        description: 'Perro perdido',
+        type: 'LOST',
+        status: 'ACTIVE',
+        location: {
+          latitude: -34.6037,
+          longitude: -58.3816,
+          address: 'Av Santa Fe 1234',
+        },
+      },
+      volunteers: [
+        {
+          publicId: 'volunteer-1',
+          username: 'voluntario1',
+          photoUrl: null,
+          name: 'Juan',
+          lastname: 'Pérez',
+        },
+      ],
+    } as unknown as MissionOutput;
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    mockMissionService.removeVolunteer.mockReturnValueOnce(
+      throwError(() => new Error('No se pudo eliminar al voluntario')),
+    );
+
+    component.mission.set(missionData);
+    component.isOwner.set(true);
+
+    await component.removeVolunteer('volunteer-1');
+
+    expect(mockToastService.error).toHaveBeenCalledWith(
+      'No se pudo eliminar al voluntario',
+    );
+
+    expect(component.mission()?.volunteers).toHaveLength(1);
+    expect(component.removingVolunteerId()).toBeNull();
+
+    confirmSpy.mockRestore();
+  });
+});
 
   describe('método cancel', () => {
     it('debería cancelar la misión si el usuario confirma', async () => {
@@ -315,10 +492,88 @@ describe('MissionDetailPage', () => {
   });
 
   describe('método rateUpdate y getPoints', () => {
-    it('debería puntuar una actualización y retornar los puntos', () => {
-      component.rateUpdate('update-1', 25);
+    it('debería puntuar una actualización y retornar los puntos', async () => {
+      await component.rateUpdate('update-1', 25);
       expect(component.getPoints('update-1')).toBe(25);
-      expect(mockToastService.success).toHaveBeenCalledWith('¡Valoración enviada! Se otorgaron +25 XP');
+      expect(mockMissionUpdateService.scoreUpdate).toHaveBeenCalledWith('update-1', 25);
+      expect(mockToastService.award).toHaveBeenCalledWith('¡Valoración enviada! Se otorgaron +25 XP');
+    });
+  });
+
+  describe('valoración de comentarios (dueño vs otros)', () => {
+    beforeEach(() => {
+      component.mission.set({
+        publicId: 'mission-123',
+        title: 'Buscar a Firulais',
+        description: 'Se perdió en Palermo',
+        status: 'OPEN',
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+        searchArea: { latitude: -34.6037, longitude: -58.3816, radius: 500 },
+        report: { publicId: 'report-123', description: 'Perro perdido', type: 'LOST', status: 'ACTIVE', location: { latitude: -34.6037, longitude: -58.3816, address: 'Av Santa Fe 1234' } },
+        volunteers: []
+      } as unknown as MissionOutput);
+
+      component.responses.set([
+        {
+          publicId: 'update-1',
+          comment: 'Pista de prueba',
+          photoUrl: null,
+          status: 'PENDING',
+          createdAt: new Date().toISOString(),
+          user: {
+            publicId: 'user-volunteer',
+            username: 'voluntario1',
+            photoUrl: null,
+            name: 'Juan',
+            lastname: 'Perez'
+          },
+          pointValue: null
+        }
+      ]);
+
+      component.pointValues.set([
+        { points: 10, label: '+10 XP' },
+        { points: 25, label: '+25 XP' },
+        { points: 50, label: '+50 XP' }
+      ]);
+    });
+
+    it('debería mostrar los botones de puntuar al dueño si el comentario no ha sido valorado', () => {
+      component.isOwner.set(true);
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const buttons = compiled.querySelectorAll('button');
+      const rateButtons = Array.from(buttons).filter(b => b.textContent?.includes('+10 XP'));
+      expect(rateButtons.length).toBe(1);
+
+      const valLabel = compiled.textContent;
+      expect(valLabel).not.toContain('Valorado:');
+    });
+
+    it('debería ocultar los botones de puntuar al dueño y mostrar la valoración si el comentario ya fue valorado', () => {
+      component.isOwner.set(true);
+      component.scores.set({ 'update-1': 25 });
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const buttons = compiled.querySelectorAll('button');
+      const rateButtons = Array.from(buttons).filter(b => b.textContent?.includes('+10 XP'));
+      expect(rateButtons.length).toBe(0);
+
+      const text = compiled.textContent;
+      expect(text).toContain('Valorado: +25 XP');
+    });
+
+    it('debería mostrar "Pendiente de valoración" a usuarios comunes si el comentario no ha sido valorado', () => {
+      component.isOwner.set(false);
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const text = compiled.textContent;
+      expect(text).toContain('Pendiente de valoración');
+      expect(text).not.toContain('Valorado:');
     });
   });
 

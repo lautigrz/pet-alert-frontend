@@ -23,6 +23,10 @@ export interface LoginUserResponse {
   refreshToken: string;
 }
 
+export interface GoogleLoginRequest {
+  code: string;
+}
+
 export interface RefreshTokenRequest {
   refreshToken: string;
 }
@@ -66,6 +70,12 @@ export class AuthHttp {
   loginUser(body: LoginUserRequest): Promise<LoginUserResponse> {
     return firstValueFrom(
       this.http.post<LoginUserResponse>(`${this.baseUrl}/auth/login`, body),
+    );
+  }
+
+  googleLogin(body: GoogleLoginRequest): Promise<LoginUserResponse> {
+    return firstValueFrom(
+      this.http.post<LoginUserResponse>(`${this.baseUrl}/auth/google`, body),
     );
   }
   
