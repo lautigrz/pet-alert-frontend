@@ -13,8 +13,15 @@ const mockSocket = {
     }
     mockSocketEvents[event].push(callback);
   }),
-  off: vi.fn((event: string) => {
-    delete mockSocketEvents[event];
+  off: vi.fn((event: string, callback?: (...args: unknown[]) => void) => {
+    if (callback && mockSocketEvents[event]) {
+      mockSocketEvents[event] = mockSocketEvents[event].filter(cb => cb !== callback);
+      if (mockSocketEvents[event].length === 0) {
+        delete mockSocketEvents[event];
+      }
+    } else {
+      delete mockSocketEvents[event];
+    }
   }),
   emit: vi.fn(),
   once: vi.fn((event: string, callback: (...args: unknown[]) => void) => {
@@ -202,7 +209,7 @@ describe('SocketService', () => {
       expect(receivedData).toEqual({ hello: 'world' });
 
       sub.unsubscribe();
-      expect(mockSocket.off).toHaveBeenCalledWith('message');
+      expect(mockSocket.off).toHaveBeenCalledWith('message', expect.any(Function));
     });
   });
 

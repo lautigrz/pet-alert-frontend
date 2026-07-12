@@ -35,6 +35,7 @@ export class ChatsService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
   private unreadChatsSubject = new BehaviorSubject<number>(0);
+  activeConversationId: string | null = null;
     
   
 
@@ -121,7 +122,10 @@ initializeSocketListeners(): void {
 
   this.listenersInitialized = true;
 
-  this.onMessageReceived().subscribe(() => {
+  this.onMessageReceived().subscribe((msg) => {
+    if (this.activeConversationId && msg.conversationId === this.activeConversationId) {
+      return;
+    }
     this.refreshUnreadChats();
   });
 

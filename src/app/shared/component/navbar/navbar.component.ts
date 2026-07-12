@@ -18,8 +18,8 @@ export class NavbarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly chatsService = inject(ChatsService);
-  
-  
+
+
 
 
   rutaHome = '/home';
@@ -30,19 +30,22 @@ export class NavbarComponent implements OnInit {
   readonly fotoUsuario = signal<string | null>(null);
   readonly menuAbierto = signal(false);
   readonly unreadChats = toSignal(
-  this.chatsService.unreadChats$,
-  { initialValue: 0 }
-);
+    this.chatsService.unreadChats$,
+    { initialValue: 0 }
+  );
 
 
 
   async ngOnInit(): Promise<void> {
     this.chatsService.refreshUnreadChats();
 
-     try { const perfil = await this.profileService.getProfile();
-      this.nombreUsuario.set(perfil.name?.trim() || perfil.username); 
-      this.fotoUsuario.set(perfil.photoUrl ?? null); }
-       catch { this.nombreUsuario.set(''); } }
+    try {
+      const perfil = await this.profileService.getProfile();
+      this.nombreUsuario.set(perfil.name?.trim() || perfil.username);
+      this.fotoUsuario.set(perfil.photoUrl ?? null);
+    }
+    catch { this.nombreUsuario.set(''); }
+  }
 
   nuevoReporte(): void {
     this.router.navigate(['/report/type']);
@@ -62,5 +65,5 @@ export class NavbarComponent implements OnInit {
     this.profileService.clearCache();
     this.router.navigate(['/login']);
   }
-  
+
 }
