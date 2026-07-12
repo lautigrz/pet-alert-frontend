@@ -13,8 +13,9 @@ interface CloseMotivo {
 })
 export class CloseReportModalComponent {
   readonly enviando = input(false);
+  readonly minDate = input<string | null>(null);
   readonly cerrar = output<void>();
-  readonly confirmar = output<boolean>();
+  readonly confirmar = output<{ resolved: boolean; resolvedAt: string }>();
 
   readonly motivos: CloseMotivo[] = [
     { label: '¡La mascota volvió a casa! 🧡', descripcion: 'El caso se resolvió', resolved: true },
@@ -24,6 +25,8 @@ export class CloseReportModalComponent {
   ];
 
   readonly motivoSeleccionado = signal<number | null>(null);
+  readonly today = this.buildToday();
+  readonly resolvedAt = signal<string>(this.today);
 
   seleccionar(i: number): void {
     this.motivoSeleccionado.set(i);
@@ -32,6 +35,11 @@ export class CloseReportModalComponent {
   onConfirmar(): void {
     const i = this.motivoSeleccionado();
     if (i === null) return;
-    this.confirmar.emit(this.motivos[i].resolved);
+    this.confirmar.emit({ resolved: this.motivos[i].resolved, resolvedAt: this.resolvedAt() });
+  }
+
+  private buildToday(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
 }
