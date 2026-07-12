@@ -221,6 +221,20 @@ describe('ReportListService', () => {
         'rep-1',
         'RESOLVED',
         true,
+        undefined,
+      );
+    });
+
+    it('reenvía la fecha de cierre si se provee', async () => {
+      reportesHttp.updateStatus.mockResolvedValue(undefined);
+
+      await service.updateToResolved('rep-1', true, '2026-07-10');
+
+      expect(reportesHttp.updateStatus).toHaveBeenCalledWith(
+        'rep-1',
+        'RESOLVED',
+        true,
+        '2026-07-10',
       );
     });
 
