@@ -10,6 +10,17 @@ export interface ReportedUserSummary {
   email: string | null;
 }
 
+export interface ReportedUserDetail {
+  username: string;
+  publicId: string;
+  xp: number;
+  level: number;
+  rating: {
+    average: number;
+    count: number;
+  };
+}
+
 export interface ReportedContentSummary {
   petName: string | null;
   reportType: 'LOST' | 'SIGHTING';
@@ -26,7 +37,7 @@ export interface ContentReportQueueItem {
   createdAt: string;
   reportCount: number;
   suspensionReason: string | null;
-  reportedUser: ReportedUserSummary | null;
+  reportedUser: ReportedUserDetail | null;
   reportedContent: ReportedContentSummary | null;
   reporter: ReportedUserSummary;
 }

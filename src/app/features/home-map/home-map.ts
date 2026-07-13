@@ -514,6 +514,7 @@ export class HomeMapComponent implements OnInit, AfterViewInit {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         this.userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
+        void this.profileService.updateCurrentLocation(position.coords.latitude, position.coords.longitude);
         this.placeUserMarker();
         this.drawRadar();
         this.filterByRadar();

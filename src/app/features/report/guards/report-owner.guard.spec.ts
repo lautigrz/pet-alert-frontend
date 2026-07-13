@@ -14,6 +14,7 @@ describe('reportOwnerGuard', () => {
       publicId?: string | null;
       ownerId?: string;
       currentUserId?: string | null;
+      status?: string;
       loadFails?: boolean;
     } = {},
   ) {
@@ -21,12 +22,13 @@ describe('reportOwnerGuard', () => {
       publicId = PUBLIC_ID,
       ownerId = 'owner-uuid',
       currentUserId = 'owner-uuid',
+      status = 'ACTIVE',
       loadFails = false,
     } = options;
 
     const getReportByPublicId = loadFails
       ? vi.fn().mockRejectedValue(new Error('boom'))
-      : vi.fn().mockResolvedValue({ user: { publicId: ownerId } });
+      : vi.fn().mockResolvedValue({ user: { publicId: ownerId }, status });
     const getCurrentUserId = vi.fn().mockReturnValue(currentUserId);
     const toast = { error: vi.fn() };
     const router = { navigateByUrl: vi.fn() };
@@ -64,6 +66,16 @@ describe('reportOwnerGuard', () => {
 
   it('bloquea y redirige al detalle cuando no es el dueño', async () => {
     const { run, toast, router } = setup({ ownerId: 'otro-uuid', currentUserId: 'owner-uuid' });
+
+    const result = await run();
+
+    expect(result).toBe(false);
+    expect(toast.error).toHaveBeenCalledOnce();
+    expect(router.navigateByUrl).toHaveBeenCalledWith(`/reports/${PUBLIC_ID}`);
+  });
+
+  it('bloquea y redirige al detalle si el reporte no está activo (cerrado/resuelto)', async () => {
+    const { run, toast, router } = setup({ ownerId: 'owner-uuid', currentUserId: 'owner-uuid', status: 'CLOSED' });
 
     const result = await run();
 

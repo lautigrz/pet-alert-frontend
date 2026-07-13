@@ -18,7 +18,13 @@ export interface ContentReportQueueItemResponse {
   createdAt: string;
   reportCount?: number;
   suspensionReason?: string | null;
-  reportedUser?: { username: string; email: string | null } | null;
+  reportedUser?: {
+    username: string;
+    publicId: string;
+    xp: number;
+    level: number;
+    rating: { average: number; count: number };
+  } | null;
   reportedContent?: { petName: string | null; reportType: 'LOST' | 'SIGHTING' } | null;
   reporter: { publicId: string; username: string; email?: string | null };
 }
