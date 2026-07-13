@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import * as L from 'leaflet';
-import 'leaflet.heat';
 import { MissionService } from '../../application/mission.service';
 import { MissionUpdateService } from '../../application/mission-update.service';
 import { MissionCoverageService } from '../../application/mission-coverage.service';
@@ -346,10 +345,16 @@ export class MissionDetailPage implements OnInit, OnDestroy {
     });
   }
 
-  initializeMap(m: MissionOutput): void {
+  async initializeMap(m: MissionOutput): Promise<void> {
     const lat = m.searchArea.latitude;
     const lng = m.searchArea.longitude;
     const radius = m.searchArea.radius;
+
+    if (typeof window !== 'undefined') {
+      const windowWithL = window as unknown as { L: typeof L };
+      windowWithL.L = Object.create(L);
+      await import('leaflet.heat');
+    }
 
     setTimeout(() => {
       if (this.map) {
@@ -385,7 +390,8 @@ export class MissionDetailPage implements OnInit, OnDestroy {
       }).addTo(this.map);
 
       const points = this.missionCoverageService.coveragePoints();
-      this.heatLayer = L.heatLayer(points, {
+      const windowWithL = window as unknown as { L: typeof L };
+      this.heatLayer = windowWithL.L.heatLayer(points, {
         radius: 25,
         blur: 15,
         maxZoom: 17

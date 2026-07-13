@@ -116,11 +116,6 @@ export class ChatsPage implements OnInit, OnDestroy {
         setTimeout(() => this.scrollToBottom(), 100);
       });
 
-    this.chatsService.onMessageRead()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(({ conversationId }) => {
-        console.log('Mensajes leídos en conversación:', conversationId);
-      });
 
     this.chatsService.onError()
       .pipe(takeUntil(this.destroy$))

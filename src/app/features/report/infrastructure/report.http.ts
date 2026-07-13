@@ -137,9 +137,6 @@ export class ReportHttp {
       description: body.description,
     };
 
-
-    console.log('Report data to be sent:', reportData);
-
     formData.append('data', JSON.stringify(reportData));
 
     if (body.photos && body.photos.length > 0) {
