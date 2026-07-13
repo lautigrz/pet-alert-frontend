@@ -31,7 +31,7 @@
         <app-report-gallery [report]="r" />
 
         <app-report-info [report]="r">
-          @if (esPropio()) {
+          @if (esPropio() && r.status === 'ACTIVE') {
           <div slot="actions" class="shrink-0 flex items-center gap-1">
             <button type="button" (click)="irAEditarDatos()"
               class="inline-flex items-center gap-1 text-sm font-semibold text-[#E8842E] hover:underline px-2 py-1">
@@ -64,7 +64,7 @@
       </div>
 
       <div class="flex flex-col gap-5 lg:sticky lg:top-16 self-start">
-        <app-report-location [report]="r" [esPropio]="esPropio()" (editar)="irAEditarUbicacion()" />
+        <app-report-location [report]="r" [esPropio]="esPropio() && r.status === 'ACTIVE'" (editar)="irAEditarUbicacion()" />
 
         @if (puedeSeguirHistoria()) {
         <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">

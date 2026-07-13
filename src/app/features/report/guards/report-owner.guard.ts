@@ -18,10 +18,13 @@ export const reportOwnerGuard: CanActivateFn = async (route: ActivatedRouteSnaps
 
   try {
     const report = await reportService.getReportByPublicId(publicId);
-    if (report.user.publicId === authService.getCurrentUserId()) {
+    if (report.user.publicId !== authService.getCurrentUserId()) {
+      toast.error('No podés editar un reporte que no es tuyo.');
+    } else if (report.status !== 'ACTIVE') {
+      toast.error('No podés editar un reporte cerrado o resuelto.');
+    } else {
       return true;
     }
-    toast.error('No podés editar un reporte que no es tuyo.');
   } catch {
     router.navigateByUrl(`/reports/${publicId}`);
     return false;
