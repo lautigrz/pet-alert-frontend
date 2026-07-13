@@ -164,9 +164,21 @@
                         <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Usuario reportado</p>
                         @if (item.reportedUser; as reportedUser) {
                           <p class="text-sm font-semibold text-[#12355B] truncate">{{ reportedUser.username }}</p>
-                          <p class="text-xs text-slate-500 truncate">{{ reportedUser.email ?? '—' }}</p>
+                          <p class="text-xs text-slate-500 truncate">
+                            @if (reportedUser.rating.count > 0) {
+                              <span class="inline-flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 shrink-0">
+                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                </svg>
+                                {{ reportedUser.rating.average }} · {{ reportedUser.rating.count }} reseñas
+                              </span>
+                            } @else {
+                              Sin reseñas
+                            }
+                          </p>
+                          <p class="text-xs text-slate-500 truncate">Nivel {{ reportedUser.level }} · {{ reportedUser.xp }} XP</p>
                         } @else {
-                          <p class="text-sm text-slate-400 italic">Pendiente del back</p>
+                          <p class="text-sm text-slate-400 italic">Sin usuario asociado</p>
                         }
                       </div>
                       <div class="min-w-0">
@@ -276,9 +288,21 @@
               <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Usuario reportado</p>
               @if (item.reportedUser; as reportedUser) {
                 <p class="text-sm font-semibold text-[#12355B]">{{ reportedUser.username }}</p>
-                <p class="text-xs text-slate-500 break-all">{{ reportedUser.email ?? '—' }}</p>
+                <p class="text-xs text-slate-500">
+                  @if (reportedUser.rating.count > 0) {
+                    <span class="inline-flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 shrink-0">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                      {{ reportedUser.rating.average }} · {{ reportedUser.rating.count }} reseñas
+                    </span>
+                  } @else {
+                    Sin reseñas
+                  }
+                </p>
+                <p class="text-xs text-slate-500">Nivel {{ reportedUser.level }} · {{ reportedUser.xp }} XP</p>
               } @else {
-                <p class="text-sm text-slate-400 italic">Pendiente del back</p>
+                <p class="text-sm text-slate-400 italic">Sin usuario asociado</p>
               }
             </div>
             <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
