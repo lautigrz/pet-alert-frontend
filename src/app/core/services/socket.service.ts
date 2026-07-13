@@ -1,6 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject, EMPTY } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 
@@ -8,6 +9,7 @@ import { environment } from '../../../environments/environment';
 export class SocketService implements OnDestroy {
 
   private socket: Socket | null = null;
+  private readonly socket$ = new BehaviorSubject<Socket | null>(null);
   private string = environment.apiUrl.replace(/\/api\/?$/, '');
 
   connect(token: string, onAuthenticationError?: () => Promise<string>): void {
@@ -17,6 +19,8 @@ export class SocketService implements OnDestroy {
         Authorization: `Bearer ${token}`
       }
     });
+
+    this.socket$.next(this.socket);
 
     this.socket.on('connect', () => console.log('Socket conectado'));
     this.socket.on('connect_error', async (err) => {
@@ -39,6 +43,7 @@ export class SocketService implements OnDestroy {
   disconnect(): void {
     this.socket?.disconnect();
     this.socket = null;
+    this.socket$.next(null);
   }
 
 
@@ -53,17 +58,21 @@ export class SocketService implements OnDestroy {
   }
 
   on<T>(event: string): Observable<T> {
-  return new Observable(observer => {
-
-    const listener = (data: T) => observer.next(data);
-
-    this.socket?.on(event, listener);
-
-    return () => {
-      this.socket?.off(event);
-    };
-  });
-}
+    return this.socket$.pipe(
+      switchMap((socket) => {
+        if (!socket) {
+          return EMPTY;
+        }
+        return new Observable<T>((observer) => {
+          const listener = (data: T) => observer.next(data);
+          socket.on(event, listener);
+          return () => {
+            socket.off(event, listener);
+          };
+        });
+      })
+    );
+  }
 
   get isConnected(): boolean {
     return this.socket?.connected ?? false;

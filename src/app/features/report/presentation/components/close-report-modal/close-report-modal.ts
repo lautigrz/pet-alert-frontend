@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 
 interface CloseMotivo {
   label: string;
@@ -13,8 +13,9 @@ interface CloseMotivo {
 })
 export class CloseReportModalComponent {
   readonly enviando = input(false);
+  readonly minDate = input<string | null>(null);
   readonly cerrar = output<void>();
-  readonly confirmar = output<boolean>();
+  readonly confirmar = output<{ resolved: boolean; resolvedAt?: string }>();
 
   readonly motivos: CloseMotivo[] = [
     { label: '¡La mascota volvió a casa! 🧡', descripcion: 'El caso se resolvió', resolved: true },
@@ -24,6 +25,13 @@ export class CloseReportModalComponent {
   ];
 
   readonly motivoSeleccionado = signal<number | null>(null);
+  readonly today = this.buildToday();
+  readonly resolvedAt = signal<string>(this.today);
+
+  readonly isReunion = computed(() => {
+    const i = this.motivoSeleccionado();
+    return i !== null && this.motivos[i].resolved;
+  });
 
   seleccionar(i: number): void {
     this.motivoSeleccionado.set(i);
@@ -32,6 +40,12 @@ export class CloseReportModalComponent {
   onConfirmar(): void {
     const i = this.motivoSeleccionado();
     if (i === null) return;
-    this.confirmar.emit(this.motivos[i].resolved);
+    const resolved = this.motivos[i].resolved;
+    this.confirmar.emit({ resolved, resolvedAt: resolved ? this.resolvedAt() : undefined });
+  }
+
+  private buildToday(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
 }

@@ -216,6 +216,14 @@ export class AdminDashboardComponent {
     window.open(url, '_blank', 'noopener');
   }
 
+  openReportedUser(item: ContentReportQueueItem): void {
+    if (item.targetType !== 'USER') return;
+    const url = this.router.serializeUrl(
+      this.router.createUrlTree(['/users', item.targetPublicId]),
+    );
+    window.open(url, '_blank', 'noopener');
+  }
+
   closeDetail(): void {
     this.selected.set(null);
   }

@@ -83,137 +83,139 @@ export class ChatsPage implements OnInit, OnDestroy {
     this.mostrandoModalDenuncia.set(false);
   }
 
- ngOnInit(): void {
+  ngOnInit(): void {
 
-  this.chatsService.getConversations()
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(contacts => {
-      this.contacts = contacts;
+    this.chatsService.getConversations()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(contacts => {
+        this.contacts = contacts;
 
-      const conversationId =
-        this.route.snapshot.queryParamMap.get('conversation');
+        const conversationId =
+          this.route.snapshot.queryParamMap.get('conversation');
 
-      if (conversationId) {
-        this.openConversation(conversationId);
-      }
-    });
-
-  this.chatsService.onMessageReceived()
-.pipe(takeUntil(this.destroy$))
-.subscribe(msg => {
-
-    if (this.conversationId && msg.conversationId && msg.conversationId !== this.conversationId) {
-        return;
-    }
-
-    this.messages = [...this.messages, msg];
-
-    if (this.conversationId) {
-      this.chatsService.readMessage(this.conversationId);
-    }
-
-    setTimeout(() => this.scrollToBottom(),100);
-});
-
-  this.chatsService.onMessageRead()
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(({ conversationId }) => {
-      console.log('Mensajes leídos en conversación:', conversationId);
-    });
-
-  this.chatsService.onError()
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(err => console.error(err.message));
-
-  this.chatsService.onPresenceStatus()
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(({ userPublicId, online }) => {
-      if (userPublicId === this.selectedContact()?.otherUser.publicId) {
-        this.contactOnline.set(online);
-      }
-    });
-
-  this.chatsService.onPresenceChanged()
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(({ userPublicId, online }) => {
-      if (userPublicId === this.selectedContact()?.otherUser.publicId) {
-        this.contactOnline.set(online);
-      }
-    });
-}
-
-private requestPresence(userPublicId: string): void {
-  this.contactOnline.set(false);
-  this.chatsService.getPresence(userPublicId);
-}
-
-
-
-selectContact(contact: ConversationSummaryOutput): void {
-
-  this.selectedContact.set(contact);
-  this.conversationId = contact.publicId;
-  this.messages = [];
-  this.requestPresence(contact.otherUser.publicId);
-
-  this.chatsService.getMessagesForConversation(this.conversationId)
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(conv => {
-
-      this.conversationOutput.set(conv);
-
-     if (this.messagesNotRead()) {
-
-    this.chatsService.readMessage(this.conversationId);
-
-    setTimeout(() => {
-        this.chatsService.refreshUnreadChats?.();
-    }, 200);
-}
-    });
-}
-
-openConversation(conversationId: string): void {
-
-  const contacto = this.contacts.find(c => c.publicId === conversationId);
-
-  if (contacto) {
-    this.selectContact(contacto);
-    return;
-  }
-
-  this.conversationId = conversationId;
-  this.messages = [];
-
-  this.chatsService.getMessagesForConversation(conversationId)
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(conv => {
-
-      this.conversationOutput.set(conv);
-
-      this.selectedContact.set({
-        publicId: conv.publicId,
-        otherUser: {
-          publicId: conv.otherUser.publicId,
-          username: conv.otherUser.username,
-          photoUrl: conv.otherUser.photoUrl ?? null,
-        },
-        lastMessage: null,
-        createdAt: conv.createdAt,
+        if (conversationId) {
+          this.openConversation(conversationId);
+        }
       });
 
-      this.requestPresence(conv.otherUser.publicId);
+    this.chatsService.onMessageReceived()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(msg => {
+        this.updateContactListWithNewMessage(msg);
 
-      if (this.messagesNotRead()) {
+        if (this.conversationId && msg.conversationId && msg.conversationId !== this.conversationId) {
+          return;
+        }
 
-    this.chatsService.readMessage(this.conversationId);
+        this.messages = [...this.messages, msg];
 
-    setTimeout(() => {
-        this.chatsService.refreshUnreadChats?.();
-    }, 200);
-}
-    });
-}
+        if (this.conversationId) {
+          this.chatsService.readMessage(this.conversationId);
+        }
+
+        setTimeout(() => this.scrollToBottom(), 100);
+      });
+
+
+    this.chatsService.onError()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(err => console.error(err.message));
+
+    this.chatsService.onPresenceStatus()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ userPublicId, online }) => {
+        if (userPublicId === this.selectedContact()?.otherUser.publicId) {
+          this.contactOnline.set(online);
+        }
+      });
+
+    this.chatsService.onPresenceChanged()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ userPublicId, online }) => {
+        if (userPublicId === this.selectedContact()?.otherUser.publicId) {
+          this.contactOnline.set(online);
+        }
+      });
+  }
+
+  private requestPresence(userPublicId: string): void {
+    this.contactOnline.set(false);
+    this.chatsService.getPresence(userPublicId);
+  }
+
+
+
+  selectContact(contact: ConversationSummaryOutput): void {
+
+    this.selectedContact.set(contact);
+    this.conversationId = contact.publicId;
+    this.chatsService.activeConversationId = contact.publicId;
+    this.messages = [];
+    this.requestPresence(contact.otherUser.publicId);
+
+    this.chatsService.getMessagesForConversation(this.conversationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(conv => {
+
+        this.conversationOutput.set(conv);
+
+        if (this.messagesNotRead()) {
+
+          this.chatsService.readMessage(this.conversationId);
+
+          setTimeout(() => {
+            this.chatsService.refreshUnreadChats?.();
+          }, 200);
+        }
+
+        setTimeout(() => this.scrollToBottom(), 100);
+      });
+  }
+
+  openConversation(conversationId: string): void {
+
+    const contacto = this.contacts.find(c => c.publicId === conversationId);
+
+    if (contacto) {
+      this.selectContact(contacto);
+      return;
+    }
+
+    this.conversationId = conversationId;
+    this.chatsService.activeConversationId = conversationId;
+    this.messages = [];
+
+    this.chatsService.getMessagesForConversation(conversationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(conv => {
+
+        this.conversationOutput.set(conv);
+
+        this.selectedContact.set({
+          publicId: conv.publicId,
+          otherUser: {
+            publicId: conv.otherUser.publicId,
+            username: conv.otherUser.username,
+            photoUrl: conv.otherUser.photoUrl ?? null,
+          },
+          lastMessage: null,
+          createdAt: conv.createdAt,
+        });
+
+        this.requestPresence(conv.otherUser.publicId);
+
+        if (this.messagesNotRead()) {
+
+          this.chatsService.readMessage(this.conversationId);
+
+          setTimeout(() => {
+            this.chatsService.refreshUnreadChats?.();
+          }, 200);
+        }
+
+        setTimeout(() => this.scrollToBottom(), 100);
+      });
+  }
 
   get chatSuspendido(): boolean {
     return this.conversationOutput()?.isSuspended ?? false;
@@ -242,6 +244,7 @@ openConversation(conversationId: string): void {
       };
 
       this.messages = [...this.messages, localMessage];
+      this.updateContactListWithNewMessage(localMessage);
 
       this.newMessage.set('');
       this.clearSelectedImage();
@@ -261,25 +264,32 @@ openConversation(conversationId: string): void {
             }
             return msg;
           });
+          this.updateContactListWithNewMessage(response);
           setTimeout(() => this.scrollToBottom(), 100);
         },
         error: (err) => {
           console.error('Error al enviar la imagen:', err);
           this.messages = this.messages.filter(msg => msg.publicId !== tempPublicId);
+          this.chatsService.getConversations().subscribe(contacts => {
+            this.contacts = contacts;
+          });
         }
       });
     } else {
-      this.chatsService.sendMessage(this.conversationId, text);
-
-      this.messages = [...this.messages, {
+      const localMsg: MessagePayload = {
         publicId: crypto.randomUUID(),
-         conversationId: this.conversationId,
+        conversationId: this.conversationId,
         text,
         senderId: this.currentUserId(),
         receiverId: this.selectedContact()!.otherUser.publicId,
         isRead: false,
         createdAt: new Date(),
-      }];
+      };
+
+      this.chatsService.sendMessage(this.conversationId, text);
+
+      this.messages = [...this.messages, localMsg];
+      this.updateContactListWithNewMessage(localMsg);
 
       this.newMessage.set('');
       setTimeout(() => this.scrollToBottom(), 100);
@@ -332,6 +342,7 @@ openConversation(conversationId: string): void {
   }
 
   ngOnDestroy(): void {
+    this.chatsService.activeConversationId = null;
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -344,15 +355,39 @@ openConversation(conversationId: string): void {
     }
   }
 
-private messagesNotRead(): boolean {
-  return this.allMessages.some((m: MessagePayload | { isRead: boolean; senderId: string }) =>
-    m.isRead === false &&
-    m.senderId !== this.currentUserId()
-  );
-}
+  private messagesNotRead(): boolean {
+    return this.allMessages.some((m: MessagePayload | { isRead: boolean; senderId: string }) =>
+      m.isRead === false &&
+      m.senderId !== this.currentUserId()
+    );
+  }
 
-get allMessages() {
-  const historical = this.conversationOutput()?.messages ?? [];
-  return [...historical, ...this.messages];
-}
+  private updateContactListWithNewMessage(msg: MessagePayload): void {
+    const contactIndex = this.contacts.findIndex(c => c.publicId === msg.conversationId);
+
+    if (contactIndex > -1) {
+      const contact = this.contacts[contactIndex];
+      const isCurrentChat = this.conversationId === msg.conversationId;
+      const isOwnMessage = msg.senderId === this.currentUserId();
+
+      const updatedContact: ConversationSummaryOutput = {
+        ...contact,
+        lastMessage: msg,
+        unreadCount: (contact.unreadCount ?? 0) + (!isCurrentChat && !isOwnMessage ? 1 : 0)
+      };
+
+      const updatedContacts = [...this.contacts];
+      updatedContacts.splice(contactIndex, 1);
+      this.contacts = [updatedContact, ...updatedContacts];
+    } else {
+      this.chatsService.getConversations().subscribe(contacts => {
+        this.contacts = contacts;
+      });
+    }
+  }
+
+  get allMessages() {
+    const historical = this.conversationOutput()?.messages ?? [];
+    return [...historical, ...this.messages];
+  }
 }

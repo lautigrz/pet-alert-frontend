@@ -158,13 +158,13 @@ export class ReportDetailPage implements OnInit {
     this.mostrandoModalDenuncia.set(false);
   }
 
-  async resolverReporte(resolved: boolean): Promise<void> {
+  async resolverReporte(payload: { resolved: boolean; resolvedAt?: string }): Promise<void> {
     const r = this.report();
     if (!r || !this.esPropio()) return;
 
     this.actualizando.set(true);
     try {
-      await this.reportesService.updateToResolved(r.publicId, resolved);
+      await this.reportesService.updateToResolved(r.publicId, payload.resolved, payload.resolvedAt);
 
       this.report.update((current) =>
         current ? { ...current, status: 'RESOLVED' } : null,

@@ -237,7 +237,7 @@
 
 
   @if (confirmandoResolucion() && report()) {
-  <app-close-report-modal [enviando]="actualizando()" (cerrar)="cancelarConfirmacion()"
-    (confirmar)="resolverReporte($event)" />
+  <app-close-report-modal [enviando]="actualizando()" [minDate]="report()!.createdAt.slice(0, 10)"
+    (cerrar)="cancelarConfirmacion()" (confirmar)="resolverReporte($event)" />
   }
 </div>

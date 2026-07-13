@@ -363,6 +363,18 @@ export class ProfilePage implements OnInit {
     );
   }
 
+  achievementPaws(requiredXp: number): boolean[] {
+    const filled = requiredXp <= 100 ? 1 : requiredXp <= 500 ? 2 : 3;
+
+    return [1, 2, 3].map((paw) => paw <= filled);
+  }
+
+  achievementDifficultyLabel(requiredXp: number): string {
+    const filled = this.achievementPaws(requiredXp).filter(Boolean).length;
+
+    return `Dificultad ${filled} de 3`;
+  }
+
   unlockedAchievementsList(): (UserExperienceAchievement & { progressLabel: string })[] {
     return this.achievements()
       .filter((a) => a.unlocked ?? true)

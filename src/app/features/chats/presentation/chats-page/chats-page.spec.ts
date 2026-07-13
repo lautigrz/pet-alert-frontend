@@ -114,6 +114,7 @@ describe('ChatsPage', () => {
         receiverId: 'u-current',
         isRead: false,
         createdAt: new Date(),
+        conversationId: 'conversation-1'
       };
 
       messageReceivedSubject.next(mockMsg);
@@ -122,15 +123,6 @@ describe('ChatsPage', () => {
       expect(component.messages).toContain(mockMsg);
     });
 
-    it('should log message read when onMessageRead emits', () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { /* noop */ });
-      fixture.detectChanges();
-
-      messageReadSubject.next({ conversationId: 'c1' });
-
-      expect(consoleSpy).toHaveBeenCalledWith('Mensajes leídos en conversación:', 'c1');
-      consoleSpy.mockRestore();
-    });
 
     it('should log error when onError emits', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
@@ -183,9 +175,11 @@ describe('ChatsPage', () => {
             senderId: 'u-other',
             isRead: false,
             createdAt: new Date(),
+
           },
         ],
         createdAt: new Date(),
+        isSuspended: false
       };
 
       chatsServiceMock.getMessagesForConversation.mockReturnValue(of(mockConversation));
@@ -232,6 +226,7 @@ describe('ChatsPage', () => {
           },
         ],
         createdAt: new Date(),
+        isSuspended: false
       };
 
       chatsServiceMock.getMessagesForConversation.mockReturnValue(of(mockConversation));
@@ -412,14 +407,14 @@ describe('ChatsPage', () => {
 
       const mockFileReader = {
         result: 'data:image/png;base64,dummy',
-        readAsDataURL: vi.fn(function(this: { onload?: (() => void) | null }) {
+        readAsDataURL: vi.fn(function (this: { onload?: (() => void) | null }) {
           if (this.onload) {
             this.onload();
           }
         }),
       };
       const originalFileReader = window.FileReader;
-      window.FileReader = vi.fn(function(this: unknown) {
+      window.FileReader = vi.fn(function (this: unknown) {
         return mockFileReader;
       }) as unknown as typeof FileReader;
 
@@ -525,9 +520,10 @@ describe('ChatsPage', () => {
         isRead: false,
         createdAt: new Date(),
         imageUrl: 'http://cloudinary/test.png',
-        images: [{ publicId: 'img-1', url: 'http://cloudinary/test.png' }]
+        images: [{ publicId: 'img-1', url: 'http://cloudinary/test.png' }],
+        conversationId: 'conversation-1'
       };
-      
+
       const sendImageSubject = new Subject<MessagePayload>();
       chatsServiceMock.sendImage.mockReturnValue(sendImageSubject.asObservable());
 

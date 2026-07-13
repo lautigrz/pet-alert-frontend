@@ -11,24 +11,26 @@ describe('CloseReportModalComponent', () => {
     component = TestBed.createComponent(CloseReportModalComponent).componentInstance;
   });
 
-  it('emite resolved=true al confirmar "¡La mascota volvió a casa!"', () => {
-    let emitido: boolean | undefined;
+  it('emite resolved=true y la fecha del reencuentro al confirmar "¡La mascota volvió a casa!"', () => {
+    let emitido: { resolved: boolean; resolvedAt?: string } | undefined;
     component.confirmar.subscribe((v) => (emitido = v));
 
     component.seleccionar(0);
     component.onConfirmar();
 
-    expect(emitido).toBe(true);
+    expect(emitido?.resolved).toBe(true);
+    expect(emitido?.resolvedAt).toBe(component.today);
   });
 
-  it('emite resolved=false para los otros motivos', () => {
-    let emitido: boolean | undefined;
+  it('emite resolved=false y sin fecha para los otros motivos', () => {
+    let emitido: { resolved: boolean; resolvedAt?: string } | undefined;
     component.confirmar.subscribe((v) => (emitido = v));
 
     component.seleccionar(1);
     component.onConfirmar();
 
-    expect(emitido).toBe(false);
+    expect(emitido?.resolved).toBe(false);
+    expect(emitido?.resolvedAt).toBeUndefined();
   });
 
   it('no emite si no hay motivo seleccionado', () => {

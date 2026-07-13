@@ -4,6 +4,7 @@ import {
   ElementRef,
   OnDestroy,
   effect,
+  inject,
   input,
   viewChild,
 } from '@angular/core';
@@ -14,14 +15,16 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-chart',
   standalone: true,
-  host: { class: 'block h-full w-full' },
+  host: { class: 'relative block h-full w-full' },
   template: '<canvas #canvas></canvas>',
 })
 export class ChartComponent implements AfterViewInit, OnDestroy {
   readonly config = input.required<ChartConfiguration>();
 
+  private readonly host = inject(ElementRef);
   private readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private chart: Chart | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor() {
     effect(() => {
@@ -35,9 +38,14 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.chart = new Chart(this.canvasRef().nativeElement, this.config());
+    this.resizeObserver = new ResizeObserver(() =>
+      requestAnimationFrame(() => this.chart?.resize()),
+    );
+    this.resizeObserver.observe(this.host.nativeElement);
   }
 
   ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
     this.chart?.destroy();
   }
 }
