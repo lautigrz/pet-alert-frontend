@@ -4,6 +4,9 @@ import { Router } from '@angular/router';
 
 import { NotificationsService } from '../../application/notifications.service';
 import { NotificacionCoincidencia } from '../../domain/match-notification';
+import { MATCH_EVENT, MatchNotification } from '../../domain/match-notification';
+import { LostNearbyNotificationsService } from '../../application/lost-nearby-notifications.service';
+import { LostNearbyNotification } from '../../domain/lost-nearby-notification';
 
 @Component({
   selector: 'app-notifications-bell',
@@ -13,12 +16,21 @@ import { NotificacionCoincidencia } from '../../domain/match-notification';
 })
 export class NotificationsBell implements OnInit {
   private readonly notificationsService = inject(NotificationsService);
+  private readonly lostNearbyNotificationsService = inject(LostNearbyNotificationsService);
   private readonly router = inject(Router);
 
   @Input() variante: 'navbar' | 'bottom' = 'navbar';
 
-  readonly notificaciones = this.notificationsService.notificaciones;
-  readonly noVistas = this.notificationsService.noVistas;
+  readonly matchNotifications = this.notificationsService.notificaciones;
+  readonly lostNearbyNotifications = this.lostNearbyNotificationsService.notifications;
+  
+  readonly noVistas = computed(() => {
+    return (
+      this.notificationsService.noVistas() +
+      this.lostNearbyNotifications().filter((n) => !n.seen).length
+    );
+  });
+
   readonly abierto = signal(false);
 
   readonly badge = computed(() => {
@@ -26,9 +38,17 @@ export class NotificationsBell implements OnInit {
     return total > 10 ? '+10' : String(total);
   });
 
+  readonly notificaciones = computed(() => {
+    return [
+      ...this.matchNotifications(),
+      ...this.lostNearbyNotifications(),
+    ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  });
+
   ngOnInit(): void {
     this.notificationsService.escuchar();
-    void this.notificationsService.cargar();
+    this.lostNearbyNotificationsService.escuchar();
+    void Promise.all([this.notificationsService.cargar(), this.lostNearbyNotificationsService.load()]);
   }
 
   alternar(): void {
@@ -43,14 +63,29 @@ export class NotificationsBell implements OnInit {
     return this.notificationsService.esNueva(notificacion.matchPublicId);
   }
 
-  goToMatches(notificacion: NotificacionCoincidencia): void {
-    this.cerrar();
-    const reportId =
-      notificacion.rol === 'avistador'
-        ? notificacion.matchedReportPublicId
-        : notificacion.lostReportPublicId;
-    this.router.navigate(['/reports', reportId, 'matches']);
+  async goToMatches(
+  notificacion: NotificacionCoincidencia,
+): Promise<void> {
+
+  if (this.esNueva(notificacion)) {
+    await this.notificationsService.markSeen(
+      notificacion.matchPublicId,
+    );
   }
+
+  this.cerrar();
+
+  const reportId =
+    notificacion.rol === 'avistador'
+      ? notificacion.matchedReportPublicId
+      : notificacion.lostReportPublicId;
+
+  await this.router.navigate([
+    '/reports',
+    reportId,
+    'matches',
+  ]);
+}
 
   imagenDe(notificacion: NotificacionCoincidencia): string | null {
     return notificacion.rol === 'avistador' ? notificacion.lostPetImage : notificacion.matchedImage;
@@ -81,5 +116,35 @@ export class NotificationsBell implements OnInit {
     return this.variante === 'bottom'
       ? 'flex w-full flex-col items-center justify-center gap-1 text-slate-500 text-[11px] font-medium transition-colors hover:text-[#E8842E]'
       : 'flex items-center justify-center w-9 h-9 rounded-full text-slate-500 hover:text-[#E8842E] hover:bg-slate-100 transition-colors';
+  }
+
+  esMatch(
+    notification: MatchNotification | LostNearbyNotification,
+    ): notification is MatchNotification {
+    return 'matchPublicId' in notification;
+  }
+
+  esLostNearby(
+    notification: MatchNotification | LostNearbyNotification,
+  ): notification is LostNearbyNotification {
+    return 'notificationPublicId' in notification;
+  }
+
+  async goToLostReport(
+    notification: LostNearbyNotification,
+  ): Promise<void> {
+
+    if (!notification.seen) {
+      await this.lostNearbyNotificationsService.markAsSeen(
+        notification.notificationPublicId,
+      );
+    }
+
+    this.cerrar();
+
+    await this.router.navigate([
+      '/reports',
+      notification.reportPublicId,
+    ]);
   }
 }
