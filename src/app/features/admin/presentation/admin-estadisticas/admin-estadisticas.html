@@ -15,7 +15,7 @@
       <!-- Reportes por mes -->
       <section class="rounded-2xl bg-white border border-slate-200 p-5 mb-4">
         <h2 class="text-sm font-bold text-[#12355B] mb-4">Reportes por mes</h2>
-        <div class="h-72">
+        <div class="h-64 sm:h-72">
           @if (barConfig(); as cfg) {
             <app-chart [config]="cfg" />
           }
@@ -27,12 +27,12 @@
         <!-- Tasa de reuniones -->
         <section class="rounded-2xl bg-white border border-slate-200 p-5">
           <h2 class="text-sm font-bold text-[#12355B] mb-4">Tasa de reuniones</h2>
-          <div class="relative h-56">
+          <div class="relative h-48 sm:h-56">
             @if (donutConfig(); as cfg) {
               <app-chart [config]="cfg" />
             }
             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span class="text-4xl font-extrabold text-[#E8842E]">{{ s.reunionRate.rate }}%</span>
+              <span class="text-3xl sm:text-4xl font-extrabold text-[#E8842E]">{{ s.reunionRate.rate }}%</span>
             </div>
           </div>
           <p class="mt-4 text-center text-sm text-slate-500">
@@ -49,7 +49,7 @@
             @if (s.avgResolutionDays === null) {
               <span class="text-2xl font-bold text-slate-300">Sin datos</span>
             } @else {
-              <span class="text-6xl font-extrabold text-[#12355B]">{{ s.avgResolutionDays }}</span>
+              <span class="text-5xl sm:text-6xl font-extrabold text-[#12355B]">{{ s.avgResolutionDays }}</span>
               <span class="mt-2 text-sm font-semibold text-slate-500">días promedio</span>
             }
           </div>

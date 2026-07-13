@@ -45,6 +45,41 @@
   </aside>
 
   <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+    <!-- Switcher de secciones (solo mobile, siempre visible) -->
+    <div class="sm:hidden shrink-0 bg-white border-b border-slate-200 px-4 py-3">
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" (click)="selectSection('posts')"
+          class="flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-sm font-semibold border transition"
+          [class]="section() === 'posts' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
+          Publicaciones
+          @if (pendingPosts() > 0) {
+            <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingPosts() }}</span>
+          }
+        </button>
+        <button type="button" (click)="selectSection('chats')"
+          class="flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-sm font-semibold border transition"
+          [class]="section() === 'chats' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
+          Chats
+          @if (pendingChats() > 0) {
+            <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingChats() }}</span>
+          }
+        </button>
+        <button type="button" (click)="selectSection('profiles')"
+          class="flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-sm font-semibold border transition"
+          [class]="section() === 'profiles' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
+          Usuarios
+          @if (pendingProfiles() > 0) {
+            <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingProfiles() }}</span>
+          }
+        </button>
+        <button type="button" (click)="selectSection('estadisticas')"
+          class="flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-sm font-semibold border transition"
+          [class]="section() === 'estadisticas' ? 'bg-[#E8842E] text-white border-[#E8842E]' : 'bg-white text-[#E8842E] border-[#E8842E]/40'">
+          Estadísticas
+        </button>
+      </div>
+    </div>
+
     @if (section() === 'estadisticas') {
       <app-admin-estadisticas />
     }
@@ -63,33 +98,6 @@
 
     <main class="flex-1 overflow-y-auto px-5 sm:px-6 py-6 [scrollbar-gutter:stable]" [class.hidden]="section() === 'estadisticas'">
       <div class="max-w-[1100px] mx-auto">
-
-        <div class="sm:hidden flex gap-2 mb-5">
-          <button type="button" (click)="selectSection('posts')"
-            class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition"
-            [class]="section() === 'posts' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
-            Publicaciones
-            @if (pendingPosts() > 0) {
-              <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingPosts() }}</span>
-            }
-          </button>
-          <button type="button" (click)="selectSection('chats')"
-            class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition"
-            [class]="section() === 'chats' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
-            Chats
-            @if (pendingChats() > 0) {
-              <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingChats() }}</span>
-            }
-          </button>
-          <button type="button" (click)="selectSection('profiles')"
-            class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition"
-            [class]="section() === 'profiles' ? 'bg-[#12355B] text-white border-[#12355B]' : 'bg-white text-slate-600 border-slate-200'">
-            Usuarios
-            @if (pendingProfiles() > 0) {
-              <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#E8842E] text-white text-[11px] font-bold">{{ pendingProfiles() }}</span>
-            }
-          </button>
-        </div>
 
         <div class="flex flex-wrap gap-2 mb-4">
           @for (option of statusOptions(); track option.value) {
