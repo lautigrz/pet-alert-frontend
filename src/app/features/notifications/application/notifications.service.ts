@@ -68,4 +68,8 @@ export class NotificationsService {
       return [...porId.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     });
   }
+
+  async markSeen(matchPublicId: string): Promise<void> {
+    await this.seenMatchesStore.markSeen(matchPublicId);
+  }
 }
