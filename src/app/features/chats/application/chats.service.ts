@@ -7,19 +7,19 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
 export interface MessagePayload {
-  publicId:   string;
-  text:       string;
-  senderId:   string;
+  publicId: string;
+  text: string;
+  senderId: string;
   receiverId: string;
-  isRead:     boolean;
-  createdAt:  Date;
-  imageUrl?:  string;
-  images?:    { publicId: string; url: string }[];
-   conversationId: string;
+  isRead: boolean;
+  createdAt: Date;
+  imageUrl?: string;
+  images?: { publicId: string; url: string }[];
+  conversationId: string;
 }
 
 export interface CreateConversationResponse {
-  publicId:  string;
+  publicId: string;
   createdAt: string;
 }
 
@@ -36,8 +36,8 @@ export class ChatsService {
   private readonly apiUrl = environment.apiUrl;
   private unreadChatsSubject = new BehaviorSubject<number>(0);
   activeConversationId: string | null = null;
-    
-  
+
+
 
   unreadChats$ = this.unreadChatsSubject.asObservable();
   sendMessage(conversationId: string, text: string): void {
@@ -64,7 +64,7 @@ export class ChatsService {
     return this.socketService.on<MessagePayload>('message:received');
   }
 
-  readMessage(conversationId: string){
+  readMessage(conversationId: string) {
     this.socketService.emit('message:read', { conversationId });
   }
 
@@ -89,7 +89,7 @@ export class ChatsService {
   }
 
   getConversations(): Observable<ConversationSummaryOutput[]> {
-   return this.http.get<ConversationSummaryOutput[]>(`${this.apiUrl}/conversations`);
+    return this.http.get<ConversationSummaryOutput[]>(`${this.apiUrl}/conversations`);
   }
 
   getMessagesForConversation(conversationId: string): Observable<ConversationOutput> {
@@ -112,55 +112,52 @@ export class ChatsService {
     }
   }
 
-private listenersInitialized = false;
+  private listenersInitialized = false;
 
-initializeSocketListeners(): void {
+  initializeSocketListeners(): void {
 
-  if (this.listenersInitialized) {
-    return;
-  }
-
-  this.listenersInitialized = true;
-
-  this.onMessageReceived().subscribe((msg) => {
-    if (this.activeConversationId && msg.conversationId === this.activeConversationId) {
+    if (this.listenersInitialized) {
       return;
     }
-    this.refreshUnreadChats();
-  });
 
-  this.onMessageRead().subscribe(() => {
-    this.refreshUnreadChats();
-  });
-}
+    this.listenersInitialized = true;
+
+    this.onMessageReceived().subscribe((msg) => {
+      if (this.activeConversationId && msg.conversationId === this.activeConversationId) {
+        return;
+      }
+      this.refreshUnreadChats();
+    });
+
+    this.onMessageRead().subscribe(() => {
+      this.refreshUnreadChats();
+    });
+  }
 
   setUnreadChats(count: number): void {
-  this.unreadChatsSubject.next(count);
-}
+    this.unreadChatsSubject.next(count);
+  }
 
 
 
-getUnreadChats(): number {
-  return this.unreadChatsSubject.value;
-}
+  getUnreadChats(): number {
+    return this.unreadChatsSubject.value;
+  }
 
-refreshUnreadChats(): void {
-  this.getConversations().subscribe({
-    next: (conversations) => {
+  refreshUnreadChats(): void {
+    this.getConversations().subscribe({
+      next: (conversations) => {
 
-      console.log("CONVERSACIONES:", conversations);
 
-      const unread = conversations.filter(
-        c => (c.unreadCount ?? 0) > 0
-      ).length;
+        const unread = conversations.filter(
+          c => (c.unreadCount ?? 0) > 0
+        ).length;
 
-      console.log("UNREAD:", unread);
-
-      this.setUnreadChats(unread);
-    },
-    error: (err) => {
-      console.error("ERROR getConversations:", err);
-    }
-  });
-}
+        this.setUnreadChats(unread);
+      },
+      error: (err) => {
+        console.error("ERROR getConversations:", err);
+      }
+    });
+  }
 }
