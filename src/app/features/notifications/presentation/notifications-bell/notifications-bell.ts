@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 
 import { NotificationsService } from '../../application/notifications.service';
 import { NotificacionCoincidencia } from '../../domain/match-notification';
-import { MATCH_EVENT, MatchNotification } from '../../domain/match-notification';
+import { MatchNotification } from '../../domain/match-notification';
 import { LostNearbyNotificationsService } from '../../application/lost-nearby-notifications.service';
 import { LostNearbyNotification } from '../../domain/lost-nearby-notification';
 

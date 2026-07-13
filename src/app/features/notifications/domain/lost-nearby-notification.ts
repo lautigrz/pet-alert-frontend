@@ -22,4 +22,4 @@ export interface LostNearbySocketNotification {
   createdAt: string;
 }
 
-export interface LostNearbyNotification  extends LostNearbySocketNotification {}
+export type LostNearbyNotification = LostNearbySocketNotification;
