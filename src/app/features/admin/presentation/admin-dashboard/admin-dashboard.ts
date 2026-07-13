@@ -7,7 +7,7 @@ import { ToastService } from '../../../../shared/application/toast.service';
 import {
   ContentReportQueueItem,
   ContentReportStatus,
-  ReportedUserSummary,
+  ReportedUserDetail,
 } from '../../domain/content-report-queue.model';
 import {
   ContentReportReason,
@@ -29,7 +29,7 @@ interface ContentReportGroup {
   targetPublicId: string;
   targetType: ContentReportTargetType;
   title: string;
-  reportedUser: ReportedUserSummary | null;
+  reportedUser: ReportedUserDetail | null;
   reportCount: number;
   pendingCount: number;
   items: ContentReportQueueItem[];
