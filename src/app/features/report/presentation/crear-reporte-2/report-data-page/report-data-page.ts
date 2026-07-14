@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { WizardStepperComponent } from '../../../../../shared/component/wizard-stepper/wizard-stepper.component';
 import { PetIconComponent } from '../../../../../shared/component/pet-icon/pet-icon.component';
@@ -38,7 +38,13 @@ export class ReportDataPage {
   readonly colorOptions = signal<string[]>(PET_COLORS);
   readonly breedOptions = signal<string[]>(DOG_BREEDS);
 
-
+  constructor() {
+    effect(() => {
+      const species = this.petSpecies() === 'gato' ? 'CAT' : 'DOG';
+      this.petBreed.set('');
+      this.catalog.getBreeds(species).then((breeds) => this.breedOptions.set(breeds));
+    });
+  }
 
   onFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
