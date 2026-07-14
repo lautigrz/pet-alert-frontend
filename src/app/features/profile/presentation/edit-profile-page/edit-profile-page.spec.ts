@@ -5,10 +5,7 @@ import { provideRouter } from '@angular/router';
 import { EditProfilePage } from './edit-profile-page';
 import { ProfileService } from '../../application/profile.service';
 
-import {
-  InvalidProfileDataError,
-  UserNotFoundError,
-} from '../../domain/profile.errors';
+import { InvalidProfileDataError, UserNotFoundError } from '../../domain/profile.errors';
 
 describe('EditProfilePage', () => {
   let profileService: {
@@ -82,27 +79,19 @@ describe('EditProfilePage', () => {
       await component.ngOnInit();
 
       // Then
-      expect(component.currentPhotoUrl()).toBe(
-        'https://res.cloudinary.com/demo/profile.jpg',
-      );
-      expect(component.profilePhotoUrl()).toBe(
-        'https://res.cloudinary.com/demo/profile.jpg',
-      );
+      expect(component.currentPhotoUrl()).toBe('https://res.cloudinary.com/demo/profile.jpg');
+      expect(component.profilePhotoUrl()).toBe('https://res.cloudinary.com/demo/profile.jpg');
     });
 
     it('shows an error when profile loading fails', async () => {
       // Given
-      profileService.getProfile.mockRejectedValue(
-        new UserNotFoundError(),
-      );
+      profileService.getProfile.mockRejectedValue(new UserNotFoundError());
 
       // When
       await component.ngOnInit();
 
       // Then
-      expect(component.serverError()).toBe(
-        'Usuario no encontrado',
-      );
+      expect(component.serverError()).toBe('Usuario no encontrado');
     });
   });
 
@@ -170,9 +159,7 @@ describe('EditProfilePage', () => {
       await component.submit();
 
       // Then
-      expect(component.successMessage()).toBe(
-        'Perfil actualizado correctamente',
-      );
+      expect(component.successMessage()).toBe('Perfil actualizado correctamente');
 
       expect(component.serverError()).toBeNull();
       expect(component.submitting()).toBe(false);
@@ -193,9 +180,7 @@ describe('EditProfilePage', () => {
       await component.submit();
 
       // Then
-      expect(component.currentPhotoUrl()).toBe(
-        'https://res.cloudinary.com/demo/profile.jpg',
-      );
+      expect(component.currentPhotoUrl()).toBe('https://res.cloudinary.com/demo/profile.jpg');
     });
 
     it('shows server error when update fails', async () => {
@@ -208,9 +193,7 @@ describe('EditProfilePage', () => {
       await component.submit();
 
       // Then
-      expect(component.serverError()).toBe(
-        'Username inválido',
-      );
+      expect(component.serverError()).toBe('Username inválido');
 
       expect(component.submitting()).toBe(false);
     });
@@ -244,12 +227,8 @@ describe('EditProfilePage', () => {
 
       // Then
       expect(profileService.uploadProfilePhoto).toHaveBeenCalledWith(file);
-      expect(component.currentPhotoUrl()).toBe(
-        'https://res.cloudinary.com/demo/profile.png',
-      );
-      expect(component.successMessage()).toBe(
-        'Foto de perfil actualizada correctamente',
-      );
+      expect(component.currentPhotoUrl()).toBe('https://res.cloudinary.com/demo/profile.png');
+      expect(component.successMessage()).toBe('Foto de perfil actualizada correctamente');
       expect(component.uploadingPhoto()).toBe(false);
     });
 
@@ -287,20 +266,14 @@ describe('EditProfilePage', () => {
 
       // Then
       expect(profileService.uploadProfilePhoto).not.toHaveBeenCalled();
-      expect(component.serverError()).toBe(
-        'Solo se permiten imágenes JPG, PNG o WEBP',
-      );
+      expect(component.serverError()).toBe('Solo se permiten imágenes JPG, PNG o WEBP');
     });
 
     it('rejects images bigger than 5MB', async () => {
       // Given
-      const file = new File(
-        [new ArrayBuffer(5 * 1024 * 1024 + 1)],
-        'perfil.png',
-        {
-          type: 'image/png',
-        },
-      );
+      const file = new File([new ArrayBuffer(5 * 1024 * 1024 + 1)], 'perfil.png', {
+        type: 'image/png',
+      });
 
       const event = {
         target: {
@@ -314,9 +287,7 @@ describe('EditProfilePage', () => {
 
       // Then
       expect(profileService.uploadProfilePhoto).not.toHaveBeenCalled();
-      expect(component.serverError()).toBe(
-        'La imagen no puede superar los 5MB',
-      );
+      expect(component.serverError()).toBe('La imagen no puede superar los 5MB');
     });
 
     it('shows server error when upload fails', async () => {
@@ -332,17 +303,13 @@ describe('EditProfilePage', () => {
         },
       } as unknown as Event;
 
-      profileService.uploadProfilePhoto.mockRejectedValue(
-        new Error('No se pudo subir la imagen'),
-      );
+      profileService.uploadProfilePhoto.mockRejectedValue(new Error('No se pudo subir la imagen'));
 
       // When
       await component.onPhotoSelected(event);
 
       // Then
-      expect(component.serverError()).toBe(
-        'No se pudo subir la imagen',
-      );
+      expect(component.serverError()).toBe('No se pudo subir la imagen');
       expect(component.uploadingPhoto()).toBe(false);
     });
   });
@@ -355,9 +322,7 @@ describe('EditProfilePage', () => {
       });
 
       // Then
-      expect(
-        component.form.get('username')?.hasError('required'),
-      ).toBe(true);
+      expect(component.form.get('username')?.hasError('required')).toBe(true);
 
       expect(component.form.invalid).toBe(true);
     });
@@ -369,9 +334,7 @@ describe('EditProfilePage', () => {
       });
 
       // Then
-      expect(
-        component.form.get('username')?.hasError('minlength'),
-      ).toBe(true);
+      expect(component.form.get('username')?.hasError('minlength')).toBe(true);
 
       expect(component.form.invalid).toBe(true);
     });
@@ -383,9 +346,7 @@ describe('EditProfilePage', () => {
       });
 
       // Then
-      expect(
-        component.form.get('name')?.hasError('maxlength'),
-      ).toBe(true);
+      expect(component.form.get('name')?.hasError('maxlength')).toBe(true);
     });
 
     it('rejects lastnames longer than 50 characters', () => {
@@ -395,9 +356,79 @@ describe('EditProfilePage', () => {
       });
 
       // Then
-      expect(
-        component.form.get('lastname')?.hasError('maxlength'),
-      ).toBe(true);
+      expect(component.form.get('lastname')?.hasError('maxlength')).toBe(true);
     });
+  });
+
+  describe('hasError', () => {
+    it('returns true when the control is touched and has the requested error', () => {
+      const username = component.form.get('username')!;
+
+      username.setValue('');
+      username.markAsTouched();
+
+      expect(component.hasError('username', 'required')).toBe(true);
+    });
+
+    it('returns false when the control has not been touched', () => {
+      component.form.get('username')?.setValue('');
+
+      expect(component.hasError('username', 'required')).toBe(false);
+    });
+  });
+
+  describe('profilePhotoUrl', () => {
+    it('returns the default photo when currentPhotoUrl is null', () => {
+      component.currentPhotoUrl.set(null);
+
+      expect(component.profilePhotoUrl()).toBe(component.defaultPhotoUrl);
+    });
+  });
+
+  it('clears previous server errors after a successful update', async () => {
+    await component.ngOnInit();
+
+    component.serverError.set('Error anterior');
+
+    profileService.updateProfile.mockResolvedValue({
+      id: 'user-123',
+      email: 'facundo@example.com',
+      username: 'facundo',
+      name: 'Facundo',
+      lastname: 'Pereira',
+      photoUrl: null,
+    });
+
+    await component.submit();
+
+    expect(component.serverError()).toBeNull();
+  });
+
+  it('clears previous success messages before uploading a new photo', async () => {
+    component.successMessage.set('Mensaje anterior');
+
+    const file = new File(['img'], 'perfil.png', {
+      type: 'image/png',
+    });
+
+    const event = {
+      target: {
+        files: [file],
+        value: '',
+      },
+    } as unknown as Event;
+
+    profileService.uploadProfilePhoto.mockResolvedValue({
+      id: 'user-123',
+      email: 'facundo@example.com',
+      username: 'facundo',
+      name: 'Facundo',
+      lastname: 'Pereira',
+      photoUrl: null,
+    });
+
+    await component.onPhotoSelected(event);
+
+    expect(component.successMessage()).toBe('Foto de perfil actualizada correctamente');
   });
 });

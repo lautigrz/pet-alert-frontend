@@ -48,11 +48,13 @@ describe('ChatsPage', () => {
       onMessageReceived: vi.fn().mockReturnValue(messageReceivedSubject.asObservable()),
       onMessageRead: vi.fn().mockReturnValue(messageReadSubject.asObservable()),
       onError: vi.fn().mockReturnValue(errorSubject.asObservable()),
-      getMessagesForConversation: vi.fn().mockReturnValue(of({
-        publicId: 'conv-123',
-        otherUser: { publicId: 'u-other', username: 'other_user' },
-        messages: [],
-      })),
+      getMessagesForConversation: vi.fn().mockReturnValue(
+        of({
+          publicId: 'conv-123',
+          otherUser: { publicId: 'u-other', username: 'other_user' },
+          messages: [],
+        }),
+      ),
       readMessage: vi.fn(),
       sendMessage: vi.fn(),
       sendImage: vi.fn().mockReturnValue(of({})),
@@ -114,18 +116,19 @@ describe('ChatsPage', () => {
         receiverId: 'u-current',
         isRead: false,
         createdAt: new Date(),
-        conversationId: 'conversation-1'
+        conversationId: 'conversation-1',
       };
 
       messageReceivedSubject.next(mockMsg);
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(component.messages).toContain(mockMsg);
     });
 
-
     it('should log error when onError emits', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
+        /* noop */
+      });
       fixture.detectChanges();
 
       errorSubject.next({ message: 'some socket error' });
@@ -140,7 +143,7 @@ describe('ChatsPage', () => {
       queryParam = 'conv-123';
 
       fixture.detectChanges();
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(chatsServiceMock.getMessagesForConversation).toHaveBeenCalledWith('conv-123');
       expect(component.conversationId).toBe('conv-123');
@@ -175,17 +178,16 @@ describe('ChatsPage', () => {
             senderId: 'u-other',
             isRead: false,
             createdAt: new Date(),
-
           },
         ],
         createdAt: new Date(),
-        isSuspended: false
+        isSuspended: false,
       };
 
       chatsServiceMock.getMessagesForConversation.mockReturnValue(of(mockConversation));
 
       component.selectContact(mockContact);
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(component.selectedContact()).toBe(mockContact);
       expect(component.conversationId).toBe('c1');
@@ -226,13 +228,13 @@ describe('ChatsPage', () => {
           },
         ],
         createdAt: new Date(),
-        isSuspended: false
+        isSuspended: false,
       };
 
       chatsServiceMock.getMessagesForConversation.mockReturnValue(of(mockConversation));
 
       component.selectContact(mockContact);
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(chatsServiceMock.readMessage).not.toHaveBeenCalled();
     });
@@ -301,7 +303,7 @@ describe('ChatsPage', () => {
       component.newMessage.set('  test message  ');
 
       component.sendMessage();
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(chatsServiceMock.sendMessage).toHaveBeenCalledWith('c1', 'test message');
       expect(component.newMessage()).toBe('');
@@ -312,7 +314,7 @@ describe('ChatsPage', () => {
           senderId: 'u-current',
           receiverId: 'u-other',
           isRead: false,
-        })
+        }),
       );
     });
 
@@ -327,6 +329,29 @@ describe('ChatsPage', () => {
     it('should do nothing if conversationId is not set', () => {
       component.conversationId = '';
       component.newMessage.set('hello');
+
+      component.sendMessage();
+
+      expect(chatsServiceMock.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('should not send messages when the chat is suspended', () => {
+      fixture.detectChanges();
+
+      component.conversationOutput.set({
+        publicId: 'c1',
+        otherUser: {
+          publicId: 'u-other',
+          username: 'user_other',
+          photoUrl: '',
+        },
+        messages: [],
+        createdAt: new Date(),
+        isSuspended: true,
+      });
+
+      component.conversationId = 'c1';
+      component.newMessage.set('hola');
 
       component.sendMessage();
 
@@ -401,8 +426,8 @@ describe('ChatsPage', () => {
       const mockEvent = {
         target: {
           files: [mockFile],
-          value: 'test.png'
-        }
+          value: 'test.png',
+        },
       } as unknown as Event;
 
       const mockFileReader = {
@@ -432,8 +457,8 @@ describe('ChatsPage', () => {
       fixture.detectChanges();
       const mockEvent = {
         target: {
-          files: []
-        }
+          files: [],
+        },
       } as unknown as Event;
 
       component.onFileSelected(mockEvent);
@@ -483,8 +508,8 @@ describe('ChatsPage', () => {
       const message = {
         images: [
           { url: 'http://test.com/img1.png', publicId: '1' },
-          { url: 'http://test.com/img2.png', publicId: '2' }
-        ]
+          { url: 'http://test.com/img2.png', publicId: '2' },
+        ],
       };
       expect(component.getMessageImageUrl(message)).toBe('http://test.com/img1.png');
     });
@@ -521,7 +546,7 @@ describe('ChatsPage', () => {
         createdAt: new Date(),
         imageUrl: 'http://cloudinary/test.png',
         images: [{ publicId: 'img-1', url: 'http://cloudinary/test.png' }],
-        conversationId: 'conversation-1'
+        conversationId: 'conversation-1',
       };
 
       const sendImageSubject = new Subject<MessagePayload>();
@@ -545,7 +570,9 @@ describe('ChatsPage', () => {
       expect(component.messages.length).toBe(1);
       expect(component.messages[0].publicId).toBe('real-id-123');
       expect(component.messages[0].imageUrl).toBe('http://cloudinary/test.png');
-      expect(component.messages[0].images).toEqual([{ publicId: 'img-1', url: 'http://cloudinary/test.png' }]);
+      expect(component.messages[0].images).toEqual([
+        { publicId: 'img-1', url: 'http://cloudinary/test.png' },
+      ]);
     });
 
     it('should revert optimistic update and log error if sendImage fails', () => {
@@ -565,7 +592,9 @@ describe('ChatsPage', () => {
 
       const sendImageSubject = new Subject<MessagePayload>();
       chatsServiceMock.sendImage.mockReturnValue(sendImageSubject.asObservable());
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
+        /* noop */
+      });
 
       component.sendMessage();
 

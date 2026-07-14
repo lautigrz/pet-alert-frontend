@@ -162,9 +162,7 @@ describe('PublicProfilePage', () => {
   });
 
   it('setea serverError si falla la carga del perfil', async () => {
-    profileService.getPublicProfile.mockRejectedValue(
-      new Error('No se pudo cargar el perfil'),
-    );
+    profileService.getPublicProfile.mockRejectedValue(new Error('No se pudo cargar el perfil'));
 
     await component.ngOnInit();
 
@@ -273,5 +271,48 @@ describe('PublicProfilePage', () => {
 
     expect(component.activeTab()).toBe('reviews');
     expect(component.reviewSheetOpen()).toBe(false);
+  });
+
+  it('no envía la reseña cuando no hay una calificación seleccionada', async () => {
+    await component.ngOnInit();
+
+    component.reviewDescription.set('Muy buena experiencia');
+
+    await component.enviarReview();
+
+    expect(profileService.createUserReview).not.toHaveBeenCalled();
+    expect(component.reviewSubmitError()).toBe('Elegí una calificación antes de enviar.');
+  });
+
+  it('muestra el error cuando falla el envío de la reseña', async () => {
+    await component.ngOnInit();
+
+    profileService.createUserReview.mockRejectedValue(new Error('No se pudo enviar la reseña'));
+
+    component.setReviewRating(5);
+    component.reviewDescription.set('Excelente');
+
+    await component.enviarReview();
+
+    expect(component.reviewSubmitError()).toBe('No se pudo enviar la reseña');
+    expect(component.reviewSubmitting()).toBe(false);
+  });
+
+  it('abre el formulario de reseña limpiando errores anteriores', () => {
+    component.reviewSubmitError.set('Error anterior');
+
+    component.abrirReviewSheet();
+
+    expect(component.reviewSheetOpen()).toBe(true);
+    expect(component.reviewSubmitError()).toBeNull();
+  });
+
+  it('no cierra el formulario mientras la reseña se está enviando', () => {
+    component.reviewSheetOpen.set(true);
+    component.reviewSubmitting.set(true);
+
+    component.cerrarReviewSheet();
+
+    expect(component.reviewSheetOpen()).toBe(true);
   });
 });
