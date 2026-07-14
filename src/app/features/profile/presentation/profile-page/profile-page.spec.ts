@@ -197,9 +197,7 @@ describe('ProfilePage', () => {
     });
 
     it('shows an error when profile loading fails', async () => {
-      profileService.getProfile.mockRejectedValue(
-        new UserNotFoundError(),
-      );
+      profileService.getProfile.mockRejectedValue(new UserNotFoundError());
 
       await component.ngOnInit();
 
@@ -229,9 +227,7 @@ describe('ProfilePage', () => {
 
       await component.ngOnInit();
 
-      expect(component.profilePhotoUrl()).toBe(
-        'https://res.cloudinary.com/demo/profile.jpg',
-      );
+      expect(component.profilePhotoUrl()).toBe('https://res.cloudinary.com/demo/profile.jpg');
     });
   });
 
@@ -307,7 +303,14 @@ describe('ProfilePage', () => {
         xp: 10,
         level: 1,
         unlockedAchievements: [
-          { code: 'FIRST_RESCUE', name: 'Primer rescate', description: '', requiredXp: 10, icon: '🐾', unlocked: true },
+          {
+            code: 'FIRST_RESCUE',
+            name: 'Primer rescate',
+            description: '',
+            requiredXp: 10,
+            icon: '🐾',
+            unlocked: true,
+          },
         ],
       } as UserExperienceSummary);
 
@@ -323,9 +326,27 @@ describe('ProfilePage', () => {
         xp: 0,
         level: 1,
         achievements: [
-          { code: 'FIRST_RESCUE', name: 'Primer rescate', description: '', requiredXp: 10, unlocked: false },
-          { code: 'SOLIDARY_NEIGHBOR', name: 'Vecino solidario', description: '', requiredXp: 50, unlocked: false },
-          { code: 'URBAN_EXPLORER', name: 'Explorador urbano', description: '', requiredXp: 100, unlocked: false },
+          {
+            code: 'FIRST_RESCUE',
+            name: 'Primer rescate',
+            description: '',
+            requiredXp: 10,
+            unlocked: false,
+          },
+          {
+            code: 'SOLIDARY_NEIGHBOR',
+            name: 'Vecino solidario',
+            description: '',
+            requiredXp: 50,
+            unlocked: false,
+          },
+          {
+            code: 'URBAN_EXPLORER',
+            name: 'Explorador urbano',
+            description: '',
+            requiredXp: 100,
+            unlocked: false,
+          },
         ],
         unlockedAchievements: [],
       } as UserExperienceSummary);
@@ -345,9 +366,27 @@ describe('ProfilePage', () => {
         xp: 60,
         level: 1,
         achievements: [
-          { code: 'FIRST_RESCUE', name: 'Primer rescate', description: '', requiredXp: 10, unlocked: true },
-          { code: 'SOLIDARY_NEIGHBOR', name: 'Vecino solidario', description: '', requiredXp: 50, unlocked: true },
-          { code: 'URBAN_EXPLORER', name: 'Explorador urbano', description: '', requiredXp: 100, unlocked: false },
+          {
+            code: 'FIRST_RESCUE',
+            name: 'Primer rescate',
+            description: '',
+            requiredXp: 10,
+            unlocked: true,
+          },
+          {
+            code: 'SOLIDARY_NEIGHBOR',
+            name: 'Vecino solidario',
+            description: '',
+            requiredXp: 50,
+            unlocked: true,
+          },
+          {
+            code: 'URBAN_EXPLORER',
+            name: 'Explorador urbano',
+            description: '',
+            requiredXp: 100,
+            unlocked: false,
+          },
         ],
         unlockedAchievements: [],
       } as UserExperienceSummary);
@@ -378,9 +417,7 @@ describe('ProfilePage', () => {
       });
 
       reportListService.getMyReports.mockResolvedValue([{ publicId: 'report-1' }]);
-      missionService.getActiveMissionsWithDetails.mockReturnValue(
-        of([ownMission, joinedMission]),
-      );
+      missionService.getActiveMissionsWithDetails.mockReturnValue(of([ownMission, joinedMission]));
 
       await component.ngOnInit();
 
@@ -411,6 +448,14 @@ describe('ProfilePage', () => {
 
     it('formats mission date', () => {
       expect(component.missionDate(new Date('2026-07-08T10:00:00.000Z'))).toBe('08/07/2026');
+    });
+
+    it('returns the original mission status when it is unknown', () => {
+      expect(component.missionStatusLabel('PAUSED')).toBe('PAUSED');
+    });
+
+    it('returns "Sin fecha" for an invalid mission date', () => {
+      expect(component.missionDate('fecha-invalida')).toBe('Sin fecha');
     });
   });
 
@@ -466,6 +511,66 @@ describe('ProfilePage', () => {
       expect(component.reportsError()).toBe('No se pudieron cargar los reportes');
       expect(component.reportsLoading()).toBe(false);
       expect(component.reports()).toEqual([]);
+    });
+  });
+
+  describe('rating', () => {
+    it('resets the rating summary when loading fails', async () => {
+      profileService.getUserRating.mockRejectedValue(new Error('boom'));
+
+      await component.loadRating();
+
+      expect(component.ratingSummary()).toEqual({
+        average: 0,
+        count: 0,
+      });
+    });
+  });
+
+  describe('reviews', () => {
+    it('shows an error when reviews loading fails', async () => {
+      profileService.getMyReviews.mockRejectedValue(new Error('No se pudieron cargar las reseñas'));
+
+      await component.loadReviews();
+
+      expect(component.reviewsError()).toBe('No se pudieron cargar las reseñas');
+
+      expect(component.reviewsLoading()).toBe(false);
+    });
+  });
+
+  it('loads received and given reviews', async () => {
+    profileService.getMyReviews.mockResolvedValue({
+      received: {
+        items: [
+          {
+            id: 1,
+          },
+        ],
+      },
+      given: {
+        items: [
+          {
+            id: 2,
+          },
+        ],
+      },
+    });
+
+    await component.loadReviews();
+
+    expect(component.receivedReviews()).toHaveLength(1);
+    expect(component.givenReviews()).toHaveLength(1);
+  });
+
+  describe('ratingStars', () => {
+    it('rounds the average rating into stars', () => {
+      component.ratingSummary.set({
+        average: 3.6,
+        count: 5,
+      });
+
+      expect(component.ratingStars()).toEqual(['★', '★', '★', '★', '☆']);
     });
   });
 });

@@ -64,10 +64,11 @@ describe('ChatsService', () => {
         isRead: false,
         createdAt: new Date(),
         imageUrl: 'http://cloudinary/test.png',
-        images: [{ publicId: 'img-1', url: 'http://cloudinary/test.png' }]
+        conversationId: 'conv-123',
+        images: [{ publicId: 'img-1', url: 'http://cloudinary/test.png' }],
       };
 
-      service.sendImage('conv-123', mockFile, 'Hello with image').subscribe(res => {
+      service.sendImage('conv-123', mockFile, 'Hello with image').subscribe((res) => {
         expect(res).toEqual(mockResponse);
       });
 
@@ -81,7 +82,7 @@ describe('ChatsService', () => {
       const dataStr = body.get('data') as string;
       expect(JSON.parse(dataStr)).toEqual({
         conversationId: 'conv-123',
-        content: 'Hello with image'
+        content: 'Hello with image',
       });
 
       req.flush(mockResponse);
@@ -97,7 +98,7 @@ describe('ChatsService', () => {
       const dataStr = body.get('data') as string;
       expect(JSON.parse(dataStr)).toEqual({
         conversationId: 'conv-123',
-        content: ''
+        content: '',
       });
       req.flush({});
     });
@@ -172,13 +173,69 @@ describe('ChatsService', () => {
         },
       ];
 
-      service.getConversations().subscribe(res => {
+      service.getConversations().subscribe((res) => {
         expect(res).toEqual(mockConversations);
       });
 
       const req = httpMock.expectOne(`${environment.apiUrl}/conversations`);
       expect(req.request.method).toBe('GET');
       req.flush(mockConversations);
+    });
+
+    it('returns the created conversation id when creation succeeds', async () => {
+      const response = {
+        publicId: 'conv-1',
+        createdAt: '',
+      };
+
+      const spy = vi.spyOn(service, 'createConversation').mockReturnValue(of(response));
+
+      const result = await service.getOrCreateConversation('user-1');
+
+      expect(spy).toHaveBeenCalledWith('user-1');
+      expect(result).toBe('conv-1');
+    });
+
+    it('returns an existing conversation when creation fails', async () => {
+      vi.spyOn(service, 'createConversation').mockImplementation(() => {
+        throw new Error();
+      });
+
+      vi.spyOn(service, 'getConversations').mockReturnValue(
+        of([
+          {
+            publicId: 'existing',
+            unreadCount: 0,
+            otherUser: {
+              publicId: 'user-1',
+              username: 'juan',
+              photoUrl: null,
+            },
+            lastMessage: {
+              text: '',
+              isRead: true,
+              createdAt: new Date(),
+            },
+            createdAt: new Date(),
+          },
+        ]),
+      );
+
+      const result = await service.getOrCreateConversation('user-1');
+
+      expect(result).toBe('existing');
+    });
+
+    it('throws an error when the conversation cannot be opened', async () => {
+      vi.spyOn(service, 'createConversation').mockImplementation(() => {
+        throw new Error();
+      });
+
+      vi.spyOn(service, 'getConversations').mockReturnValue(of([]));
+
+      await expect(service.getOrCreateConversation('user-1')).rejects.toThrow(
+        'No se pudo abrir el chat',
+      );
     });
   });
 
@@ -197,15 +254,65 @@ describe('ChatsService', () => {
           },
         ],
         createdAt: new Date(),
+        isSuspended: false,
       };
 
-      service.getMessagesForConversation('c1').subscribe(res => {
+      service.getMessagesForConversation('c1').subscribe((res) => {
         expect(res).toEqual(mockConversation);
       });
 
       const req = httpMock.expectOne(`${environment.apiUrl}/conversations/c1`);
       expect(req.request.method).toBe('GET');
       req.flush(mockConversation);
+    });
+  });
+
+  describe('createConversation', () => {
+    it('should create a new conversation via HTTP POST', () => {
+      const response = {
+        publicId: 'conv-123',
+        createdAt: '2026-07-14T10:00:00Z',
+      };
+
+      service.createConversation('user-999').subscribe((result) => {
+        expect(result).toEqual(response);
+      });
+
+      const req = httpMock.expectOne(`${environment.apiUrl}/conversations`);
+
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        publicTargetId: 'user-999',
+      });
+
+      req.flush(response);
+    });
+  });
+  describe('setUnreadChats', () => {
+    it('updates the unread chats counter', () => {
+      service.setUnreadChats(7);
+
+      expect(service.getUnreadChats()).toBe(7);
+    });
+
+    it('counts conversations with unread messages', () => {
+      vi.spyOn(service, 'getConversations').mockReturnValue(
+        of([
+          {
+            unreadCount: 2,
+          },
+          {
+            unreadCount: 0,
+          },
+          {
+            unreadCount: 5,
+          },
+        ] as ConversationSummaryOutput[]),
+      );
+
+      service.refreshUnreadChats();
+
+      expect(service.getUnreadChats()).toBe(2);
     });
   });
 });
